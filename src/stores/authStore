@@ -1,0 +1,137 @@
+import { defineStore } from 'pinia'
+import authApi from '@/api/authApi'
+import api from '@/api/config'
+import { computed, ref } from 'vue'
+import { jwtDecode } from 'jwt-decode'
+
+export const useAuthStore = defineStore('auth', () => {
+  const accessToken = ref(localStorage.getItem('access_token') || null)
+  const refreshToken = ref(localStorage.getItem('refresh_token') || null)
+  const user = ref(null)
+
+  const isAuthenticated = computed(() => !!accessToken.value)
+
+  function setUserFromToken(token) {
+    try {
+      const payload = jwtDecode(token)
+      user.value = {
+        id: payload.user_id ?? payload.id ?? null,
+        user_id: payload.user_id ?? null,
+        name: payload.name ?? null,
+        email: payload.email ?? null,
+      }
+    } catch (e) {
+      user.value = null
+    }
+  }
+
+  async function loadCurrentUser() {
+    try {
+      const response = await authApi.me()
+      const profile = response.data
+
+      user.value = profile
+      localStorage.setItem('user_profile_cache', JSON.stringify(profile))
+      return profile
+    } catch (error) {
+      console.error('Erro ao buscar usuário atual:', error)
+      throw error
+    }
+  }
+
+  if (accessToken.value) {
+    setUserFromToken(accessToken.value)
+
+    const cache = localStorage.getItem('user_profile_cache')
+    if (cache && user.value) {
+      user.value = { ...user.value, ...JSON.parse(cache) }
+    }
+  }
+
+  async function login(credentials) {
+    try {
+      const response = await authApi.login(credentials)
+      const { access, refresh } = response.data
+
+      accessToken.value = access
+      refreshToken.value = refresh
+      localStorage.setItem('access_token', access)
+      localStorage.setItem('refresh_token', refresh)
+
+      setUserFromToken(access)
+      await loadCurrentUser()
+    } catch (error) {
+      console.error('Login failed:', error)
+      throw error
+    }
+  }
+
+  async function refreshAccessToken() {
+    try {
+      const rToken = localStorage.getItem('refresh_token')
+      if (!rToken) {
+        console.warn('Nenhum refresh token encontrado no localStorage')
+        throw new Error('No refresh token')
+      }
+
+      const response = await authApi.refresh({ refresh: rToken })
+      const { access } = response.data
+
+      accessToken.value = access
+      localStorage.setItem('access_token', access)
+      setUserFromToken(access)
+
+      return access
+    } catch (e) {
+      console.error('Erro ao atualizar token:', e.response?.data || e.message)
+      logout()
+      throw e
+    }
+  }
+
+  async function refreshUserSession() {
+    return await refreshAccessToken()
+  }
+
+  async function updateUserAccount(userId, data) {
+    try {
+      const response = await api.patch(`/usuarios/${userId}/`, data, {
+        headers: {
+          Authorization: `Bearer ${accessToken.value}`,
+        },
+      })
+      return response.data
+    } catch (error) {
+      console.error('Erro ao atualizar usuário:', error)
+      throw error
+    }
+  }
+
+  function updateUserData(newData) {
+    if (user.value) {
+      user.value = { ...user.value, ...newData }
+    }
+  }
+
+  function logout() {
+    accessToken.value = null
+    refreshToken.value = null
+    user.value = null
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+    localStorage.removeItem('user_profile_cache')
+  }
+
+  return {
+    accessToken,
+    refreshToken,
+    isAuthenticated,
+    user,
+    login,
+    logout,
+    refreshAccessToken,
+    refreshUserSession,
+    updateUserAccount,
+    updateUserData,
+  }
+})
