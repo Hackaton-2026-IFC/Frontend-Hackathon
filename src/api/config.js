@@ -4,6 +4,12 @@ const url = import.meta.env.VITE_URL_BACKEND
 
 const api = axios.create({
   baseURL: url ?? 'http://127.0.0.1:8000/api/',
+  headers: {
+    'Accept-Language': 'pt-BR',
+  },
+  headers: {
+    'Accept-Language': 'pt-br',
+  },
 })
 
 api.interceptors.request.use(
@@ -23,8 +29,14 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config
+    const requestUrl = originalRequest?.url ?? ''
+    const isTokenEndpoint = /(?:^|\/)token(?:\/|$)/.test(requestUrl)
 
-    if (error.response?.status === 401 && !originalRequest?._retry) {
+    if (
+      error.response?.status === 401 &&
+      !isTokenEndpoint &&
+      !originalRequest?._retry
+    ) {
       const refreshToken = localStorage.getItem('refresh_token')
 
       if (!refreshToken) {
@@ -46,6 +58,7 @@ api.interceptors.response.use(
           {
             headers: {
               Authorization: undefined,
+              'Accept-Language': 'pt-br',
             },
           },
         )
