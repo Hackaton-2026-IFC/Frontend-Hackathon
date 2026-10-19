@@ -1,4 +1,4 @@
-<script setup>
+ <script setup>
 import { RouterView, useRoute } from 'vue-router'
 import appFooterComponent from './components/layout/appFooterComponent.vue'
 import appHeaderComponent from './components/layout/appHeaderComponent.vue'
@@ -9,20 +9,27 @@ const route = useRoute()
 const authStore = useAuthStore()
 const templateStore = useTemplateStore()
 </script>
+
 <template>
-  <appHeaderComponent v-if="!route.meta.hideHeader"></appHeaderComponent>
+  <appHeaderComponent v-if="!route.meta.hideHeader" />
 
-  <main class="page">
-    <RouterView> </RouterView>
-  </main>
 
-  <appFooterComponent v-if="!route.meta.hideFooter"></appFooterComponent>
+<main
+  :class="
+    route.meta.hideHeader && route.meta.hideFooter
+      ? 'auth-main'
+      : 'page'
+  "
+>
+  <RouterView />
+</main>
+
 
   <p
     v-if="
       authStore.errorMessage &&
-      route.name !== 'welcome' &&
-      route.name !== 'register'
+      route.name !== 'login' &&
+      route.name !== 'cadastro'
     "
     class="app-error"
     role="alert"
@@ -40,10 +47,19 @@ const templateStore = useTemplateStore()
     <span class="loading-spinner"></span>
   </div>
 </template>
+
 <style>
 @import url('/src/assets/css/global.css');
 </style>
+
 <style scoped>
+.auth-page {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
 .app-error {
   position: fixed;
   right: 1rem;
@@ -81,4 +97,14 @@ const templateStore = useTemplateStore()
     transform: rotate(360deg);
   }
 }
+
+.auth-main {
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+}
+
 </style>

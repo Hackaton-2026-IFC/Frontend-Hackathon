@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 * {
   margin: 0;
   padding: 0;
@@ -20,7 +22,7 @@ body {
   min-height: 100vh;
 }
 
-/* Espaçamento para conteúdo abaixo do header fixo */
+/* Espaçamento para conteúdo abaixo do header fixo (use apenas nas páginas que têm header) */
 .page {
   padding: 72px 16px 16px;
   max-width: 600px;

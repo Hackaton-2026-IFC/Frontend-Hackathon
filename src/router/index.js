@@ -1,49 +1,50 @@
+
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
-import welcomeView from '@/views/welcomeView.vue'
-import registerView from '@/views/registerView.vue'
-import homeView from '@/views/homeView.vue'
+import { useAuthStore } from '@/stores/authStore.js'
+
+import InicioView from '@/views/InicioView.vue'
+import LoginView from '@/views/LoginView.vue'
+import CadastroView from '@/views/CadastroView.vue'
+import AuthLayout from '@/components/layout/AuthLayout.vue'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(),
   routes: [
     {
       path: '/',
-      name: 'welcome',
-      component: welcomeView,
-      meta: { guestOnly: true, hideHeader: true, hideFooter: true },
+      component: AuthLayout,
+      meta: {
+        hideHeader: true,
+        hideFooter: true,
+      },
+      children: [
+        { path: '', redirect: { name: 'login' } },
+        { path: 'login', name: 'login', component: LoginView },
+        { path: 'cadastro', name: 'cadastro', component: CadastroView },
+      ],
     },
     {
-      path: '/registro',
-      name: 'register',
-      component: registerView,
-      meta: { guestOnly: true, hideHeader: true, hideFooter: true },
-    },
-    {
-      path: '/home',
-      name: 'home',
-      component: homeView,
+      path: '/inicio',
+      name: 'inicio',
+      component: InicioView,
       meta: { requiresAuth: true },
-    },
-    {
-      path: '/:pathMatch(.*)*',
-      redirect: '/',
     },
   ],
 })
 
 router.beforeEach((to) => {
-  const authStore = useAuthStore()
+  const auth = useAuthStore()
 
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    return { name: 'welcome', query: { redirect: to.fullPath } }
+  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+    return { name: 'login' }
   }
 
-  if (to.meta.guestOnly && authStore.isAuthenticated) {
-    return { name: 'home' }
+  if (
+    (to.name === 'login' || to.name === 'cadastro') &&
+    auth.isAuthenticated
+  ) {
+    return { name: 'inicio' }
   }
-
-  return true
 })
 
 export default router
