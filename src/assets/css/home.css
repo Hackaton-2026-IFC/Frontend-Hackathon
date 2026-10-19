@@ -1,0 +1,511 @@
+/* =========================
+   HOME — ESTRUTURA
+========================= */
+
+.home-page {
+  --home-background: #f7f7f5;
+  --home-surface: #ffffff;
+  --home-text: #20201e;
+  --home-muted: #777771;
+  --home-border: #e6e6e1;
+  --home-dark: #20201e;
+
+  width: 100%;
+  min-height: 100%;
+  padding: 36px clamp(20px, 4vw, 56px) 24px;
+  overflow-wrap: anywhere;
+  background: var(--home-background);
+  color: var(--home-text);
+}
+
+/* =========================
+   BOAS-VINDAS
+========================= */
+
+.home-welcome {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 290px;
+  padding: clamp(28px, 5vw, 58px);
+  overflow: hidden;
+  border: 1px solid #30302d;
+  border-radius: 20px;
+  background: var(--home-dark);
+  color: #ffffff;
+}
+
+.home-welcome-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 560px;
+}
+
+.home-eyebrow {
+  display: inline-block;
+  color: var(--home-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.7px;
+  line-height: 1.6;
+}
+
+.home-welcome .home-eyebrow {
+  color: #b5b5ae;
+}
+
+.home-welcome h1 {
+  margin-top: 18px;
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 650;
+  letter-spacing: -2px;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}
+
+.home-title-period {
+  color: #aaa9a1;
+}
+
+.home-welcome-description {
+  max-width: 440px;
+  margin-top: 18px;
+  color: #c4c4be;
+  font-size: 14px;
+  line-height: 1.9;
+}
+
+.home-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 22px;
+  margin-top: 28px;
+}
+
+.home-primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  min-height: 44px;
+  padding: 0 17px;
+  border: 1px solid #ffffff;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #20201e;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.home-primary-button:hover {
+  background: #e9e9e5;
+}
+
+.home-primary-button span {
+  font-size: 15px;
+}
+
+.home-secondary-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: #deded8;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.home-secondary-link:hover {
+  color: #ffffff;
+}
+
+.home-welcome-index {
+  position: absolute;
+  right: 28px;
+  bottom: 22px;
+  z-index: 2;
+  color: #898982;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+}
+
+/* =========================
+   ELEMENTOS DECORATIVOS
+========================= */
+
+.home-welcome-decoration {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 42%;
+  pointer-events: none;
+}
+
+.decoration-circle {
+  position: absolute;
+  display: block;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 50%;
+}
+
+.decoration-circle-one {
+  top: 50%;
+  right: 6%;
+  width: 240px;
+  height: 240px;
+  transform: translateY(-50%);
+}
+
+.decoration-circle-two {
+  top: 50%;
+  right: -2%;
+  width: 330px;
+  height: 330px;
+  transform: translateY(-50%);
+}
+
+.decoration-square {
+  position: absolute;
+  top: 50%;
+  right: 20%;
+  width: 65px;
+  height: 65px;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 14px;
+  transform: translateY(-50%) rotate(18deg);
+}
+
+.decoration-cross {
+  position: absolute;
+  top: 25%;
+  right: 24%;
+  color: #d4d4cd;
+  font-size: 25px;
+  font-weight: 300;
+}
+
+/* =========================
+   RECURSOS
+========================= */
+
+.home-resources {
+  padding-top: 52px;
+  scroll-margin-top: 24px;
+}
+
+.home-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+  margin-bottom: 24px;
+}
+
+.home-section-heading h2 {
+  margin-top: 9px;
+  font-size: clamp(21px, 2.5vw, 27px);
+  font-weight: 650;
+  letter-spacing: -0.9px;
+  line-height: 1.3;
+}
+
+.home-section-heading > p {
+  max-width: 330px;
+  color: var(--home-muted);
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.home-resources-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 16px;
+}
+
+/* Ajustes visuais do componente de card reutilizável */
+.home-resources-grid :deep(.resource-card) {
+  min-height: 245px;
+  padding: 23px;
+  border-color: var(--home-border);
+  border-radius: 15px;
+  background: var(--home-surface);
+  color: var(--home-text);
+}
+
+.home-resources-grid :deep(.resource-card:hover) {
+  border-color: #c9c9c2;
+}
+
+.home-resources-grid :deep(.resource-icon) {
+  border-color: var(--home-border);
+  border-radius: 11px;
+  background: #f7f7f5;
+}
+
+.home-resources-grid :deep(.resource-number) {
+  color: #85857e;
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+
+.home-resources-grid :deep(.resource-card h3) {
+  font-size: 17px;
+  letter-spacing: -0.4px;
+}
+
+.home-resources-grid :deep(.resource-card p) {
+  color: var(--home-muted);
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.home-resources-grid :deep(.card-link) {
+  color: var(--home-text);
+}
+
+.home-resources-grid :deep(.resource-card-disabled) {
+  background: #f0f0ed;
+}
+
+/* =========================
+   NOTA INFERIOR
+========================= */
+
+.home-bottom-note {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  margin-top: 28px;
+  padding: 23px 25px;
+  border: 1px solid var(--home-border);
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.home-note-symbol {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #20201e;
+  color: #ffffff;
+  font-size: 20px;
+}
+
+.home-bottom-note h2 {
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.home-bottom-note p {
+  margin-top: 4px;
+  color: var(--home-muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.home-note-number {
+  margin-left: auto;
+  color: #898982;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+/* =========================
+   RODAPÉ DA HOME
+========================= */
+
+.home-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 27px 0 4px;
+  color: #85857e;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 1.1px;
+}
+
+/* =========================
+   TABLETS
+========================= */
+
+@media (max-width: 1000px) {
+  .home-resources-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-resources-grid :deep(.resource-card:last-child) {
+    grid-column: 1 / -1;
+  }
+
+  .home-welcome-decoration {
+    width: 35%;
+    opacity: 0.65;
+  }
+
+  .home-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+/* =========================
+   CELULARES
+========================= */
+
+@media (max-width: 700px) {
+  .home-page {
+    padding: 22px 16px 20px;
+  }
+
+  .home-welcome {
+    min-height: 310px;
+    padding: 28px 23px 42px;
+    border-radius: 15px;
+  }
+
+  .home-welcome-content {
+    max-width: 100%;
+  }
+
+  .home-welcome h1 {
+    max-width: 100%;
+    margin-top: 15px;
+    font-size: clamp(30px, 8vw, 39px);
+    letter-spacing: -1.5px;
+  }
+
+  .home-welcome-description {
+    max-width: 100%;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .home-actions {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 23px;
+  }
+
+  .home-welcome-decoration {
+    right: -45px;
+    width: 180px;
+    opacity: 0.35;
+  }
+
+  .decoration-circle-one {
+    right: 0;
+    width: 150px;
+    height: 150px;
+  }
+
+  .decoration-circle-two {
+    right: -45px;
+    width: 220px;
+    height: 220px;
+  }
+
+  .decoration-square {
+    right: 38px;
+    width: 45px;
+    height: 45px;
+  }
+
+  .decoration-cross {
+    right: 50px;
+  }
+
+  .home-welcome-index {
+    right: 17px;
+    bottom: 15px;
+    font-size: 8px;
+  }
+
+  .home-resources {
+    padding-top: 36px;
+  }
+
+  .home-section-heading {
+    margin-bottom: 19px;
+  }
+
+  .home-section-heading h2 {
+    font-size: 23px;
+  }
+
+  .home-section-heading > p {
+    font-size: 12px;
+  }
+
+  .home-resources-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .home-resources-grid :deep(.resource-card:last-child) {
+    grid-column: auto;
+  }
+
+  .home-resources-grid :deep(.resource-card) {
+    min-height: 220px;
+    padding: 21px;
+  }
+
+  .home-bottom-note {
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 20px;
+    padding: 19px 16px;
+  }
+
+  .home-note-symbol {
+    width: 36px;
+    height: 36px;
+  }
+
+  .home-bottom-note h2 {
+    font-size: 13px;
+  }
+
+  .home-bottom-note p {
+    font-size: 11px;
+  }
+
+  .home-note-number {
+    display: none;
+  }
+
+  .home-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 7px;
+    padding-top: 23px;
+    font-size: 8px;
+  }
+}
+
+/* =========================
+   ACESSIBILIDADE
+========================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .home-primary-button {
+    transition: none;
+  }
+}
