@@ -44,8 +44,7 @@ defineProps({
     class="resource-card"
   >
     <div class="resource-card-top">
-      <span class="resource-icon" aria-hidden="true">
-        {{ icon }}
+      <span :class="icon" aria-hidden="true">
       </span>
 
       <span class="resource-number">
@@ -60,14 +59,14 @@ defineProps({
 
     <span class="card-link">
       {{ action }}
-      <span aria-hidden="true">→</span>
+      <span class="mdi mdi-arrow-right"></span>
+
     </span>
   </RouterLink>
 
   <article v-else class="resource-card resource-card-disabled">
     <div class="resource-card-top">
-      <span class="resource-icon" aria-hidden="true">
-        {{ icon }}
+      <span :class="icon" aria-hidden="true">
       </span>
 
       <span class="resource-number">
@@ -82,7 +81,7 @@ defineProps({
 
     <span class="card-link">
       {{ action }}
-      <span aria-hidden="true">↗</span>
+      <span class="mdi mdi-arrow-top-right"></span>
     </span>
   </article>
 </template>
@@ -118,7 +117,7 @@ defineProps({
   width: 100%;
 }
 
-.resource-icon {
+.resource-card-top .mdi {
   display: grid;
   flex-shrink: 0;
   place-items: center;
@@ -165,6 +164,10 @@ defineProps({
   color: #252523;
   font-size: 12px;
   font-weight: 700;
+
+  & span{
+    background: none;
+  }
 }
 
 .resource-card-disabled {
@@ -172,7 +175,7 @@ defineProps({
   color: #555550;
 }
 
-.resource-card-disabled .resource-icon {
+.resource-card-disabled .resource-card-top .mdi {
   background: #f0f0ed;
 }
 

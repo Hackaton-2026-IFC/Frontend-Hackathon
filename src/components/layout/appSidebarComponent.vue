@@ -1,13 +1,15 @@
 <script setup>
 import { RouterLink, useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
 
 const route = useRoute()
+const authStore = useAuthStore()
 
 const navigationItems = [
-  { label: 'Início', to: '/home', symbol: '⌂' },
-  { label: 'Projetos', to: '/projects', symbol: '▦' },
-  { label: 'Perfil', to: '/profile', symbol: '○' },
-  { label: 'Configurações', to: '/settings', symbol: '⚙' },
+  { label: 'Início', to: '/home', symbol: 'mdi mdi-home-outline' },
+  { label: 'Projetos', to: '/projects', symbol: 'mdi mdi-list-box-outline' },
+  { label: 'Perfil', to: '/profile', symbol: 'mdi mdi-account-outline' },
+  { label: 'Configurações', to: '/settings', symbol: 'mdi mdi-cog-outline' },
 ]
 
 function isActive(item) {
@@ -48,8 +50,7 @@ function isActive(item) {
           :class="{ 'navigation-link-active': isActive(item) }"
           :aria-current="isActive(item) ? 'page' : undefined"
         >
-          <span class="navigation-symbol" aria-hidden="true">
-            {{ item.symbol }}
+          <span :class="item.symbol" aria-hidden="true">
           </span>
 
           <span class="navigation-label">
@@ -174,7 +175,7 @@ function isActive(item) {
   color: #fff;
 }
 
-.navigation-symbol {
+.mdi {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;

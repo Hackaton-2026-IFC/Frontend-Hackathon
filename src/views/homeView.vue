@@ -20,7 +20,7 @@ const resources = [
   {
     number: '01',
     category: 'ORGANIZAÇÃO',
-    icon: '▦',
+    icon: 'mdi mdi-list-box-outline',
     title: 'Seus projetos',
     description:
       'Organize suas ideias, acompanhe seus projetos e transforme planos em resultados.',
@@ -31,7 +31,7 @@ const resources = [
   {
     number: '02',
     category: 'CRIATIVIDADE',
-    icon: '✳',
+    icon: 'mdi mdi-creation-outline',
     title: 'Novas ideias',
     description:
       'Um espaço para desenvolver possibilidades e encontrar novas soluções.',
@@ -42,7 +42,7 @@ const resources = [
   {
     number: '03',
     category: 'PRODUTIVIDADE',
-    icon: '◎',
+    icon: 'mdi mdi-skip-next-outline',
     title: 'Próximos passos',
     description:
       'Transforme objetivos em pequenas ações e acompanhe sua evolução.',
@@ -73,12 +73,12 @@ const resources = [
         <div class="home-actions">
           <RouterLink to="/projects" class="home-primary-button">
             Explorar projetos
-            <span aria-hidden="true">↗</span>
+            <span aria-hidden="true"><span class="mdi mdi-arrow-top-right"></span></span>
           </RouterLink>
 
           <a href="#recursos" class="home-secondary-link">
             Conhecer recursos
-            <span aria-hidden="true">↓</span>
+            <span aria-hidden="true"><span class="mdi mdi-arrow-down"></span></span>
           </a>
         </div>
       </div>
@@ -118,7 +118,8 @@ const resources = [
     </section>
 
     <section class="home-bottom-note">
-      <span class="home-note-symbol" aria-hidden="true">↗</span>
+      <span class="home-note-symbol mdi mdi-arrow-top-right" aria-hidden="true">↗</span>
+
 
       <div>
         <h2>Uma ideia de cada vez.</h2>

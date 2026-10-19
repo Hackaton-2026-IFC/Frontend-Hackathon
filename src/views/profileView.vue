@@ -13,6 +13,10 @@ const userEmail = computed(() => {
   return authStore.user?.email || 'E-mail não informado'
 })
 
+const profileImage = computed(() => {
+  return authStore.user?.profile_image?.url
+})
+
 const initials = computed(() => {
   return userName.value
     .split(' ')
@@ -62,10 +66,14 @@ async function handleLogout() {
 
     <!-- Identidade: totalmente abaixo do banner -->
     <section class="profile-identity">
+      <div class="profile-avatar" v-if="profileImage">
+        <img class="profile-image" :src="profileImage" :alt="userName">
+      </div>
       <div
         class="profile-avatar"
         role="img"
         :aria-label="`Avatar de ${userName}`"
+        v-else
       >
         <span>{{ initials || 'U' }}</span>
       </div>
@@ -126,7 +134,7 @@ async function handleLogout() {
         @click="handleLogout"
       >
         <span>Sair da conta</span>
-        <span class="profile-logout-icon" aria-hidden="true">↗</span>
+        <span class="profile-logout-icon" aria-hidden="true"><span class="mdi mdi-arrow-top-right"></span></span>
       </button>
     </section>
   </main>

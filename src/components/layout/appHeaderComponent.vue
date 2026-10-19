@@ -11,6 +11,10 @@ const userName = computed(() => {
   return authStore.user?.name?.trim() || 'Usuário'
 })
 
+const profileImage = computed(() => {
+  return authStore.user?.profile_image?.url
+})
+
 const pageTitle = computed(() => {
   const titles = {
     home: 'Área de trabalho',
@@ -36,7 +40,10 @@ const pageTitle = computed(() => {
       aria-label="Abrir meu perfil"
       title="Meu perfil"
     >
-      <span class="profile-avatar" aria-hidden="true">
+    <span v-if="profileImage" class="profile-avatar">
+      <img :src="profileImage" :alt="userName">
+    </span>
+      <span v-else class="profile-avatar" aria-hidden="true">
         {{ userName.charAt(0).toUpperCase() }}
       </span>
 

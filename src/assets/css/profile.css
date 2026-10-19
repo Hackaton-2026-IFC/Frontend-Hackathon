@@ -4,9 +4,9 @@
 
 .profile-page {
   width: 100%;
-  max-width: 1400px;
+  min-height: 100dvh;
   margin: 0 auto;
-  padding: 24px 28px 32px;
+  padding: 36px clamp(20px, 4vw, 56px) 24px;
   color: #171717;
 }
 
