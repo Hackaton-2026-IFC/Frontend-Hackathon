@@ -113,7 +113,7 @@ onBeforeUnmount(() => {
 /* Tablet e celular */
 @media (max-width: 767px) {
   .auth-page {
-    align-items: flex-start;
+    align-items: center;
     padding: 16px;
   }
 
@@ -121,7 +121,8 @@ onBeforeUnmount(() => {
     width: 100%;
     max-width: 520px;
     height: auto;
-    min-height: 700px;
+    min-height: min(700px, calc(100dvh - 32px));
+    margin-inline: auto;
     border-radius: 16px;
   }
 }
@@ -133,7 +134,7 @@ onBeforeUnmount(() => {
   }
 
   .auth-card {
-    min-height: 690px;
+    min-height: min(690px, calc(100dvh - 20px));
     border-radius: 12px;
   }
 }

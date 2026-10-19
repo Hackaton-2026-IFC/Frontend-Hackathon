@@ -1,28 +1,24 @@
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import CadastroForm from '@/components/cadastro/CadastroForm.vue'
-import { useAuthStore } from '@/stores/authStore.js'
+import { useRegisterStore } from '@/stores/registerStore.js'
 
-const auth = useAuthStore()
+const registerStore = useRegisterStore()
 const router = useRouter()
 
 const loading = ref(false)
-const error = ref('')
+const error = computed(() => registerStore.errorMessage)
 
 async function handleCadastro(data) {
   loading.value = true
-  error.value = ''
 
   try {
-    await auth.register(data)
-    await router.push({
-      name: 'login',
-      query: { cadastro: 'ok' },
-    })
-  } catch (e) {
-    error.value = e.message
+    const registered = await registerStore.register(data)
+    if (!registered || registerStore.errorMessage) return
+
+    await router.push({ name: 'inicio' })
   } finally {
     loading.value = false
   }

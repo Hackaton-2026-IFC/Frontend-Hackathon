@@ -30,7 +30,7 @@ function onSubmit() {
   localError.value = ''
 
   emit('submit', {
-    name: form.name,
+    name: form.name.trim(),
     email: form.email,
     password: form.password,
   })
@@ -48,6 +48,7 @@ function onSubmit() {
       <AuthInput
         v-model="form.name"
         icon="user"
+        type="text"
         placeholder="Nome"
         autocomplete="name"
         required
@@ -68,6 +69,7 @@ function onSubmit() {
         type="password"
         placeholder="Senha"
         autocomplete="new-password"
+        minlength="8"
         required
       />
 
@@ -77,6 +79,7 @@ function onSubmit() {
         type="password"
         placeholder="Confirmar senha"
         autocomplete="new-password"
+        minlength="8"
         required
       />
 

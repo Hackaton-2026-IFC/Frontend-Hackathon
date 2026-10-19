@@ -23,7 +23,12 @@ async function handleLogin(credentials) {
   error.value = ''
 
   try {
-    await auth.login(credentials)
+    const success = await auth.login(credentials)
+    if (!success) {
+      error.value = auth.errorMessage
+      return
+    }
+
     await router.push({ name: 'inicio' })
   } catch (e) {
     error.value = e.message
