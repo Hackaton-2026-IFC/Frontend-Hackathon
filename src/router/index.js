@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import welcomeView from '@/views/welcomeView.vue'
+import registerView from '@/views/registerView.vue'
 import homeView from '@/views/homeView.vue'
 
 const router = createRouter({
@@ -10,6 +11,12 @@ const router = createRouter({
       path: '/',
       name: 'welcome',
       component: welcomeView,
+      meta: { guestOnly: true, hideHeader: true, hideFooter: true },
+    },
+    {
+      path: '/registro',
+      name: 'register',
+      component: registerView,
       meta: { guestOnly: true, hideHeader: true, hideFooter: true },
     },
     {

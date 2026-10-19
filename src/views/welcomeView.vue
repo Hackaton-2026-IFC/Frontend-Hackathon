@@ -25,6 +25,10 @@ function handleLogin() {
   <p v-if="authStore.errorMessage" class="login-error" role="alert">
     {{ authStore.errorMessage }}
   </p>
+  <p>
+    Ainda não tem conta?
+    <RouterLink :to="{ name: 'register' }">Cadastre-se</RouterLink>
+  </p>
 </template>
 <style scoped>
 .login-error {

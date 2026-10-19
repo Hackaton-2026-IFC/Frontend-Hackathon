@@ -19,19 +19,25 @@ const templateStore = useTemplateStore()
   <appFooterComponent v-if="!route.meta.hideFooter"></appFooterComponent>
 
   <p
-    v-if="authStore.errorMessage && route.name !== 'welcome'"
+    v-if="
+      authStore.errorMessage &&
+      route.name !== 'welcome' &&
+      route.name !== 'register'
+    "
     class="app-error"
     role="alert"
   >
     {{ authStore.errorMessage }}
   </p>
 
-  <div v-if="templateStore.isLoading" class="loading-overlay" role="status" aria-live="polite">
-    <span class="loading-dots" aria-label="Carregando">
-      <span></span>
-      <span></span>
-      <span></span>
-    </span>
+  <div
+    v-if="templateStore.isLoading"
+    class="loading-overlay"
+    role="status"
+    aria-label="Carregando"
+    aria-live="polite"
+  >
+    <span class="loading-spinner"></span>
   </div>
 </template>
 <style>
@@ -61,34 +67,18 @@ const templateStore = useTemplateStore()
   background: rgb(80 80 80 / 45%);
 }
 
-.loading-dots {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 1rem 1.25rem;
-  border-radius: 999px;
-  background: rgb(235 235 235 / 88%);
-}
-
-.loading-dots span {
-  width: 0.7rem;
-  height: 0.7rem;
+.loading-spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 0.35rem solid rgb(255 255 255 / 60%);
+  border-top-color: #555;
   border-radius: 50%;
-  background: #555;
-  animation: dot-bounce 0.7s ease-in-out infinite alternate;
+  animation: loading-spin 0.8s linear infinite;
 }
 
-.loading-dots span:nth-child(2) {
-  animation-delay: 0.15s;
-}
-
-.loading-dots span:nth-child(3) {
-  animation-delay: 0.3s;
-}
-
-@keyframes dot-bounce {
+@keyframes loading-spin {
   to {
-    transform: translateY(-0.65rem);
+    transform: rotate(360deg);
   }
 }
 </style>

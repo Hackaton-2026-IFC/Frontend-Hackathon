@@ -131,7 +131,8 @@ export const useAuthStore = defineStore('auth', () => {
 
       setUserFromToken(access)
       await loadCurrentUser()
-      router.push('/home')
+      await router.push('/home')
+      return true
     } catch (error) {
       console.error('Login failed:', error)
       const message = getErrorMessage(
