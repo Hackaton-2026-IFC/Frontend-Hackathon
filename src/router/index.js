@@ -73,6 +73,7 @@ const router = createRouter({
 router.beforeEach((to) => {
   const authStore = useAuthStore()
 
+  // Se a rota exige autenticação e o usuário NÃO está autenticado
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return {
       name: 'welcome',
@@ -80,11 +81,10 @@ router.beforeEach((to) => {
     }
   }
 
+  // Se a rota é exclusiva para convidados (welcome/register) e o usuário JÁ está autenticado
   if (to.meta.guestOnly && authStore.isAuthenticated) {
     return { name: 'home' }
   }
-
-  return true
 })
 
 export default router

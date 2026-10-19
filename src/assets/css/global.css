@@ -1,3 +1,4 @@
+@import "tailwindcss";
 
 /* =========================
    CSS RESET
@@ -74,6 +75,7 @@ textarea {
 
 button {
   cursor: pointer;
+  border: 0;
 }
 
 button:disabled {
@@ -92,6 +94,12 @@ ol {
 
 textarea {
   resize: vertical;
+  min-width: 0;
+}
+
+input,
+select {
+  min-width: 0;
 }
 
 table {
@@ -109,14 +117,15 @@ h6 {
   font: inherit;
 }
 
-button {
-  border: 0;
-}
+/* =========================
+   CLASSES ÚTEIS / LAYOUT
+========================= */
 
-input,
-textarea,
-select {
-  min-width: 0;
+/* Espaçamento para conteúdo abaixo do header fixo (use apenas nas páginas que têm header) */
+.page {
+  padding: 72px 16px 16px;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 /* =========================

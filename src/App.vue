@@ -1,4 +1,3 @@
-
 <script setup>
 import { RouterView, useRoute } from 'vue-router'
 
@@ -36,7 +35,7 @@ const templateStore = useTemplateStore()
     <p
       v-if="
         authStore.errorMessage &&
-        !['welcome', 'register', 'login'].includes(route.name)
+        !['login', 'cadastro', 'welcome', 'register'].includes(route.name)
       "
       class="app-error"
       role="alert"
@@ -58,7 +57,9 @@ const templateStore = useTemplateStore()
 
 <style>
 @import url('/src/assets/css/global.css');
+</style>
 
+<style scoped>
 /* =========================
    ESTRUTURA PRINCIPAL
 ========================= */
@@ -69,8 +70,11 @@ const templateStore = useTemplateStore()
 }
 
 .auth-page {
+  width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
+  margin: 0;
+  padding: 0;
 }
 
 .app-layout {
