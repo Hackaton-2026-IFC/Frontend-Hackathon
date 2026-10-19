@@ -22,18 +22,4 @@ function handleLogin() {
     <input type="password" placeholder="Password" v-model="password" required />
     <button type="submit">Log-in</button>
   </form>
-  <p v-if="authStore.errorMessage" class="login-error" role="alert">
-    {{ authStore.errorMessage }}
-  </p>
-  <p>
-    Ainda não tem conta?
-    <RouterLink :to="{ name: 'register' }">Cadastre-se</RouterLink>
-  </p>
 </template>
-<style scoped>
-.login-error {
-  margin-top: 1rem;
-  color: #8b1e1e;
-  text-align: center;
-}
-</style>

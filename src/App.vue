@@ -1,9 +1,11 @@
- <script setup>
+<script setup>
 import { RouterView, useRoute } from 'vue-router'
-import appFooterComponent from './components/layout/appFooterComponent.vue'
-import appHeaderComponent from './components/layout/appHeaderComponent.vue'
-import { useAuthStore } from './stores/authStore'
-import { useTemplateStore } from './stores/templateStore'
+
+import appHeaderComponent from '@/components/layout/appHeaderComponent.vue'
+import appSidebarComponent from '@/components/layout/appSidebarComponent.vue'
+
+import { useAuthStore } from '@/stores/authStore'
+import { useTemplateStore } from '@/stores/templateStore'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -11,40 +13,45 @@ const templateStore = useTemplateStore()
 </script>
 
 <template>
-  <appHeaderComponent v-if="!route.meta.hideHeader" />
+  <div class="app-shell">
+    <template v-if="route.meta.hideHeader">
+      <main class="auth-page">
+        <RouterView />
+      </main>
+    </template>
 
+    <template v-else>
+      <appHeaderComponent />
 
-<main
-  :class="
-    route.meta.hideHeader && route.meta.hideFooter
-      ? 'auth-main'
-      : 'page'
-  "
->
-  <RouterView />
-</main>
+      <div class="app-layout">
+        <appSidebarComponent />
 
+        <main class="page-content">
+          <RouterView />
+        </main>
+      </div>
+    </template>
 
-  <p
-    v-if="
-      authStore.errorMessage &&
-      route.name !== 'login' &&
-      route.name !== 'cadastro'
-    "
-    class="app-error"
-    role="alert"
-  >
-    {{ authStore.errorMessage }}
-  </p>
+    <p
+      v-if="
+        authStore.errorMessage &&
+        !['login', 'cadastro', 'welcome', 'register'].includes(route.name)
+      "
+      class="app-error"
+      role="alert"
+    >
+      {{ authStore.errorMessage }}
+    </p>
 
-  <div
-    v-if="templateStore.isLoading"
-    class="loading-overlay"
-    role="status"
-    aria-label="Carregando"
-    aria-live="polite"
-  >
-    <span class="loading-spinner"></span>
+    <div
+      v-if="templateStore.isLoading"
+      class="loading-overlay"
+      role="status"
+      aria-label="Carregando"
+      aria-live="polite"
+    >
+      <span class="loading-spinner"></span>
+    </div>
   </div>
 </template>
 
@@ -53,31 +60,66 @@ const templateStore = useTemplateStore()
 </style>
 
 <style scoped>
+/* =========================
+   ESTRUTURA PRINCIPAL
+========================= */
+
+.app-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
 .auth-page {
   width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
   padding: 0;
 }
 
+.app-layout {
+  display: flex;
+  align-items: stretch;
+  min-height: calc(100vh - 76px);
+  min-height: calc(100dvh - 76px);
+}
+
+.page-content {
+  flex: 1;
+  min-width: 0;
+  min-height: calc(100vh - 76px);
+  min-height: calc(100dvh - 76px);
+  margin-left: 250px;
+}
+
+/* =========================
+   MENSAGENS DE ERRO
+========================= */
+
 .app-error {
   position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 20;
-  max-width: min(28rem, calc(100vw - 2rem));
-  padding: 0.85rem 1rem;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1100;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  padding: 12px 16px;
   border: 1px solid #e4a4a4;
-  border-radius: 0.5rem;
+  border-radius: 8px;
   background: #fff0f0;
   color: #8b1e1e;
   box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
+  overflow-wrap: anywhere;
 }
+
+/* =========================
+   CARREGAMENTO
+========================= */
 
 .loading-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: 2000;
   display: grid;
   place-items: center;
   background: rgb(80 80 80 / 45%);
@@ -98,13 +140,29 @@ const templateStore = useTemplateStore()
   }
 }
 
-.auth-main {
-  width: 100%;
-  max-width: none;
-  min-height: 100vh;
-  min-height: 100dvh;
-  margin: 0;
-  padding: 0;
-}
+/* =========================
+   RESPONSIVIDADE
+========================= */
 
+@media (max-width: 700px) {
+  .app-layout {
+    min-height: calc(100vh - 66px);
+    min-height: calc(100dvh - 66px);
+  }
+
+  .page-content {
+    min-height: calc(100vh - 66px);
+    min-height: calc(100dvh - 66px);
+    margin-left: 0;
+    padding-bottom: 76px;
+  }
+
+  .app-error {
+    right: 12px;
+    bottom: 76px;
+    left: 12px;
+    width: auto;
+    max-width: none;
+  }
+}
 </style>

@@ -233,6 +233,7 @@ export const useAuthStore = defineStore('auth', () => {
     errorMessage,
     login,
     logout,
+    loadCurrentUser,
     refreshAccessToken,
     refreshUserSession,
     updateUserAccount,
