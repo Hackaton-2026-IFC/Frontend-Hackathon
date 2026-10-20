@@ -49,7 +49,7 @@ function onSubmit() {
         v-model="form.name"
         icon="user"
         type="text"
-        placeholder="Nome"
+        placeholder="Nome completo"
         autocomplete="name"
         required
       />
