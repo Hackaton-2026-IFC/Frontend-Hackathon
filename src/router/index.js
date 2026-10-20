@@ -1,31 +1,34 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 
-import welcomeView from '@/views/welcomeView.vue'
-import registerView from '@/views/registerView.vue'
+import AuthLayout from '@/components/layout/AuthLayout.vue'
+import LoginView from '@/views/LoginView.vue'
+import CadastroView from '@/views/CadastroView.vue'
 import homeView from '@/views/homeView.vue'
 import profileView from '@/views/profileView.vue'
 
 const routes = [
   {
     path: '/',
-    name: 'welcome',
-    component: welcomeView,
+    component: AuthLayout,
     meta: {
       guestOnly: true,
       hideHeader: true,
       hideFooter: true,
     },
-  },
-  {
-    path: '/registro',
-    name: 'register',
-    component: registerView,
-    meta: {
-      guestOnly: true,
-      hideHeader: true,
-      hideFooter: true,
-    },
+    children: [
+      {
+        path: '',
+        name: 'welcome',
+        component: LoginView,
+      },
+      {
+        path: 'registro',
+        alias: ['cadastro', 'register'],
+        name: 'register',
+        component: CadastroView,
+      },
+    ],
   },
   {
     path: '/home',

@@ -28,7 +28,9 @@ export const useRegisterStore = defineStore('register', () => {
       if (fieldErrors) return fieldErrors
     }
 
-    return 'Não foi possível criar sua conta. Verifique os dados e tente novamente.'
+    return typeof error?.message === 'string' && error.message.trim()
+      ? error.message
+      : 'Não foi possível criar sua conta. Verifique os dados e tente novamente.'
   }
 
   function clearError() {

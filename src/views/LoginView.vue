@@ -1,13 +1,12 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import LoginForm from '@/components/login/LoginForm.vue'
 import { useAuthStore } from '@/stores/authStore.js'
 
 const auth = useAuthStore()
 const route = useRoute()
-const router = useRouter()
 
 const loading = ref(false)
 const error = ref('')
@@ -24,12 +23,7 @@ async function handleLogin(credentials) {
 
   try {
     const success = await auth.login(credentials)
-    if (!success) {
-      error.value = auth.errorMessage
-      return
-    }
-
-    await router.push({ name: 'inicio' })
+    if (!success) error.value = auth.errorMessage
   } catch (e) {
     error.value = e.message
   } finally {

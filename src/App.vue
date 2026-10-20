@@ -14,12 +14,7 @@ const templateStore = useTemplateStore()
 
 <template>
   <div class="app-shell">
-    <template v-if="route.meta.hideHeader">
-      <main class="auth-page">
-        <RouterView />
-      </main>
-    </template>
-
+    <RouterView v-if="route.meta.hideHeader" />
     <template v-else>
       <appHeaderComponent />
 
@@ -67,14 +62,6 @@ const templateStore = useTemplateStore()
 .app-shell {
   min-height: 100vh;
   min-height: 100dvh;
-}
-
-.auth-page {
-  width: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
-  margin: 0;
-  padding: 0;
 }
 
 .app-layout {

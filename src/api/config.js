@@ -1,12 +1,10 @@
 import axios from 'axios'
 
-const url = import.meta.env.VITE_URL_BACKEND
+const configuredUrl = import.meta.env.VITE_URL_BACKEND?.trim()
+const url = configuredUrl ? `${configuredUrl.replace(/\/+$/, '')}/` : undefined
 
 const api = axios.create({
-  baseURL: url ?? 'http://127.0.0.1:8000/api/',
-  headers: {
-    'Accept-Language': 'pt-BR',
-  },
+  baseURL: url || (import.meta.env.DEV ? 'http://127.0.0.1:8000/api/' : undefined),
   headers: {
     'Accept-Language': 'pt-br',
   },
@@ -14,6 +12,14 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
+    if (!url && import.meta.env.PROD) {
+      return Promise.reject(
+        new Error(
+          'A API não está configurada. Defina VITE_URL_BACKEND nas variáveis de ambiente da Vercel.',
+        ),
+      )
+    }
+
     const token = localStorage.getItem('access_token')
 
     if (token) {

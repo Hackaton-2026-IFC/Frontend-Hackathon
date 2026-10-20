@@ -11,12 +11,12 @@ const isMobile = ref(false)
 let mediaQuery
 
 const mode = computed(() =>
-  route.name === 'cadastro' ? 'register' : 'login',
+  route.name === 'register' ? 'register' : 'login',
 )
 
 function toggle() {
   router.push({
-    name: mode.value === 'login' ? 'cadastro' : 'login',
+    name: mode.value === 'login' ? 'register' : 'welcome',
   })
 }
 

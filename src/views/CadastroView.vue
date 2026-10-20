@@ -1,12 +1,10 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import CadastroForm from '@/components/cadastro/CadastroForm.vue'
 import { useRegisterStore } from '@/stores/registerStore.js'
 
 const registerStore = useRegisterStore()
-const router = useRouter()
 
 const loading = ref(false)
 const error = computed(() => registerStore.errorMessage)
@@ -15,10 +13,7 @@ async function handleCadastro(data) {
   loading.value = true
 
   try {
-    const registered = await registerStore.register(data)
-    if (!registered || registerStore.errorMessage) return
-
-    await router.push({ name: 'inicio' })
+    await registerStore.register(data)
   } finally {
     loading.value = false
   }

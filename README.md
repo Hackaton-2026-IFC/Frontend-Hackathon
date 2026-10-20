@@ -37,6 +37,13 @@ npm run dev
 npm run build
 ```
 
+### Deploy on Vercel
+
+Set `VITE_URL_BACKEND` in the Vercel project's Environment Variables to the
+backend API base URL (for example, `https://your-backend.example.com/api/`).
+The `vercel.json` rewrite serves the Vue app for direct visits to client-side
+routes such as `/registro`.
+
 ### Lint with [ESLint](https://eslint.org/)
 
 ```sh
