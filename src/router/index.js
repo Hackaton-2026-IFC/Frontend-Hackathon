@@ -6,6 +6,7 @@ import LoginView from '@/views/LoginView.vue'
 import CadastroView from '@/views/CadastroView.vue'
 import homeView from '@/views/homeView.vue'
 import profileView from '@/views/profileView.vue'
+import NotFoundView from '@/views/NotFoundView.vue'
 
 const routes = [
   {
@@ -64,7 +65,12 @@ const routes = [
   },
   {
     path: '/:pathMatch(.*)*',
-    redirect: { name: 'home' },
+    name: 'not-found',
+    component: NotFoundView,
+    meta: {
+      hideHeader: true,
+      hideFooter: true,
+    },
   },
 ]
 
