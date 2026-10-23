@@ -5,10 +5,26 @@ import { RouterLink, useRoute } from 'vue-router'
 const route = useRoute()
 
 const navigationItems = [
-  { label: 'Início', to: '/home', symbol: 'mdi mdi-home-outline' },
-  { label: 'Projetos', to: '/projects', symbol: 'mdi mdi-list-box-outline' },
-  { label: 'Perfil', to: '/profile', symbol: 'mdi mdi-account-outline' },
-  { label: 'Configurações', to: '/settings', symbol: 'mdi mdi-cog-outline' },
+  {
+    label: 'Início',
+    to: '/home',
+    symbol: 'mdi mdi-home-outline',
+  },
+  {
+    label: 'Projetos',
+    to: '/projects',
+    symbol: 'mdi mdi-list-box-outline',
+  },
+  {
+    label: 'Perfil',
+    to: '/profile',
+    symbol: 'mdi mdi-account-outline',
+  },
+  {
+    label: 'Configurações',
+    to: '/settings',
+    symbol: 'mdi mdi-cog-outline',
+  },
 ]
 
 function isActive(item) {
@@ -25,17 +41,24 @@ function isActive(item) {
 
 <template>
   <aside class="app-sidebar">
-    <RouterLink to="/home" class="sidebar-brand">
-      <span class="brand-mark" aria-hidden="true">M</span>
 
-      <span class="brand-text">
-        <strong>Momentum</strong>
-        <small>Seu espaço de trabalho</small>
-      </span>
-    </RouterLink>
+<RouterLink to="/home" class="sidebar-brand">
+  <img
+    src="/icons/momentum-192x192.png"
+    alt="Logo Momentum"
+    class="brand-mark"
+  />
+
+  <span class="brand-text">
+    <strong>Momentum</strong>
+  </span>
+</RouterLink>
+
 
     <div class="sidebar-section">
-      <span class="section-label">MENU PRINCIPAL</span>
+      <span class="section-label">
+        MENU PRINCIPAL
+      </span>
 
       <nav
         class="sidebar-navigation"
@@ -46,10 +69,15 @@ function isActive(item) {
           :key="item.to"
           :to="item.to"
           class="navigation-link"
-          :class="{ 'navigation-link-active': isActive(item) }"
+          :class="{
+            'navigation-link-active': isActive(item)
+          }"
           :aria-current="isActive(item) ? 'page' : undefined"
         >
-          <span :class="item.symbol" aria-hidden="true"></span>
+          <span
+            :class="item.symbol"
+            aria-hidden="true"
+          ></span>
 
           <span class="navigation-label">
             {{ item.label }}
@@ -60,7 +88,10 @@ function isActive(item) {
 
     <div class="sidebar-bottom">
       <div class="sidebar-status">
-        <span class="status-dot" aria-hidden="true"></span>
+        <span
+          class="status-dot"
+          aria-hidden="true"
+        ></span>
 
         <div>
           <strong>Seu espaço de trabalho</strong>
@@ -95,6 +126,8 @@ function isActive(item) {
   color: #f8f8f6;
 }
 
+/* LOGO */
+
 .sidebar-brand {
   display: flex;
   align-items: center;
@@ -106,41 +139,47 @@ function isActive(item) {
   text-decoration: none;
 }
 
+
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 5px 32px;
+  color: inherit;
+  text-decoration: none;
+}
+
 .brand-mark {
-  display: grid;
+  display: block;
   flex-shrink: 0;
-  place-items: center;
-
-  width: 42px;
-  height: 42px;
-
-  border-radius: 13px;
-  background: #fff;
-  color: #171716;
-
-  font-size: 22px;
-  font-weight: 800;
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 12px;
 }
 
 .brand-text {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  align-items: center;
   min-width: 0;
 }
 
 .brand-text strong {
   color: #fff;
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
+  font-size: 22px;
+  font-weight: 750;
+  letter-spacing: -0.7px;
 }
+
 
 .brand-text small {
   color: #92928c;
   font-size: 10px;
   white-space: nowrap;
 }
+
+/* MENU */
 
 .sidebar-section {
   display: flex;
@@ -150,6 +189,7 @@ function isActive(item) {
 
 .section-label {
   padding: 0 12px;
+
   color: #85857e;
   font-size: 10px;
   font-weight: 700;
@@ -201,17 +241,22 @@ function isActive(item) {
   justify-content: center;
 
   width: 22px;
+
   font-size: 22px;
   line-height: 1;
 }
 
 .navigation-label {
   overflow: hidden;
+
   font-size: 13px;
   font-weight: 500;
+
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* RODAPÉ */
 
 .sidebar-bottom {
   margin-top: auto;
@@ -233,6 +278,7 @@ function isActive(item) {
 
 .status-dot {
   flex-shrink: 0;
+
   width: 8px;
   height: 8px;
   margin-top: 4px;
@@ -257,6 +303,8 @@ function isActive(item) {
   color: #96968f;
   font-size: 10px;
 }
+
+/* MOBILE */
 
 @media (max-width: 700px) {
   .app-sidebar {
@@ -292,6 +340,7 @@ function isActive(item) {
     flex-direction: row;
     justify-content: space-around;
     gap: 3px;
+
     width: 100%;
   }
 
