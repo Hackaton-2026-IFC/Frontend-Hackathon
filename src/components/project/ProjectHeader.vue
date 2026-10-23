@@ -36,7 +36,7 @@ const statuses = {
         class="board-link"
         :to="{ name: 'project-tasks', params: { projectId: project.id } }"
       >
-        Ver tarefas no Kanban ↗
+        Criar ou editar tarefas ↗
       </RouterLink>
 
       <button type="button" @click="emit('edit')">
