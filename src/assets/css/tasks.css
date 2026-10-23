@@ -121,9 +121,12 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   margin-top: 14px;
-  align-items: start;
+  align-items: stretch;
 }
 .task-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
   background: #eeefec;
   border: 1px solid #e8e9e5;
   border-radius: 12px;
@@ -158,6 +161,8 @@
   background: #3c8a64;
 }
 .task-card {
+  height: 96px;
+  flex-shrink: 0;
   background: white;
   border: 1px solid #e0e1dc;
   border-radius: 10px;
@@ -168,21 +173,26 @@
   cursor: grab;
 }
 .task-card-open {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+  text-align: left;
   background: none;
   border: 0;
-  padding: 17px;
-  text-align: left;
-  display: flex;
-  align-items: flex-start;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
   color: inherit;
+  cursor: pointer;
 }
 .task-card-open:hover {
   background: #fcfcfa;
 }
 .task-card-open strong {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
   font-size: 15px;
   font-weight: 650;
   overflow-wrap: anywhere;
@@ -237,6 +247,8 @@
 }
 .task-add {
   width: 100%;
+  margin-top: auto;
+  flex-shrink: 0;
   padding: 11px;
   background: transparent;
   color: #777;
@@ -245,6 +257,10 @@
   font-size: 12px;
 }
 .task-empty-column {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
   padding: 24px 8px;
   text-align: center;
   color: #888;
