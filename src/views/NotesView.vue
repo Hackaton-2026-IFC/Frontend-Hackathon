@@ -35,6 +35,9 @@ function resetForm() {
 }
 
 function apiError(err, fallback) {
+  if (err?.response?.status === 404) {
+    return 'A API de notas não foi encontrada no backend configurado. Atualize o backend para a DEV (FEAT-55), aplique as migrações e confirme a variável VITE_URL_BACKEND do frontend.'
+  }
   const data = err?.response?.data
   if (typeof data?.detail === 'string') return data.detail
   if (data && typeof data === 'object') {
@@ -268,7 +271,7 @@ onMounted(load)
       </article>
     </section>
 
-    <div v-else class="state">
+    <div v-else-if="!error" class="state">
       <strong>Nenhuma nota por aqui.</strong>
       <span>Capture a próxima ideia antes que ela fuja.</span>
     </div>
