@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useTaskStore } from '@/stores/taskStore'
 import { taskIsOverdue } from '@/utils/taskPresentation'
@@ -10,9 +10,8 @@ import '@/assets/css/tasks.css'
 const store = useTaskStore()
 const route = useRoute()
 const selectedId = ref('')
-const formVersion = ref(0)
+const formOpen = ref(false)
 const notice = ref('')
-const editor = ref(null)
 
 const routeProject = computed(() =>
   route.params.projectId ? Number(route.params.projectId) : null,
@@ -52,33 +51,31 @@ const selectedTask = computed(() =>
 onMounted(() => store.load())
 
 watch(routeProject, () => {
-  selectedId.value = ''
+  closeForm()
   notice.value = ''
-  formVersion.value += 1
 })
 
-function reset() {
+function closeForm() {
+  formOpen.value = false
+  selectedId.value = ''
+}
+
+function createTask() {
   selectedId.value = ''
   notice.value = ''
-  formVersion.value += 1
+  formOpen.value = true
 }
 
-async function selectForEdit(id) {
+function editTask(id) {
+  if (!availableTasks.value.some((task) => String(task.id) === String(id))) return
   selectedId.value = String(id)
   notice.value = ''
-  await nextTick()
-  editor.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  formOpen.value = true
 }
 
-function saved(task) {
+function savedTask() {
   notice.value = selectedId.value ? 'Tarefa atualizada com sucesso.' : 'Tarefa criada com sucesso.'
-
-  if (!selectedId.value) {
-    formVersion.value += 1
-  } else if (task) {
-    selectedId.value = String(task.id)
-    formVersion.value += 1
-  }
+  closeForm()
 }
 </script>
 
@@ -94,11 +91,22 @@ function saved(task) {
       </RouterLink>
 
       <header class="tasks-page-heading">
-        <p class="task-eyebrow">MOMENTUM / ORGANIZAÇÃO</p>
-        <h1>{{ routeProject ? 'Tarefas do projeto' : 'Todas as tarefas' }}</h1>
-        <p>Veja os prazos, identifique atrasos e acompanhe o que já foi concluído.</p>
+        <div>
+          <p class="task-eyebrow">MOMENTUM / ORGANIZAÇÃO</p>
+          <h1>{{ routeProject ? 'Tarefas do projeto' : 'Todas as tarefas' }}</h1>
+          <p>Veja os prazos, identifique atrasos e acompanhe o que já foi concluído.</p>
+        </div>
+        <button
+          type="button"
+          class="task-button task-primary task-create-button"
+          :disabled="store.loading || store.busy || !projects.length"
+          @click="createTask"
+        >
+          + Nova tarefa
+        </button>
       </header>
 
+      <p v-if="notice" class="task-notice" role="status">{{ notice }}</p>
       <p v-if="store.loading" class="task-state" role="status">Carregando tarefas...</p>
 
       <template v-else>
@@ -130,7 +138,7 @@ function saved(task) {
                 :task="task"
                 :projects="store.projects"
                 :busy="store.busy"
-                @edit="selectForEdit"
+                @edit="editTask"
               />
             </div>
             <p v-else class="task-list-empty">Nenhuma tarefa atrasada.</p>
@@ -151,41 +159,22 @@ function saved(task) {
                 :task="task"
                 :projects="store.projects"
                 :busy="store.busy"
-                @edit="selectForEdit"
+                @edit="editTask"
               />
             </div>
             <p v-else class="task-list-empty">Nenhuma outra tarefa neste projeto.</p>
           </section>
-
-          <div ref="editor" class="task-editor-area">
-            <div class="task-mode">
-              <label for="task-to-edit">Criar ou editar</label>
-              <select
-                id="task-to-edit"
-                v-model="selectedId"
-                :disabled="store.busy"
-                @change="notice = ''"
-              >
-                <option value="">Criar nova tarefa</option>
-                <option v-for="task in availableTasks" :key="task.id" :value="String(task.id)">
-                  Editar — {{ task.titulo }}
-                </option>
-              </select>
-            </div>
-
-            <p v-if="notice" class="task-notice" role="status">{{ notice }}</p>
-
-            <TaskForm
-              :key="`${routeProject || 'all'}-${selectedId}-${formVersion}`"
-              :task="selectedTask"
-              :projects="projects"
-              :project-id="routeProject"
-              @cancel="reset"
-              @saved="saved"
-            />
-          </div>
         </template>
       </template>
+
+      <TaskForm
+        v-if="formOpen && projects.length"
+        :task="selectedTask"
+        :projects="projects"
+        :project-id="routeProject"
+        @close="closeForm"
+        @saved="savedTask"
+      />
     </div>
   </section>
 </template>

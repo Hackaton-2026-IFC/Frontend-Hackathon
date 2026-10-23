@@ -1,7 +1,33 @@
-import { isOverdue, formatDeadline } from '@/api/taskApi'
+import { formatDeadline, isOverdue } from '@/api/taskApi'
+
+/**
+ * Automatic deadline-based priority, matching the backend urgency thresholds.
+ * This is presentation-only: it does not overwrite the task's manually stored
+ * priority, and completed tasks have no active urgency.
+ */
+export function automaticPriority(task, today = new Date()) {
+  if (task.status === 'concluido' || task.concluida === true) return null
+
+  const deadline = task.prazo_antecipado || task.prazo_efetivo || task.data_limite
+  if (!deadline) return 'neutra'
+
+  const match = String(deadline).match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (!match) return 'neutra'
+
+  const deadlineDay = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+  const currentDay = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())
+  const days = Math.round((deadlineDay - currentDay) / 86400000)
+
+  if (days <= 0) return 'muito_alta'
+  if (days <= 2) return 'alta'
+  if (days <= 7) return 'neutra'
+  if (days <= 14) return 'baixa'
+  return 'muito_baixa'
+}
 
 export function taskIsOverdue(task) {
-  // A API pode considerar o prazo antecipado; use a regra do servidor quando disponível.
+  // Use the backend's computed flag if available; its effective date may
+  // differ from the official deadline when an early deadline is configured.
   return typeof task.atrasada === 'boolean' ? task.atrasada : isOverdue(task)
 }
 

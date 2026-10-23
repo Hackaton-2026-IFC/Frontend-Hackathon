@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { TASK_PRIORITIES, TASK_STATUSES } from '@/api/taskApi'
 import {
+  automaticPriority,
   responsibleForTask,
   taskCompletionDate,
   taskDueDate,
@@ -18,7 +19,8 @@ const emit = defineEmits(['edit'])
 const overdue = computed(() => taskIsOverdue(props.task))
 const responsible = computed(() => responsibleForTask(props.task, props.projects))
 const completion = computed(() => taskCompletionDate(props.task))
-const priority = computed(() => TASK_PRIORITIES[props.task.prioridade] || 'Não definida')
+const priorityCode = computed(() => automaticPriority(props.task))
+const priorityLabel = computed(() => TASK_PRIORITIES[priorityCode.value] || 'Sem urgência')
 const status = computed(() => TASK_STATUSES[props.task.status] || 'A fazer')
 </script>
 
@@ -26,9 +28,14 @@ const status = computed(() => TASK_STATUSES[props.task.status] || 'A fazer')
   <article class="task-overview-card" :class="{ 'task-overview-card--overdue': overdue }">
     <div class="task-overview-card__top">
       <h3>{{ task.titulo }}</h3>
-      <span class="task-priority" :title="`Prioridade: ${priority}`">
-        <span class="task-priority__dot" :class="`task-priority__dot--${task.prioridade}`" aria-hidden="true"></span>
-        {{ priority }}
+      <span class="task-priority" :title="`Prioridade automática: ${priorityLabel}`">
+        <span
+          v-if="priorityCode"
+          class="task-priority__dot"
+          :class="`task-priority__dot--${priorityCode}`"
+          aria-hidden="true"
+        ></span>
+        {{ priorityLabel }}
       </span>
     </div>
 
