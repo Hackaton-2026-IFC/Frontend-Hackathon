@@ -43,7 +43,8 @@ const members = computed(() =>
 
 <style scoped>
 .members {
-  padding: 24px;
+  min-width: 0;
+  padding: 18px;
   border: 1px solid #000;
   border-radius: 18px;
   background: #fff;
@@ -59,6 +60,8 @@ header {
 
 h2 {
   margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-size: 18px;
   font-weight: 700;
 }
@@ -78,6 +81,7 @@ ul {
 li {
   display: flex;
   align-items: center;
+  min-width: 0;
   gap: 12px;
 }
 
@@ -110,4 +114,5 @@ p {
 .empty {
   margin-top: 20px;
 }
+@media (min-width: 768px) { .members { padding: 24px; } }
 </style>

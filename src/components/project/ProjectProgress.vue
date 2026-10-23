@@ -40,11 +40,11 @@ const porcentagem = computed(() => totalTarefas.value > 0
 </template>
 
 <style scoped>
-.progress { min-width: 0; border: 1px solid #000; border-radius: 18px; background: #fff; color: #000; }
-.progress__header { padding: 24px; border-bottom: 1px solid #000; }
+.progress { min-width: 0; overflow-wrap: anywhere; border: 1px solid #000; border-radius: 18px; background: #fff; color: #000; }
+.progress__header { padding: 18px; border-bottom: 1px solid #000; }
 h2 { margin: 0; font-size: 18px; font-weight: 700; }
 .progress__header p { margin: 6px 0 0; font-size: 13px; line-height: 1.6; }
-.progress__body { padding: 24px; }
+.progress__body { padding: 18px; }
 .progress__summary { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
 .progress__summary strong { font-size: 44px; line-height: 1; letter-spacing: -2px; }
 .progress__summary strong span { margin-left: 3px; font-size: 22px; }
@@ -54,6 +54,6 @@ progress::-webkit-progress-bar { background: #fff; }
 progress::-webkit-progress-value { background: #000; }
 progress::-moz-progress-bar { background: #000; }
 .progress__body > p, .progress__empty { margin: 16px 0 0; font-size: 13px; line-height: 1.6; }
-.progress__empty { margin: 0; padding: 28px 24px; }
-@media (max-width: 600px) { .progress__header, .progress__body { padding: 18px; } }
+.progress__empty { margin: 0; padding: 20px 18px; }
+@media (min-width: 768px) { .progress__header, .progress__body { padding: 24px; } .progress__empty { padding: 28px 24px; } }
 </style>

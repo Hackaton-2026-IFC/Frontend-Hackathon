@@ -168,8 +168,8 @@ function salvar() {
 .project-modal {
   position: fixed;
   inset: 0;
-  width: min(560px, calc(100% - 32px));
-  max-height: calc(100dvh - 32px);
+  width: min(560px, calc(100% - 24px));
+  max-height: calc(100dvh - 24px);
   margin: auto;
   padding: 0;
   overflow-y: auto;
@@ -190,7 +190,7 @@ function salvar() {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 24px;
+  padding: 18px;
   border-bottom: 1px solid #000;
 }
 
@@ -218,7 +218,7 @@ h2 {
 }
 
 form {
-  padding: 24px;
+  padding: 18px;
 }
 
 fieldset {
@@ -259,11 +259,10 @@ textarea {
 }
 
 .modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
-  margin-top: 28px;
+  margin-top: 24px;
 }
 
 .button {
@@ -304,14 +303,20 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 480px) {
-  .modal-header,
-  form {
-    padding: 20px;
+@media (min-width: 640px) {
+  .project-modal {
+    width: min(560px, calc(100% - 32px));
+    max-height: calc(100dvh - 32px);
   }
 
-  .modal-actions .button {
-    width: 100%;
+  .modal-header,
+  form { padding: 24px; }
+
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    margin-top: 28px;
   }
 }
 </style>

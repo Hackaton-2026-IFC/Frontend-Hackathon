@@ -508,52 +508,6 @@
   outline: 2px solid #477698;
   outline-offset: 3px;
 }
-@media (max-width: 1100px) {
-  .task-board {
-    grid-template-columns: 1fr;
-  }
-  .task-column {
-    min-width: 0;
-  }
-  .task-progress {
-    flex-wrap: wrap;
-  }
-  .task-progress progress {
-    flex-basis: 50%;
-  }
-}
-@media (max-width: 600px) {
-  .tasks-heading {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-  .tasks-heading h1 {
-    font-size: 28px;
-  }
-  .task-toolbar label {
-    flex: 1 1 130px;
-  }
-  .task-toolbar select {
-    max-width: 100%;
-  }
-  .task-fields-grid,
-  .task-form-edit-grid {
-    grid-template-columns: 1fr;
-  }
-  .task-dialog-header,
-  .task-dialog > .task-form,
-  .task-details-body {
-    padding: 18px;
-  }
-  .task-progress {
-    gap: 12px;
-  }
-  .task-actions .task-button {
-    flex: 1;
-  }
-}
-
-
 /* Identidade visual FEAT-8: bordas pretas, fundo branco e botões em pílula. */
 .tasks-page {
   padding: clamp(20px, 4vw, 44px);
@@ -641,10 +595,185 @@
   outline: 2px solid #000;
   outline-offset: 4px;
 }
-@media (max-width: 650px) {
-  .tasks-page { padding: 24px 16px; }
-  .tasks-heading > .task-button { width: 100%; }
+
+
+/* FEAT-17: layout mobile first.
+   As regras básicas atendem celulares; acima disso o espaço é expandido progressivamente. */
+.tasks-page {
+  width: 100%;
+  min-width: 0;
+  padding: 20px 16px;
 }
+
+.tasks-heading {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 18px;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+}
+
+.tasks-heading > div { min-width: 0; }
+.tasks-heading h1 {
+  margin: 10px 0;
+  font-size: clamp(28px, 7vw, 38px);
+  overflow-wrap: anywhere;
+}
+.tasks-heading > .task-button { width: 100%; }
+
+.task-progress {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+}
+.task-progress > strong,
+.task-progress > span { min-width: 0; overflow-wrap: anywhere; }
+.task-progress progress { width: 100%; min-width: 0; }
+
+.task-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 12px;
+  min-width: 0;
+  margin-bottom: 20px;
+}
+.task-toolbar label {
+  min-width: 0;
+  width: 100%;
+}
+.task-toolbar input,
+.task-toolbar select {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  min-height: 44px;
+  font-size: 16px;
+}
+.task-toolbar > .task-button { width: 100%; }
+.task-search { min-width: 0; }
+
+.task-board {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+.task-column {
+  min-width: 0;
+  min-height: 220px;
+  padding: 14px;
+}
+.task-column > header { min-width: 0; }
+.task-card { width: 100%; }
+.task-card-open { min-width: 0; }
+.task-card-extra { min-width: 0; }
+.task-empty-column { min-height: 64px; }
+
+.task-dialog {
+  box-sizing: border-box;
+  width: min(600px, calc(100% - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+}
+.task-dialog-header {
+  padding: 18px;
+  align-items: flex-start;
+  gap: 12px;
+}
+.task-dialog-header h2 {
+  font-size: 19px;
+  overflow-wrap: anywhere;
+}
+.task-dialog-header > div { min-width: 0; }
+.task-dialog-header > button { flex-shrink: 0; }
+.task-dialog > .task-form,
+.task-details-body { padding: 18px; }
+.task-fields-grid,
+.task-form-edit-grid { grid-template-columns: minmax(0, 1fr); }
+.task-fields-grid > *,
+.task-form-edit-grid > * { min-width: 0; }
+.task-form-edit-grid .task-form-assignee { grid-column: auto; }
+.task-form-edit-options { padding: 14px; }
+.task-dialog input:not([type="checkbox"]),
+.task-dialog select,
+.task-dialog textarea {
+  width: 100%;
+  min-width: 0;
+  font-size: 16px;
+}
+.task-inline-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.task-inline-form input { width: 100%; }
+.task-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.task-actions > .task-button { width: 100%; }
+
+@media (min-width: 480px) {
+  .task-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .task-search { grid-column: 1 / -1; }
+}
+
+@media (min-width: 640px) {
+  .task-fields-grid,
+  .task-form-edit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .task-form-edit-grid .task-form-assignee { grid-column: 1 / -1; }
+  .task-inline-form { display: flex; }
+  .task-inline-form input { flex: 1; width: 0; }
+  .task-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+  .task-actions > .task-button { width: auto; }
+}
+
+@media (min-width: 768px) {
+  .tasks-page { padding: 28px; }
+  .tasks-heading {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 28px;
+    padding-bottom: 28px;
+  }
+  .tasks-heading > .task-button {
+    width: auto;
+    flex-shrink: 0;
+  }
+  .task-toolbar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .task-search { grid-column: 1 / -1; }
+  .task-dialog-header,
+  .task-dialog > .task-form,
+  .task-details-body { padding: 24px; }
+}
+
+@media (min-width: 1000px) {
+  .task-progress {
+    grid-template-columns: auto minmax(90px, 1fr) auto;
+    align-items: center;
+    gap: 18px;
+    padding: 20px;
+  }
+  .task-board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .task-toolbar { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .task-search { grid-column: span 2; }
+  .task-column { min-height: 360px; padding: 16px; }
+}
+
+@media (min-width: 1280px) {
+  .tasks-page { padding: clamp(28px, 3vw, 44px); }
+  .task-board { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+  .task-toolbar { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .task-search { grid-column: span 2; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .task-card { transition: none; }
 }

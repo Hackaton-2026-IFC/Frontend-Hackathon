@@ -35,16 +35,16 @@ function confirmar() {
 </template>
 
 <style scoped>
-.delete-dialog { position: fixed; inset: 0; width: min(460px, calc(100% - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 32px; overflow-y: auto; box-sizing: border-box; border: 1px solid #000; border-radius: 20px; background: #fff; color: #000; box-shadow: 0 24px 80px rgb(0 0 0 / 24%); }
+.delete-dialog { position: fixed; inset: 0; width: min(460px, calc(100% - 24px)); max-height: calc(100dvh - 24px); margin: auto; padding: 20px; overflow-y: auto; box-sizing: border-box; border: 1px solid #000; border-radius: 20px; background: #fff; color: #000; box-shadow: 0 24px 80px rgb(0 0 0 / 24%); }
 .delete-dialog::backdrop { background: rgb(0 0 0 / 65%); }
 .delete-dialog__icon { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 24px; border: 1px solid #000; border-radius: 50%; background: #000; color: #fff; font-size: 26px; font-weight: 600; }
 h2 { margin: 0 0 14px; font-size: 26px; font-weight: 700; letter-spacing: -0.8px; }
 p { margin: 10px 0; font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
-footer { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 28px; }
+footer { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin-top: 24px; }
 .button { min-height: 44px; padding: 10px 18px; border: 1px solid #000; border-radius: 999px; background: #fff; color: #000; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 .button--primary { background: #000; color: #fff; }
 .button:focus-visible { outline: 2px solid #000; outline-offset: 3px; }
 .button:disabled { opacity: 0.55; cursor: wait; }
 .delete-dialog__error { padding: 12px; border: 1px solid #000; border-radius: 8px; }
-@media (max-width: 480px) { .delete-dialog { padding: 24px; } .button { flex: 1 1 100%; } }
+@media (min-width: 640px) { .delete-dialog { width: min(460px, calc(100% - 32px)); max-height: calc(100dvh - 32px); padding: 32px; } footer { display: flex; justify-content: flex-end; flex-wrap: wrap; margin-top: 28px; } }
 </style>
