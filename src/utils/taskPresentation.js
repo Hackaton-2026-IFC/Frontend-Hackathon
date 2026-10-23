@@ -58,3 +58,27 @@ export function taskCompletionDate(task) {
 export function taskDueDate(task) {
   return formatDeadline(task.prazo_efetivo || task.data_limite)
 }
+
+export function assigneeDisplayName(member) {
+  return member?.usuario_detalhes?.name?.trim() ||
+    member?.usuario_detalhes?.username ||
+    'Participante'
+}
+
+export function assigneePhotoUrl(member) {
+  const url = member?.usuario_detalhes?.profile_image?.url
+  return typeof url === 'string' && /^https?:\/\//i.test(url) ? url : null
+}
+
+export function assigneeMembers(task, projects, additionalAssigneesByTask = {}) {
+  if (!task) return []
+  const project = projects.find((item) => String(item.id) === String(task.projeto))
+  const members = project?.participantes || []
+  const idList = [
+    task.responsavel,
+    ...(additionalAssigneesByTask[String(task.id)] || []),
+  ]
+  return [...new Set(idList.filter((id) => id != null && id !== '').map(String))]
+    .map((id) => members.find((member) => String(member.usuario) === id))
+    .filter(Boolean)
+}

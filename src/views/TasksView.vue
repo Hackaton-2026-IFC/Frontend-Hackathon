@@ -73,8 +73,11 @@ function editTask(id) {
   formOpen.value = true
 }
 
-function savedTask() {
-  notice.value = selectedId.value ? 'Tarefa atualizada com sucesso.' : 'Tarefa criada com sucesso.'
+function savedTask({ additionalStored, additionalCount }) {
+  const result = selectedId.value ? 'Tarefa atualizada com sucesso.' : 'Tarefa criada com sucesso.'
+  notice.value = additionalCount && !additionalStored
+    ? `${result} Os responsáveis adicionais não puderam ser salvos neste navegador.`
+    : result
   closeForm()
 }
 </script>
@@ -137,6 +140,7 @@ function savedTask() {
                 :key="task.id"
                 :task="task"
                 :projects="store.projects"
+                :additional-assignees-by-task="store.additionalAssigneesByTask"
                 :busy="store.busy"
                 @edit="editTask"
               />
@@ -158,6 +162,7 @@ function savedTask() {
                 :key="task.id"
                 :task="task"
                 :projects="store.projects"
+                :additional-assignees-by-task="store.additionalAssigneesByTask"
                 :busy="store.busy"
                 @edit="editTask"
               />

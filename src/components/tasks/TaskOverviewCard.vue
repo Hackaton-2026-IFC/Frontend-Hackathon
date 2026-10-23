@@ -1,9 +1,10 @@
 <script setup>
 import { computed } from 'vue'
 import { TASK_PRIORITIES, TASK_STATUSES } from '@/api/taskApi'
+import TaskAssigneeAvatar from '@/components/tasks/TaskAssigneeAvatar.vue'
 import {
   automaticPriority,
-  responsibleForTask,
+  assigneeMembers,
   taskCompletionDate,
   taskDueDate,
   taskIsOverdue,
@@ -13,11 +14,14 @@ const props = defineProps({
   task: { type: Object, required: true },
   projects: { type: Array, required: true },
   busy: { type: Boolean, default: false },
+  additionalAssigneesByTask: { type: Object, default: () => ({}) },
 })
 
 const emit = defineEmits(['edit'])
 const overdue = computed(() => taskIsOverdue(props.task))
-const responsible = computed(() => responsibleForTask(props.task, props.projects))
+const responsibleMembers = computed(() =>
+  assigneeMembers(props.task, props.projects, props.additionalAssigneesByTask),
+)
 const completion = computed(() => taskCompletionDate(props.task))
 const priorityCode = computed(() => automaticPriority(props.task))
 const priorityLabel = computed(() => TASK_PRIORITIES[priorityCode.value] || 'Sem urgência')
@@ -40,7 +44,18 @@ const status = computed(() => TASK_STATUSES[props.task.status] || 'A fazer')
     </div>
 
     <div class="task-overview-card__meta">
-      <p><span>Responsável</span><strong>{{ responsible }}</strong></p>
+      <div class="task-overview-assignees">
+        <span>Responsáveis</span>
+        <div v-if="responsibleMembers.length" class="task-avatar-stack" aria-label="Responsáveis pela tarefa">
+          <TaskAssigneeAvatar
+            v-for="member in responsibleMembers"
+            :key="member.usuario"
+            :member="member"
+            compact
+          />
+        </div>
+        <strong v-else>Sem responsável</strong>
+      </div>
       <p v-if="completion !== null">
         <span>Conclusão</span>
         <strong>{{ completion }}</strong>

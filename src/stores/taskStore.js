@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useAuthStore } from '@/stores/authStore'
 import taskApi, { taskError } from '@/api/taskApi'
 
 export const useTaskStore = defineStore('tasks', () => {
+  const authStore = useAuthStore()
   const tasks = ref([])
   const projects = ref([])
   const loading = ref(false)
@@ -11,6 +13,54 @@ export const useTaskStore = defineStore('tasks', () => {
   const resourcesByTask = ref({})
   const resourcesLoading = ref({})
   const resourceErrors = ref({})
+
+  // The backend supports only one official assignee per task. Extra selections
+  // are local to this browser and scoped by authenticated user ID.
+  const additionalAssigneesByTask = ref({})
+  const localAssigneesStorageKey = computed(() => {
+    const userId = authStore.user?.id ?? authStore.user?.user_id
+    return userId == null ? null : `momentum:task-extra-assignees:v1:${userId}`
+  })
+
+  function hydrateAdditionalAssignees() {
+    additionalAssigneesByTask.value = {}
+    if (!localAssigneesStorageKey.value || typeof localStorage === 'undefined') return
+
+    try {
+      const value = JSON.parse(localStorage.getItem(localAssigneesStorageKey.value) || '{}')
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return
+      additionalAssigneesByTask.value = Object.fromEntries(
+        Object.entries(value)
+          .filter(([, ids]) => Array.isArray(ids))
+          .map(([taskId, ids]) => [taskId, [...new Set(ids.map(String).filter(Boolean))]]),
+      )
+    } catch {
+      // Storage might be disabled or contain invalid older data.
+      additionalAssigneesByTask.value = {}
+    }
+  }
+
+  watch(localAssigneesStorageKey, hydrateAdditionalAssignees, { immediate: true })
+
+  function persistAdditionalAssignees() {
+    if (!localAssigneesStorageKey.value || typeof localStorage === 'undefined') return false
+    try {
+      localStorage.setItem(localAssigneesStorageKey.value, JSON.stringify(additionalAssigneesByTask.value))
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  function setAdditionalAssignees(taskId, userIds) {
+    const ids = [...new Set(userIds.map(String).filter(Boolean))]
+    const key = String(taskId)
+    const next = { ...additionalAssigneesByTask.value }
+    if (ids.length) next[key] = ids
+    else delete next[key]
+    additionalAssigneesByTask.value = next
+    return persistAdditionalAssignees()
+  }
 
   function replace(task) {
     const index = tasks.value.findIndex((item) => item.id === task.id)
@@ -62,6 +112,12 @@ export const useTaskStore = defineStore('tasks', () => {
       delete resourcesByTask.value[id]
       delete resourcesLoading.value[id]
       delete resourceErrors.value[id]
+      if (additionalAssigneesByTask.value[String(id)]) {
+        const next = { ...additionalAssigneesByTask.value }
+        delete next[String(id)]
+        additionalAssigneesByTask.value = next
+        persistAdditionalAssignees()
+      }
     })
   async function checklist(taskId, item, title) {
     return mutate(async () => {
@@ -114,6 +170,8 @@ export const useTaskStore = defineStore('tasks', () => {
     resourcesByTask,
     resourcesLoading,
     resourceErrors,
+    additionalAssigneesByTask,
+    setAdditionalAssignees,
     load,
     create,
     update,

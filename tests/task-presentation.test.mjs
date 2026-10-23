@@ -10,6 +10,9 @@ try {
     automaticPriority,
     taskIsOverdue,
     responsibleForTask,
+    assigneeMembers,
+    assigneeDisplayName,
+    assigneePhotoUrl,
     taskCompletionDate,
     taskDueDate,
   } = await server.ssrLoadModule('/src/utils/taskPresentation.js')
@@ -54,6 +57,23 @@ try {
     assert.equal(responsibleForTask({ projeto: 8, responsavel: 5 }, projects), 'Vitória')
     assert.equal(responsibleForTask({ projeto: 8, responsavel: null }, projects), 'Sem responsável')
     assert.equal(responsibleForTask({ projeto: 8, responsavel: 42 }, projects), 'Responsável não identificado')
+  })
+
+  await test('resolve vários responsáveis e fotos a partir dos membros do projeto', () => {
+    const members = [
+      { usuario: 5, usuario_detalhes: { name: 'Vitória', profile_image: { url: 'https://example.org/vitoria.png' } } },
+      { usuario: 6, usuario_detalhes: { name: 'Lucas', profile_image: null } },
+    ]
+    const projects = [{ id: 8, participantes: members }]
+    const task = { id: 20, projeto: 8, responsavel: 5 }
+    const selected = assigneeMembers(task, projects, { '20': ['6', '5', '6'] })
+    assert.deepEqual(selected.map((member) => member.usuario), [5, 6])
+    assert.equal(assigneeDisplayName(selected[0]), 'Vitória')
+    assert.equal(assigneePhotoUrl(selected[0]), 'https://example.org/vitoria.png')
+    assert.equal(assigneePhotoUrl(selected[1]), null)
+    assert.deepEqual(assigneeMembers(task, projects, {} ).map((member) => member.usuario), [5])
+    assert.deepEqual(assigneeMembers({ id: 99, projeto: 8, responsavel: null }, projects, {}), [])
+    assert.equal(assigneePhotoUrl({ usuario_detalhes: { profile_image: { url: 'javascript:alert(1)' } } }), null)
   })
 
   await test('mostra a data real de conclusão sem inventar histórico', () => {

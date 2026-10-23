@@ -28,3 +28,12 @@ O cálculo considera o prazo antecipado quando presente. A prioridade visual é 
 ## Conclusão
 
 A data `data_conclusao` precisa vir da API do backend com a migração aplicada; não é estimada pelo frontend. Tarefas antigas sem essa data exibem **Data não registrada**.
+
+
+## Fotos e múltiplos responsáveis (somente frontend)
+
+- Os cards mostram as **fotos dos responsáveis** obtidas de `projetos[].participantes[].usuario_detalhes.profile_image.url`. Sem foto ou em caso de erro na imagem, aparece uma inicial.
+- O formulário usa checkboxes com foto e nome para permitir várias escolhas.
+- **Limitação da API existente:** `tarefas[].responsavel` aceita apenas um usuário. O primeiro selecionado (ou o responsável oficial atual, se continuar selecionado) é enviado à API normalmente.
+- Os responsáveis adicionais são apenas uma preferência visual **local**, armazenada no `localStorage` deste navegador e isolada por ID de usuário. Eles **não** são compartilhados entre dispositivos ou membros da equipe nem recebem atribuições/notificações oficiais do backend.
+- Caso o armazenamento local esteja bloqueado, a interface informa que as pessoas adicionais não puderam ser persistidas. Não há alterações no repositório backend.

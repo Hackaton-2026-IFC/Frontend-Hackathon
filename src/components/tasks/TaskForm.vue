@@ -3,6 +3,8 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { TASK_PRIORITIES, TASK_STATUSES, taskError } from '@/api/taskApi'
 import { automaticPriority } from '@/utils/taskPresentation'
 import { useTaskStore } from '@/stores/taskStore'
+import TaskAssigneeAvatar from '@/components/tasks/TaskAssigneeAvatar.vue'
+import { assigneeDisplayName } from '@/utils/taskPresentation'
 
 const props = defineProps({
   task: { type: Object, default: null },
@@ -20,9 +22,15 @@ const form = reactive({
   titulo: props.task?.titulo ?? '',
   descricao: props.task?.descricao ?? '',
   status: props.task?.status ?? 'planejado',
-  responsavel: props.task?.responsavel == null ? '' : String(props.task.responsavel),
   data_limite: props.task?.data_limite ?? '',
 })
+
+const selectedAssigneeIds = ref([
+  ...new Set([
+    props.task?.responsavel,
+    ...(store.additionalAssigneesByTask[String(props.task?.id)] || []),
+  ].filter((id) => id != null && id !== '').map(String)),
+])
 
 const members = computed(() =>
   props.projects.find((project) => String(project.id) === String(form.projeto))?.participantes || [],
@@ -44,7 +52,7 @@ function close() {
 }
 
 function changeProject() {
-  form.responsavel = ''
+  selectedAssigneeIds.value = []
 }
 
 async function save() {
@@ -53,12 +61,19 @@ async function save() {
   error.value = ''
 
   try {
+    const allowedIds = new Set(members.value.map((member) => String(member.usuario)))
+    const selectedIds = [...new Set(selectedAssigneeIds.value.filter((id) => allowedIds.has(id)))]
+    const currentPrimary = props.task?.responsavel == null ? null : String(props.task.responsavel)
+    const primaryId = currentPrimary && selectedIds.includes(currentPrimary)
+      ? currentPrimary
+      : selectedIds[0] || null
+
     const payload = {
       projeto: Number(form.projeto),
       titulo: form.titulo.trim(),
       descricao: form.descricao.trim(),
       status: form.status,
-      responsavel: form.responsavel === '' ? null : Number(form.responsavel),
+      responsavel: primaryId == null ? null : Number(primaryId),
       data_limite: form.data_limite || null,
     }
 
@@ -68,7 +83,9 @@ async function save() {
       ? await store.update(props.task.id, payload)
       : await store.create(payload)
 
-    emit('saved', savedTask)
+    const additionalIds = selectedIds.filter((id) => id !== primaryId)
+    const additionalStored = store.setAdditionalAssignees(savedTask.id, additionalIds)
+    emit('saved', { task: savedTask, additionalStored, additionalCount: additionalIds.length })
   } catch (err) {
     error.value = taskError(err)
   }
@@ -129,19 +146,30 @@ async function save() {
         <section class="task-form-edit-options" aria-labelledby="task-options-title">
           <h3 id="task-options-title">Responsável, prioridade e prazo</h3>
           <div class="task-form-edit-grid">
-            <label class="task-form-assignee">
-              Responsável
-              <select v-model="form.responsavel">
-                <option value="">Sem responsável</option>
-                <option
+            <div class="task-form-assignee">
+              <span class="task-assignee-title">Responsáveis</span>
+              <div v-if="members.length" class="task-assignee-choices" role="group" aria-label="Selecionar responsáveis">
+                <label
                   v-for="member in members"
                   :key="member.usuario"
-                  :value="String(member.usuario)"
+                  class="task-assignee-option"
+                  :class="{ 'task-assignee-option--selected': selectedAssigneeIds.includes(String(member.usuario)) }"
                 >
-                  {{ member.usuario_detalhes?.name || member.usuario_detalhes?.username || 'Participante' }}
-                </option>
-              </select>
-            </label>
+                  <input
+                    v-model="selectedAssigneeIds"
+                    type="checkbox"
+                    :value="String(member.usuario)"
+                  />
+                  <TaskAssigneeAvatar :member="member" compact />
+                  <span class="task-assignee-option__name">{{ assigneeDisplayName(member) }}</span>
+                </label>
+              </div>
+              <p v-else class="task-form-priority-help">Nenhum participante disponível neste projeto.</p>
+              <p class="task-assignee-help">
+                Você pode selecionar várias pessoas. A primeira fica como responsável oficial na API;
+                as adicionais são salvas somente neste navegador e não aparecem para outros integrantes.
+              </p>
+            </div>
 
             <label>
               Prazo
