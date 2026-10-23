@@ -270,7 +270,7 @@ onMounted(load)
 
     <div v-else class="state">
       <strong>Nenhuma nota por aqui.</strong>
-      <span>Joga a próxima ideia ali em cima antes que ela fuja, gênio.</span>
+      <span>Capture a próxima ideia antes que ela fuja.</span>
     </div>
   </main>
 </template>
