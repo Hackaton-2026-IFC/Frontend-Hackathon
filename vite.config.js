@@ -15,7 +15,7 @@ export default defineConfig({
         name: 'Hackathon 2026',
         short_name: 'Hackathon',
         description: 'Aplicativo feito no hackathon 2026 no IFC Araquari',
-        theme_color: '#00000',
+        theme_color: '#000000',
         background_color: '#ffffff',
         display: 'standalone',
         scope: '/',
