@@ -1,7 +1,9 @@
 import axios from 'axios'
 
-const BACKEND_URL =
+const BACKEND_URL = (
+  import.meta.env.VITE_URL_BACKEND?.trim() ||
   'https://hackathon-3info3-2026.class.fabricadesoftware.ifc.edu.br/api/'
+).replace(/\/+$/, '') + '/'
 
 const api = axios.create({
   baseURL: BACKEND_URL,

@@ -138,9 +138,25 @@ export const useProjectStore = defineStore('projects', () => {
 
     try {
       return await executar(async () => {
-        const { data } = await projectApi.listar()
+        const encontrados = []
+        let pagina = 1
 
-        projects.value = data.map(adaptarProjeto)
+        // O backend pode responder com array simples ou lista paginada.
+        while (true) {
+          const { data } = await projectApi.listar({ page: pagina })
+
+          if (Array.isArray(data)) {
+            encontrados.push(...data)
+            break
+          }
+
+          encontrados.push(...(Array.isArray(data?.results) ? data.results : []))
+
+          if (data?.total_pages != null ? pagina >= data.total_pages : !data?.next) break
+          pagina += 1
+        }
+
+        projects.value = encontrados.map(adaptarProjeto)
 
         return projects.value
       })

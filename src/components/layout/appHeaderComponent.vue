@@ -9,6 +9,7 @@ const pageTitle = computed(() => {
     '/': 'Início',
     '/home': 'Início',
     '/projects': 'Projetos',
+    '/tasks': 'Todas as tarefas',
     '/profile': 'Perfil',
     '/settings': 'Configurações',
   }
@@ -17,6 +18,10 @@ const pageTitle = computed(() => {
 
   if (titles[path]) {
     return titles[path]
+  }
+
+  if (route.name === 'project-tasks') {
+    return 'Tarefas do projeto'
   }
 
   if (path.startsWith('/projects/')) {

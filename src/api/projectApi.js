@@ -2,8 +2,8 @@ import api from './config'
 
 const projectApi = {
   // Lista os projetos do usuário autenticado.
-  listar() {
-    return api.get('projetos/meus-projetos/')
+  listar(params = {}) {
+    return api.get('projetos/meus-projetos/', { params })
   },
 
   // Busca os detalhes de um projeto.

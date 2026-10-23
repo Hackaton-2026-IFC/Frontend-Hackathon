@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useProjectStore } from '@/stores/project'
 
 import ProjectHeader from '@/components/project/ProjectHeader.vue'
@@ -140,6 +140,13 @@ async function deleteProject(id) {
           @delete="openDelete"
         />
 
+        <RouterLink
+          class="board-link"
+          :to="{ name: 'project-tasks', params: { projectId: project.id } }"
+        >
+          Ver tarefas no Kanban ↗
+        </RouterLink>
+
         <div class="project-summary">
           <ProjectMembers :project="project" />
 
@@ -186,4 +193,21 @@ async function deleteProject(id) {
 .page-state .back-button { margin-bottom: 0; }
 @media (max-width: 900px) { .project-summary { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 650px) { .project-page { padding: 20px 16px; } .project-summary { gap: 18px; margin-top: 18px; } }
+.board-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 18px;
+  margin: 0 0 24px;
+  border: 1px solid #000;
+  border-radius: 999px;
+  background: #000;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.board-link:hover { background: #fff; color: #000; }
+.board-link:focus-visible { outline: 2px solid #000; outline-offset: 4px; }
 </style>
