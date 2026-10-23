@@ -1,4 +1,3 @@
-
 <script setup>
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
@@ -17,6 +16,8 @@ const profileImage = computed(() => {
 
 const pageTitle = computed(() => {
   const titles = {
+    tasks: 'Todas as tarefas',
+    'project-tasks': 'Tarefas do projeto',
     home: 'Área de trabalho',
     projects: 'Projetos',
     profile: 'Meu perfil',
@@ -34,15 +35,10 @@ const pageTitle = computed(() => {
       <h1>{{ pageTitle }}</h1>
     </div>
 
-    <RouterLink
-      to="/profile"
-      class="profile-link"
-      aria-label="Abrir meu perfil"
-      title="Meu perfil"
-    >
-    <span v-if="profileImage" class="profile-avatar">
-      <img :src="profileImage" :alt="userName">
-    </span>
+    <RouterLink to="/profile" class="profile-link" aria-label="Abrir meu perfil" title="Meu perfil">
+      <span v-if="profileImage" class="profile-avatar">
+        <img :src="profileImage" :alt="userName" />
+      </span>
       <span v-else class="profile-avatar" aria-hidden="true">
         {{ userName.charAt(0).toUpperCase() }}
       </span>

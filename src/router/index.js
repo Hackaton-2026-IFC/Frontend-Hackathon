@@ -10,6 +10,18 @@ import NotFoundView from '@/views/NotFoundView.vue'
 
 const routes = [
   {
+    path: '/tasks',
+    name: 'tasks',
+    component: () => import('@/views/TasksView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/projects/:projectId/tasks',
+    name: 'project-tasks',
+    component: () => import('@/views/TasksView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/',
     component: AuthLayout,
     meta: {

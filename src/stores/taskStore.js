@@ -1,0 +1,71 @@
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import taskApi, { taskError } from '@/api/taskApi'
+
+export const useTaskStore = defineStore('tasks', () => {
+  const tasks = ref([])
+  const projects = ref([])
+  const loading = ref(false)
+  const error = ref('')
+  const busy = ref(false)
+
+  function replace(task) {
+    const index = tasks.value.findIndex((item) => item.id === task.id)
+    if (index >= 0) tasks.value[index] = task
+    else tasks.value.unshift(task)
+    return task
+  }
+
+  async function load() {
+    if (loading.value) return
+    loading.value = true
+    error.value = ''
+    tasks.value = []
+    projects.value = []
+    try {
+      const [allTasks, allProjects] = await Promise.all([taskApi.list(), taskApi.projects()])
+      tasks.value = allTasks
+      projects.value = allProjects
+    } catch (err) {
+      error.value = taskError(err)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function mutate(operation) {
+    if (busy.value) throw new Error('Aguarde a operação atual terminar.')
+    busy.value = true
+    error.value = ''
+    try {
+      return await operation()
+    } catch (err) {
+      error.value = taskError(err)
+      throw err
+    } finally {
+      busy.value = false
+    }
+  }
+
+  const create = (payload) => mutate(async () => replace(await taskApi.create(payload)))
+  const update = (id, payload) => mutate(async () => replace(await taskApi.update(id, payload)))
+  const remove = (id) =>
+    mutate(async () => {
+      await taskApi.remove(id)
+      tasks.value = tasks.value.filter((item) => item.id !== id)
+    })
+  async function checklist(taskId, item, title) {
+    return mutate(async () => {
+      if (item) await taskApi.updateChecklist(item.id, { concluida: !item.concluida })
+      else {
+        const task = tasks.value.find((entry) => entry.id === taskId)
+        const ordem = Math.max(0, ...(task?.microtarefas || []).map((entry) => entry.ordem)) + 1
+        await taskApi.addChecklist({ tarefa: taskId, titulo: title, ordem, concluida: false })
+      }
+      // The backend recalculates task status after checklist changes.
+      return replace(await taskApi.get(taskId))
+    })
+  }
+
+  return { tasks, projects, loading, error, busy, load, create, update, remove, checklist }
+})
