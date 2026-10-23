@@ -1,227 +1,216 @@
-
 <script setup>
 import { computed } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
+import { useRoute } from 'vue-router'
+import NotificationBell from '@/components/layout/NotificationBell.vue'
 
-const authStore = useAuthStore()
 const route = useRoute()
-
-const userName = computed(() => {
-  return authStore.user?.name?.trim() || 'Usuário'
-})
-
-const profileImage = computed(() => {
-  return authStore.user?.profile_image?.url
-})
 
 const pageTitle = computed(() => {
   const titles = {
-    home: 'Área de trabalho',
-    projects: 'Projetos',
-    profile: 'Meu perfil',
-    settings: 'Configurações',
+    '/': 'Início',
+    '/home': 'Início',
+    '/projects': 'Projetos',
+    '/tasks': 'Criar ou editar tarefa',
+    '/notes': 'Notas',
+    '/profile': 'Perfil',
+    '/settings': 'Configurações',
   }
 
-  return titles[route.name] || 'Área de trabalho'
+  const path = route.path.replace(/\/+$/, '') || '/'
+
+  if (titles[path]) {
+    return titles[path]
+  }
+
+  if (route.name === 'project-tasks') {
+    return 'Tarefas do projeto'
+  }
+
+  if (path.startsWith('/projects/')) {
+    return 'Projetos'
+  }
+
+  return String(route.meta?.title || route.name || 'Página')
 })
 </script>
 
 <template>
   <header class="app-header">
-    <div class="header-title">
-      <span class="header-label">HACKATHON WORKSPACE</span>
-      <h1>{{ pageTitle }}</h1>
+    <div class="header-content">
+      <!-- DESKTOP -->
+      <div class="desktop-header-title">
+        <h1 class="header-page-title">
+          {{ pageTitle }}
+        </h1>
+      </div>
+
+      <!-- MOBILE -->
+      <div class="mobile-header-title">
+        <img
+          src="/icons/momentum-192x192.png"
+          alt=""
+          class="mobile-logo"
+        />
+
+        <span class="mobile-brand-name">
+          Momentum
+        </span>
+
+        <span class="mobile-separator" aria-hidden="true">
+          /
+        </span>
+
+        <span class="mobile-page-name">
+          {{ pageTitle }}
+        </span>
+      </div>
+
+      <NotificationBell />
     </div>
-
-    <RouterLink
-      to="/profile"
-      class="profile-link"
-      aria-label="Abrir meu perfil"
-      title="Meu perfil"
-    >
-    <span v-if="profileImage" class="profile-avatar">
-      <img :src="profileImage" :alt="userName">
-    </span>
-      <span v-else class="profile-avatar" aria-hidden="true">
-        {{ userName.charAt(0).toUpperCase() }}
-      </span>
-
-      <span class="profile-name">
-        {{ userName }}
-      </span>
-    </RouterLink>
   </header>
 </template>
 
 <style scoped>
+/* HEADER DESKTOP */
+
 .app-header {
-  position: relative;
-  z-index: 10;
+  position: fixed;
+  top: 0;
+  left: 250px;
+  right: 0;
+  z-index: 1000;
+
+  height: 76px;
+
+  background: #ffffff;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  min-height: 76px;
-  padding: 12px 32px;
-  border-bottom: 1px solid #e9e9e7;
-  background: #fff;
+  gap: 18px;
+
+  width: 100%;
+  height: 100%;
+
+  padding: 0 32px;
 }
 
-.header-title {
-  min-width: 0;
-}
-
-.header-label {
-  display: block;
-  margin-bottom: 4px;
-  color: #85857e;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.4px;
-}
-
-.header-title h1 {
-  overflow: hidden;
-  margin: 0;
-  color: #252523;
-  font-size: 18px;
-  font-weight: 650;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Perfil no header */
-
-.profile-link {
+.desktop-header-title {
   display: flex;
-  flex: 0 1 auto;
   align-items: center;
-  gap: 10px;
   min-width: 0;
-  max-width: 240px;
-  padding: 6px 10px 6px 6px;
-  border: 1px solid transparent;
-  border-radius: 12px;
-  color: #252523;
-  text-decoration: none;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
 }
 
-.profile-link:hover {
-  border-color: #e8e8e5;
-  background: #f7f7f5;
-}
+.header-page-title {
+  margin: 0;
 
-/* Avatar sempre circular */
-
-.profile-avatar {
-  display: grid;
-  flex: 0 0 36px;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  aspect-ratio: 1 / 1;
-  overflow: hidden;
-  border-radius: 50%;
-  background: #252523;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-/* Nome */
-
-.profile-name {
-  display: block;
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  color: #252523;
-  font-size: 12px;
+  color: #171717;
+  font-size: 20px;
   font-weight: 650;
-  text-overflow: ellipsis;
+  line-height: 1.2;
+
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Tablet e celular */
+/* MOBILE OCULTO NO DESKTOP */
+
+.mobile-header-title {
+  display: none;
+}
+
+/* MOBILE */
 
 @media (max-width: 700px) {
   .app-header {
-    min-height: 66px;
-    padding: 10px 15px;
-    gap: 10px;
+    left: 0;
+    height: 62px;
+
+    background: #171716;
+    border-bottom: 1px solid #353532;
   }
 
-  .header-label {
-    font-size: 9px;
-    letter-spacing: 1px;
+  .header-content {
+    padding: 0 14px;
   }
 
-  .header-title h1 {
-    font-size: 15px;
+  .desktop-header-title {
+    display: none;
   }
 
-  .profile-link {
+  .mobile-header-title {
+    display: flex;
+    align-items: center;
     gap: 7px;
-    max-width: 45%;
-    padding: 4px;
+
+    flex: 1;
+    width: auto;
+    min-width: 0;
+
+    overflow: hidden;
   }
 
-  .profile-avatar {
-    flex: 0 0 32px;
-    width: 32px;
-    height: 32px;
-    aspect-ratio: 1 / 1;
-    font-size: 12px;
+  .mobile-logo {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+
+    object-fit: contain;
   }
 
-  .profile-name {
-    font-size: 11px;
+  .mobile-brand-name {
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 750;
+    letter-spacing: -0.5px;
+    white-space: nowrap;
+  }
+
+  .mobile-separator {
+    margin: 0 1px;
+
+    color: #777770;
+    font-size: 18px;
+    font-weight: 300;
+  }
+
+  .mobile-page-name {
+    min-width: 0;
+
+    color: #c9c9c4;
+    font-size: 13px;
+    font-weight: 500;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
-/* Telas muito estreitas */
-
-@media (max-width: 380px) {
-  .app-header {
-    gap: 6px;
-    padding-right: 10px;
-    padding-left: 10px;
+@media (max-width: 360px) {
+  .header-content {
+    padding: 0 10px;
   }
 
-  .header-label {
-    font-size: 8px;
-    letter-spacing: 0.7px;
-  }
-
-  .header-title h1 {
-    font-size: 14px;
-  }
-
-  .profile-link {
+  .mobile-header-title {
     gap: 5px;
-    max-width: 44%;
   }
 
-  .profile-avatar {
-    flex-basis: 30px;
-    width: 30px;
-    height: 30px;
+  .mobile-logo {
+    width: 40px;
+    height: 40px;
   }
 
-  .profile-name {
-    font-size: 10px;
+  .mobile-brand-name {
+    font-size: 13px;
   }
-}
 
-/* Acessibilidade */
-
-@media (prefers-reduced-motion: reduce) {
-  .profile-link {
-    transition: none;
+  .mobile-page-name {
+    font-size: 12px;
   }
 }
 </style>
