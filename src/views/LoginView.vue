@@ -2,7 +2,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import LoginForm from '@/components/login/LoginForm.vue'
+import LoginForm from '@/components/auth/LoginForm.vue'
 import { useAuthStore } from '@/stores/authStore.js'
 
 const auth = useAuthStore()
