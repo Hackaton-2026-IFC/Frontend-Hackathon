@@ -1,85 +1,481 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import projectsApi from '@/api/projectsApi'
+import { useProjectStore } from '@/stores/project'
+import ProjectEditModal from '@/components/project/ProjectEditModal.vue'
 
-const projects = ref([])
-const loading = ref(false)
-const saving = ref(false)
-const error = ref('')
-const showForm = ref(false)
+const store = useProjectStore()
+
 const search = ref('')
-const form = ref({ nome: '', descricao: '', data_limite: '' })
+const status = ref('all')
+const error = ref('')
+const createError = ref('')
+const showCreate = ref(false)
+const saving = ref(false)
 
-function explain(errorResponse) {
-  const data = errorResponse?.response?.data
-  if (typeof data?.detail === 'string') return data.detail
-  if (typeof data === 'object' && data) return Object.entries(data).map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`).join(' • ')
-  return errorResponse?.message || 'Não foi possível concluir a operação.'
+const statuses = {
+  planned: 'Planejado',
+  in_progress: 'Em andamento',
+  completed: 'Concluído',
 }
-async function load() {
-  loading.value = true
+
+function normalize(value) {
+  return String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+}
+
+const filteredProjects = computed(() => {
+  const query = normalize(search.value.trim())
+
+  return store.projects.filter((project) => {
+    const matchesName = normalize(project.name).includes(query)
+    const matchesStatus =
+      status.value === 'all' || project.status === status.value
+
+    return matchesName && matchesStatus
+  })
+})
+
+async function loadProjects() {
   error.value = ''
+
   try {
-    const { data } = await projectsApi.list({ search: search.value })
-    projects.value = Array.isArray(data) ? data : (data.results ?? [])
-  } catch (e) { error.value = explain(e) }
-  finally { loading.value = false }
+    await store.fetchProjects()
+  } catch (e) {
+    error.value = e.message || 'Não foi possível carregar os projetos.'
+  }
 }
-async function createProject() {
+
+function openCreate() {
+  createError.value = ''
+  showCreate.value = true
+}
+
+function closeCreate() {
+  if (!saving.value) {
+    showCreate.value = false
+  }
+}
+
+function clearFilters() {
+  search.value = ''
+  status.value = 'all'
+}
+
+async function createProject(data) {
+  if (saving.value) return
+
   saving.value = true
-  error.value = ''
+  createError.value = ''
+
   try {
-    await projectsApi.create({
-      nome: form.value.nome.trim(),
-      descricao: form.value.descricao,
-      ...(form.value.data_limite ? { data_limite: form.value.data_limite } : {}),
-    })
-    form.value = { nome: '', descricao: '', data_limite: '' }
-    showForm.value = false
-    await load()
-  } catch (e) { error.value = explain(e) }
-  finally { saving.value = false }
+    await store.createProject(data)
+    clearFilters()
+    showCreate.value = false
+  } catch (e) {
+    createError.value = e.message || 'Não foi possível criar o projeto.'
+  } finally {
+    saving.value = false
+  }
 }
-async function togglePin(project) {
-  error.value = ''
-  try {
-    if (project.fixado) await projectsApi.unpin(project.id)
-    else await projectsApi.pin(project.id)
-    await load()
-  } catch (e) { error.value = explain(e) }
-}
-onMounted(load)
+
+onMounted(loadProjects)
 </script>
 
 <template>
-  <section class="workspace">
-    <header class="heading">
-      <div><span class="eyebrow">WORKSPACE</span><h1>Seus projetos</h1><p>Organize os projetos e acompanhe o progresso da equipe.</p></div>
-      <button type="button" @click="showForm = !showForm">{{ showForm ? 'Cancelar' : '+ Novo projeto' }}</button>
-    </header>
-    <form v-if="showForm" class="panel form" @submit.prevent="createProject">
-      <label>Nome <input v-model="form.nome" required maxlength="200" /></label>
-      <label>Descrição <textarea v-model="form.descricao" rows="3" /></label>
-      <label>Prazo oficial <input v-model="form.data_limite" type="date" /></label>
-      <button :disabled="saving" type="submit">{{ saving ? 'Salvando...' : 'Criar projeto' }}</button>
-    </form>
-    <form class="search" @submit.prevent="load"><input v-model="search" placeholder="Buscar projetos..." aria-label="Buscar projetos" /><button type="submit">Buscar</button></form>
-    <p v-if="error" class="error" role="alert">{{ error }}</p>
-    <p v-if="loading" role="status">Carregando projetos...</p>
-    <p v-else-if="!projects.length" class="panel">Nenhum projeto encontrado. Crie o primeiro!</p>
-    <div v-else class="cards">
-      <article v-for="project in projects" :key="project.id" class="panel project">
-        <div class="row"><span class="eyebrow">{{ project.status || 'PROJETO' }}</span><button class="ghost" type="button" @click="togglePin(project)">{{ project.fixado ? '★ Desafixar' : '☆ Fixar' }}</button></div>
-        <h2>{{ project.nome }}</h2>
-        <p>{{ project.descricao || 'Sem descrição' }}</p>
-        <small>Prazo: {{ project.data_limite || 'não definido' }} · {{ project.participantes?.length ?? 0 }} participante(s)</small>
-        <RouterLink :to="`/projects/${project.id}`">Abrir projeto →</RouterLink>
-      </article>
+  <div class="projects-page">
+    <div class="projects-container">
+      <header class="page-heading">
+        <div>
+          <span class="eyebrow">MOMENTUM / ORGANIZAÇÃO</span>
+          <h1>Seus projetos.</h1>
+          <p>
+            Um espaço para organizar ideias e acompanhar suas entregas.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="button button--primary"
+          :disabled="store.loading || !!error"
+          @click="openCreate"
+        >
+          <span aria-hidden="true">+</span>
+          Novo projeto
+        </button>
+      </header>
+
+      <div class="project-filters">
+        <label class="search-field">
+          <span>Buscar projeto</span>
+          <input
+            v-model="search"
+            type="search"
+            placeholder="Digite o nome do projeto"
+          />
+        </label>
+
+        <label class="status-field">
+          <span>Status</span>
+          <select v-model="status">
+            <option value="all">Todos os status</option>
+            <option
+              v-for="(label, value) in statuses"
+              :key="value"
+              :value="value"
+            >
+              {{ label }}
+            </option>
+          </select>
+        </label>
+      </div>
+
+      <div v-if="store.loading" class="empty-state" role="status">
+        <p>Carregando projetos...</p>
+      </div>
+
+      <div v-else-if="error" class="empty-state" role="alert">
+        <h2>Não foi possível carregar</h2>
+        <p>{{ error }}</p>
+        <button type="button" class="button" @click="loadProjects">
+          Tentar novamente
+        </button>
+      </div>
+
+      <template v-else>
+        <p class="results" role="status">
+          {{ filteredProjects.length }} projeto(s) encontrado(s)
+        </p>
+
+        <div v-if="filteredProjects.length" class="project-grid">
+          <RouterLink
+            v-for="project in filteredProjects"
+            :key="project.id"
+            class="project-card"
+            :to="{
+              name: 'project-details',
+              params: { id: project.id },
+            }"
+          >
+            <span class="project-status">
+              {{ statuses[project.status] || project.status }}
+            </span>
+
+            <h2>{{ project.name }}</h2>
+            <p>
+              {{ project.description || 'Sem descrição por enquanto.' }}
+            </p>
+
+            <span class="project-card__footer">
+              Abrir projeto
+              <span aria-hidden="true">↗</span>
+            </span>
+          </RouterLink>
+        </div>
+
+        <div v-else class="empty-state">
+          <h2>
+            {{
+              store.projects.length
+                ? 'Nenhum resultado'
+                : 'Seu próximo projeto começa aqui.'
+            }}
+          </h2>
+
+          <p>
+            {{
+              store.projects.length
+                ? 'Tente outro nome ou altere o filtro de status.'
+                : 'Crie um projeto para começar a organizar suas ideias.'
+            }}
+          </p>
+
+          <button
+            v-if="!store.projects.length"
+            type="button"
+            class="button button--primary"
+            @click="openCreate"
+          >
+            Criar primeiro projeto
+          </button>
+
+          <button
+            v-else
+            type="button"
+            class="button"
+            @click="clearFilters"
+          >
+            Limpar filtros
+          </button>
+        </div>
+      </template>
+
+      <ProjectEditModal
+        v-if="showCreate"
+        :project="{}"
+        mode="create"
+        :saving="saving"
+        :error="createError"
+        @close="closeCreate"
+        @save="createProject"
+      />
     </div>
-  </section>
+  </div>
 </template>
 
 <style scoped>
-.workspace{padding:36px;max-width:1300px;margin:auto;color:#252525}.heading,.row{display:flex;justify-content:space-between;align-items:center;gap:20px}.heading{margin-bottom:26px}.heading h1{font-size:34px;margin:6px 0}.heading p,.project p{color:#676767}.eyebrow{font-size:11px;letter-spacing:1.5px;font-weight:700;color:#74746f}.panel{background:white;border:1px solid #e6e6e2;border-radius:16px;padding:24px;box-shadow:0 5px 20px #00000005}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:18px}.project{display:flex;flex-direction:column;gap:10px}.project h2{margin:0}.project p{flex:1}.project a{font-weight:700;color:#202020}.project small{color:#666}button{border:0;border-radius:9px;padding:12px 18px;cursor:pointer;background:#1b1b1b;color:white}.ghost{background:transparent;color:#444;padding:8px}.form{display:grid;gap:12px;margin-bottom:22px}.form label{display:grid;gap:6px}.form input,.form textarea,.search input{width:100%;border:1px solid #d6d6d1;border-radius:8px;padding:11px}.search{display:flex;gap:10px;margin-bottom:25px}.error{color:#b42318}@media(max-width:700px){.workspace{padding:20px}.heading{align-items:flex-start;flex-direction:column}}
+.projects-page {
+  min-height: 100%;
+  padding: clamp(20px, 4vw, 44px);
+  box-sizing: border-box;
+  background: #fff;
+  color: #000;
+}
+
+.projects-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding-bottom: 32px;
+  border-bottom: 2px solid #000;
+}
+
+.page-heading > div {
+  flex: 1;
+  min-width: min(100%, 260px);
+}
+
+.eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+}
+
+h1 {
+  margin: 14px 0;
+  font-size: clamp(30px, 4vw, 46px);
+  font-weight: 700;
+  letter-spacing: -1.5px;
+  line-height: 1.1;
+}
+
+.page-heading p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 12px 20px;
+  border: 1px solid #000;
+  border-radius: 999px;
+  background: #fff;
+  color: #000;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button--primary {
+  background: #000;
+  color: #fff;
+}
+
+.button > span {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.project-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 28px 0 20px;
+}
+
+.project-filters label {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.search-field {
+  flex: 1 1 260px;
+}
+
+.status-field {
+  flex: 0 1 210px;
+}
+
+input,
+select {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 12px 14px;
+  box-sizing: border-box;
+  border: 1px solid #000;
+  border-radius: 10px;
+  background: #fff;
+  color: #000;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+input::placeholder {
+  color: #000;
+  opacity: 1;
+}
+
+.results {
+  margin: 0 0 20px;
+  font-size: 12px;
+}
+
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.project-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  min-height: 245px;
+  padding: 24px;
+  border: 1px solid #000;
+  border-radius: 18px;
+  background: #fff;
+  color: #000;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.project-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 0 #000;
+}
+
+.project-status {
+  padding: 5px 10px;
+  border: 1px solid #000;
+  border-radius: 999px;
+  font-size: 11px;
+}
+
+.project-card h2 {
+  margin: 22px 0 10px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.6px;
+}
+
+.project-card > p {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0 0 28px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.project-card__footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding-top: 16px;
+  margin-top: auto;
+  border-top: 1px solid #000;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 48px 24px;
+  border: 1px dashed #000;
+  border-radius: 18px;
+  text-align: center;
+}
+
+.empty-state h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+:is(button, a, input, select):focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 4px;
+}
+
+@media (max-width: 1100px) {
+  .project-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .projects-page {
+    padding: 24px 16px;
+  }
+
+  .project-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .status-field {
+    flex: 1 1 100%;
+  }
+
+  .page-heading > .button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-card {
+    transition: none;
+  }
+}
 </style>
