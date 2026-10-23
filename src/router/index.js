@@ -10,6 +10,7 @@ import ProfileView from '@/views/ProfileView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import ProjectsView from '@/views/ProjectsView.vue'
 import DetalhesProjetoView from '@/views/DetalhesProjetoView.vue'
+import NotesView from '@/views/NotesView.vue'
 
 const routes = [
   {
@@ -69,6 +70,12 @@ const routes = [
     meta: {
       requiresAuth: true,
     },
+  },
+  {
+    path: '/notes',
+    name: 'notes',
+    component: NotesView,
+    meta: { requiresAuth: true },
   },
   {
     path: '/settings',

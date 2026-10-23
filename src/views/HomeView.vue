@@ -35,9 +35,9 @@ const resources = [
     title: 'Novas ideias',
     description:
       'Um espaço para desenvolver possibilidades e encontrar novas soluções.',
-    action: 'Em breve',
-    to: '',
-    available: false,
+    action: 'Abrir mural',
+    to: '/notes',
+    available: true,
   },
   {
     number: '03',

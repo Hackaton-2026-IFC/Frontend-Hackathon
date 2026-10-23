@@ -41,6 +41,11 @@ const navigationItems = [
     symbol: 'mdi mdi-list-box-outline',
   },
   {
+    label: 'Notas',
+    to: '/notes',
+    symbol: 'mdi mdi-note-multiple-outline',
+  },
+  {
     label: 'Configurações',
     to: '/settings',
     symbol: 'mdi mdi-cog-outline',
