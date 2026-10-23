@@ -8,6 +8,7 @@ import ProjectMembers from '@/components/project/ProjectMembers.vue'
 import ProjectProgress from '@/components/project/ProjectProgress.vue'
 import ProjectEditModal from '@/components/project/ProjectEditModal.vue'
 import ProjectDeleteDialog from '@/components/project/ProjectDeleteDialog.vue'
+import ProjectAgent from '@/components/project/ProjectAgent.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -145,6 +146,8 @@ async function deleteProject(id) {
 
           <ProjectProgress :project="project" />
         </div>
+
+        <ProjectAgent :project="project" />
 
         <ProjectEditModal
           v-if="showEdit"
