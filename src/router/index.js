@@ -3,7 +3,7 @@ import { useAuthStore } from '@/stores/authStore'
 
 import AuthLayout from '@/components/layout/AuthLayout.vue'
 import LoginView from '@/views/LoginView.vue'
-import RegisterView from '@/views/RegisterView.vue'
+import RegisterView from '@/views/registerView.vue'
 import HomeView from '@/views/homeView.vue'
 import ProfileView from '@/views/profileView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
