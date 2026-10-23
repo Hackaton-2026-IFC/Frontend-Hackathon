@@ -40,3 +40,15 @@ npm run build
 Os testes usam respostas HTTP simuladas para verificar paginação, CRUD, erros de validação, recálculo após checklist, carregamento e criação de materiais pela store, prazos e links seguros. Não substituem testes com backend autenticado.
 
 Roteiro manual: entrar em `/tasks`, criar tarefa em um projeto, abrir detalhes, editar, movimentar com seletor ou arraste, concluir etapas em ordem, adicionar link e excluir com confirmação. Conferir filtros combinados e layout no celular. O build apresenta avisos existentes sobre Tailwind e `:deep` no CSS global/home; esses estilos não foram alterados nesta funcionalidade.
+
+
+## Integração com projetos (FEAT-8 + DEV)
+
+- `/projects` mostra os projetos reais, com busca, filtros, cadastro e navegação aos detalhes.
+- `/projects/:id` mostra membros, progresso, edição, exclusão e link para o Kanban.
+- `/projects/:projectId/tasks` conserva o Kanban da FEAT-9, filtrado pelo projeto.
+- A store `project.js` é responsável pelas ações de projetos; as views usam a store em vez de chamadas HTTP.
+- O cliente HTTP usa o servidor configurado na DEV como padrão, aceita `VITE_URL_BACKEND` como substituição e renova o JWT após HTTP 401.
+- `tasks.css` foi adaptado à identidade visual da FEAT-8 (fundo branco, bordas pretas e botões arredondados).
+
+Verificação manual sugerida: autenticar; abrir Projetos; criar, editar e excluir um projeto de teste; abrir um projeto; entrar no Kanban pelo botão; criar, mover, editar e excluir tarefas; renovar sessão com token expirado. Os fluxos com backend real exigem sessão e acesso ao servidor.

@@ -7,6 +7,8 @@ import RegisterView from '@/views/registerView.vue'
 import HomeView from '@/views/homeView.vue'
 import ProfileView from '@/views/profileView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
+import ProjectsView from '@/views/ProjectsView.vue'
+import DetalhesProjetoView from '@/views/DetalhesProjetoView.vue'
 
 const routes = [
   { path: '/tasks', name: 'tasks', component: () => import('@/views/TasksView.vue'), meta: { requiresAuth: true } },
@@ -44,10 +46,16 @@ const routes = [
   {
     path: '/projects',
     name: 'projects',
-    component: HomeView,
+    component: ProjectsView,
     meta: {
       requiresAuth: true,
     },
+  },
+  {
+    path: '/projects/:id',
+    name: 'project-details',
+    component: DetalhesProjetoView,
+    meta: { requiresAuth: true },
   },
   {
     path: '/settings',

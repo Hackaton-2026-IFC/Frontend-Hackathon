@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import { useTaskStore } from '@/stores/taskStore'
 import { TASK_PRIORITIES, TASK_STATUSES, isOverdue } from '@/api/taskApi'
 import TaskBoard from '@/components/tasks/TaskBoard.vue'
@@ -117,6 +117,11 @@ async function move(id, value) {
   <section class="tasks-page">
     <header class="tasks-heading">
       <div>
+        <RouterLink
+          v-if="routeProject"
+          class="task-back-link"
+          :to="{ name: 'project-details', params: { id: routeProject } }"
+        >← Voltar ao projeto</RouterLink>
         <p class="task-eyebrow">MOMENTUM / ORGANIZAÇÃO</p>
         <h1>
           {{

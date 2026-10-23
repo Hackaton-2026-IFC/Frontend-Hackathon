@@ -20,6 +20,7 @@ const pageTitle = computed(() => {
     'project-tasks': 'Tarefas do projeto',
     home: 'Área de trabalho',
     projects: 'Projetos',
+    'project-details': 'Detalhes do projeto',
     profile: 'Meu perfil',
     settings: 'Configurações',
   }
