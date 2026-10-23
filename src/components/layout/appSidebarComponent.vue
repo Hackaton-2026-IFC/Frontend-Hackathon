@@ -1,9 +1,8 @@
+
 <script setup>
 import { RouterLink, useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
 
 const route = useRoute()
-const authStore = useAuthStore()
 
 const navigationItems = [
   { label: 'Início', to: '/home', symbol: 'mdi mdi-home-outline' },
@@ -27,11 +26,11 @@ function isActive(item) {
 <template>
   <aside class="app-sidebar">
     <RouterLink to="/home" class="sidebar-brand">
-      <span class="brand-mark" aria-hidden="true">H</span>
+      <span class="brand-mark" aria-hidden="true">M</span>
 
       <span class="brand-text">
-        <strong>Hackathon</strong>
-        <small>Workspace</small>
+        <strong>Momentum</strong>
+        <small>Seu espaço de trabalho</small>
       </span>
     </RouterLink>
 
@@ -50,8 +49,7 @@ function isActive(item) {
           :class="{ 'navigation-link-active': isActive(item) }"
           :aria-current="isActive(item) ? 'page' : undefined"
         >
-          <span :class="item.symbol" aria-hidden="true">
-          </span>
+          <span :class="item.symbol" aria-hidden="true"></span>
 
           <span class="navigation-label">
             {{ item.label }}
@@ -76,16 +74,23 @@ function isActive(item) {
 <style scoped>
 .app-sidebar {
   position: fixed;
-  inset: 0 auto 0 0;
-  z-index: 1000;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 1100;
+
   display: flex;
   flex-direction: column;
+
   width: 250px;
   height: 100vh;
   height: 100dvh;
+
   padding: 27px 17px 20px;
+
   overflow-x: hidden;
   overflow-y: auto;
+
   background: #171716;
   color: #f8f8f6;
 }
@@ -94,7 +99,9 @@ function isActive(item) {
   display: flex;
   align-items: center;
   gap: 12px;
+
   padding: 0 9px 32px;
+
   color: inherit;
   text-decoration: none;
 }
@@ -103,11 +110,14 @@ function isActive(item) {
   display: grid;
   flex-shrink: 0;
   place-items: center;
+
   width: 42px;
   height: 42px;
+
   border-radius: 13px;
   background: #fff;
   color: #171716;
+
   font-size: 22px;
   font-weight: 800;
 }
@@ -116,16 +126,20 @@ function isActive(item) {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  min-width: 0;
 }
 
 .brand-text strong {
+  color: #fff;
   font-size: 17px;
+  font-weight: 700;
   letter-spacing: -0.5px;
 }
 
 .brand-text small {
   color: #92928c;
-  font-size: 11px;
+  font-size: 10px;
+  white-space: nowrap;
 }
 
 .sidebar-section {
@@ -152,15 +166,20 @@ function isActive(item) {
   display: flex;
   align-items: center;
   gap: 13px;
+
   min-width: 0;
   min-height: 46px;
+
   padding: 0 12px;
+
   border: 1px solid transparent;
   border-radius: 10px;
+
   color: #b7b7b0;
   text-decoration: none;
+
   transition:
-    background 0.2s ease,
+    background-color 0.2s ease,
     color 0.2s ease;
 }
 
@@ -180,6 +199,7 @@ function isActive(item) {
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
+
   width: 22px;
   font-size: 22px;
   line-height: 1;
@@ -202,9 +222,12 @@ function isActive(item) {
   display: flex;
   align-items: flex-start;
   gap: 10px;
+
   padding: 14px 10px;
+
   border: 1px solid #30302d;
   border-radius: 11px;
+
   background: #232321;
 }
 
@@ -213,6 +236,7 @@ function isActive(item) {
   width: 8px;
   height: 8px;
   margin-top: 4px;
+
   border-radius: 50%;
   background: #8dba8b;
 }
@@ -236,11 +260,20 @@ function isActive(item) {
 
 @media (max-width: 700px) {
   .app-sidebar {
-    inset: auto 0 0;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+
+    z-index: 1100;
+
     width: 100%;
     height: auto;
+
     padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+
     overflow: visible;
+
     border-top: 1px solid #353532;
   }
 
@@ -267,13 +300,15 @@ function isActive(item) {
     flex-direction: column;
     justify-content: center;
     gap: 3px;
+
     min-width: 0;
     min-height: 50px;
+
     padding: 5px 2px;
     border-radius: 9px;
   }
 
-  .navigation-symbol {
+  .navigation-link .mdi {
     width: auto;
     font-size: 20px;
   }

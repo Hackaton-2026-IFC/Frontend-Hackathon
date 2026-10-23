@@ -12,7 +12,7 @@ const userName = computed(() => {
 })
 
 const profileImage = computed(() => {
-  return authStore.user?.profile_image?.url
+  return authStore.user?.profile_image?.url || null
 })
 
 const pageTitle = computed(() => {
@@ -30,7 +30,7 @@ const pageTitle = computed(() => {
 <template>
   <header class="app-header">
     <div class="header-title">
-      <span class="header-label">HACKATHON WORKSPACE</span>
+      <span class="header-label">MOMENTUM</span>
       <h1>{{ pageTitle }}</h1>
     </div>
 
@@ -40,11 +40,16 @@ const pageTitle = computed(() => {
       aria-label="Abrir meu perfil"
       title="Meu perfil"
     >
-    <span v-if="profileImage" class="profile-avatar">
-      <img :src="profileImage" :alt="userName">
-    </span>
-      <span v-else class="profile-avatar" aria-hidden="true">
-        {{ userName.charAt(0).toUpperCase() }}
+      <span class="profile-avatar">
+        <img
+          v-if="profileImage"
+          :src="profileImage"
+          :alt="userName"
+        />
+
+        <span v-else>
+          {{ userName.charAt(0).toUpperCase() }}
+        </span>
       </span>
 
       <span class="profile-name">
@@ -56,15 +61,21 @@ const pageTitle = computed(() => {
 
 <style scoped>
 .app-header {
-  position: relative;
-  z-index: 10;
+  position: fixed;
+  top: 0;
+  left: 250px;
+  right: 0;
+  z-index: 1000;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  min-height: 76px;
+
+  height: 76px;
   padding: 12px 32px;
-  border-bottom: 1px solid #e9e9e7;
+
+  border-bottom: 1px solid #e9e9e9;
   background: #fff;
 }
 
@@ -75,82 +86,107 @@ const pageTitle = computed(() => {
 .header-label {
   display: block;
   margin-bottom: 4px;
-  color: #85857e;
+
+  color: #737373;
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.4px;
+  font-weight: 750;
+  letter-spacing: 1.6px;
 }
 
 .header-title h1 {
   overflow: hidden;
   margin: 0;
-  color: #252523;
+
+  color: #171717;
   font-size: 18px;
   font-weight: 650;
+
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-/* Perfil no header */
 
 .profile-link {
   display: flex;
   flex: 0 1 auto;
   align-items: center;
   gap: 10px;
+
   min-width: 0;
   max-width: 240px;
+
   padding: 6px 10px 6px 6px;
+
   border: 1px solid transparent;
-  border-radius: 12px;
-  color: #252523;
+  border-radius: 10px;
+
+  color: #171717;
   text-decoration: none;
+
   transition:
-    background 0.2s ease,
+    background-color 0.2s ease,
     border-color 0.2s ease;
 }
 
 .profile-link:hover {
-  border-color: #e8e8e5;
-  background: #f7f7f5;
+  border-color: #e5e5e5;
+  background: #f5f5f5;
 }
 
-/* Avatar sempre circular */
-
 .profile-avatar {
-  display: grid;
+  display: flex;
   flex: 0 0 36px;
-  place-items: center;
+  align-items: center;
+  justify-content: center;
+
   width: 36px;
   height: 36px;
-  aspect-ratio: 1 / 1;
+
   overflow: hidden;
+
   border-radius: 50%;
-  background: #252523;
+  background: #171717;
   color: #fff;
+
   font-size: 14px;
   font-weight: 700;
 }
 
-/* Nome */
+.profile-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.profile-avatar > span {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+}
 
 .profile-name {
   display: block;
   flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
-  color: #252523;
+
+  color: #171717;
   font-size: 12px;
   font-weight: 650;
+
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Tablet e celular */
-
 @media (max-width: 700px) {
   .app-header {
-    min-height: 66px;
+    left: 0;
+    right: 0;
+
+    height: 66px;
     padding: 10px 15px;
     gap: 10px;
   }
@@ -171,10 +207,9 @@ const pageTitle = computed(() => {
   }
 
   .profile-avatar {
-    flex: 0 0 32px;
+    flex-basis: 32px;
     width: 32px;
     height: 32px;
-    aspect-ratio: 1 / 1;
     font-size: 12px;
   }
 
@@ -182,8 +217,6 @@ const pageTitle = computed(() => {
     font-size: 11px;
   }
 }
-
-/* Telas muito estreitas */
 
 @media (max-width: 380px) {
   .app-header {
@@ -216,8 +249,6 @@ const pageTitle = computed(() => {
     font-size: 10px;
   }
 }
-
-/* Acessibilidade */
 
 @media (prefers-reduced-motion: reduce) {
   .profile-link {
