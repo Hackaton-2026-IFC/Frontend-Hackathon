@@ -174,10 +174,13 @@
 }
 .task-card-open {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  gap: 5px;
   width: 100%;
   height: 100%;
-  padding: 16px;
+  padding: 10px 16px;
   text-align: left;
   background: none;
   border: 0;
@@ -188,15 +191,46 @@
   background: #fcfcfa;
 }
 .task-card-open strong {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  display: block;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 15px;
   font-weight: 650;
-  overflow-wrap: anywhere;
 }
+
+.task-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.task-card-responsible {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #555;
+  font-size: 11px;
+}
+
+.task-card-priority {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  flex: 0 0 11px;
+  border-radius: 50%;
+  background: #9ca3af;
+}
+
+.task-card-priority-muito_baixa { background: #6b7280; }
+.task-card-priority-baixa { background: #389466; }
+.task-card-priority-neutra { background: #d9a521; }
+.task-card-priority-alta { background: #e8752c; }
+.task-card-priority-muito_alta { background: #cf3e3e; }
 .task-project-label {
   color: #85857e;
 }
