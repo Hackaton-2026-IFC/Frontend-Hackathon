@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { TASK_PRIORITIES } from '@/api/taskApi'
+import { TASK_PRIORITIES, formatDeadline, isOverdue } from '@/api/taskApi'
 
 const props = defineProps({
   task: { type: Object, required: true },
@@ -21,6 +21,13 @@ const responsibleName = computed(() => {
 })
 
 const priorityLabel = computed(() => TASK_PRIORITIES[props.task.prioridade] || 'Não definida')
+
+const checklistProgress = computed(() => {
+  const steps = props.task.microtarefas
+  if (!Array.isArray(steps) || steps.length === 0) return null
+  const completed = steps.filter((step) => step.concluida).length
+  return `${completed}/${steps.length}`
+})
 </script>
 
 <template>
@@ -48,6 +55,24 @@ const priorityLabel = computed(() => TASK_PRIORITIES[props.task.prioridade] || '
           :aria-label="`Prioridade: ${priorityLabel}`"
           role="img"
         ></span>
+      </span>
+
+      <span v-if="task.data_limite || checklistProgress" class="task-card-extra">
+        <span
+          v-if="task.data_limite"
+          class="task-card-deadline"
+          :class="{ 'task-card-deadline-overdue': isOverdue(task) }"
+          :title="`Prazo: ${formatDeadline(task.data_limite)}`"
+        >
+          {{ isOverdue(task) ? 'Atrasada · ' : 'Prazo · ' }}{{ formatDeadline(task.data_limite) }}
+        </span>
+        <span
+          v-if="checklistProgress"
+          class="task-card-checklist"
+          :title="`Microtarefas concluídas: ${checklistProgress}`"
+        >
+          Etapas {{ checklistProgress }}
+        </span>
       </span>
     </button>
   </article>
