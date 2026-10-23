@@ -1,28 +1,8 @@
-
 <script setup>
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
+import { useRoute } from 'vue-router'
 
 const route = useRoute()
-const router = useRouter()
-const authStore = useAuthStore()
-
-const userName = computed(() => {
-  return authStore.user?.name?.trim() || 'Usuário'
-})
-
-const firstName = computed(() => {
-  return userName.value.split(/\s+/)[0]
-})
-
-const userPhoto = computed(() => {
-  return authStore.user?.profile_image?.url || null
-})
-
-const initials = computed(() => {
-  return firstName.value.charAt(0).toUpperCase()
-})
 
 const pageTitle = computed(() => {
   const titles = {
@@ -31,9 +11,6 @@ const pageTitle = computed(() => {
     '/projects': 'Projetos',
     '/profile': 'Perfil',
     '/settings': 'Configurações',
-    '/projetos': 'Projetos',
-    '/perfil': 'Perfil',
-    '/configuracoes': 'Configurações',
   }
 
   const path = route.path.replace(/\/+$/, '') || '/'
@@ -46,25 +23,18 @@ const pageTitle = computed(() => {
     return 'Projetos'
   }
 
-  if (route.meta?.title) {
-    return String(route.meta.title)
-  }
-
-  return 'Página'
+  return String(route.meta?.title || route.name || 'Página')
 })
-
-function goToProfile() {
-  router.push('/profile')
-}
 </script>
 
 <template>
   <header class="app-header">
     <div class="header-content">
       <!-- DESKTOP -->
-      <div class="header-page desktop-header-title">
-        <span class="header-brand">MOMENTUM</span>
-        <h1 class="header-page-title">{{ pageTitle }}</h1>
+      <div class="desktop-header-title">
+        <h1 class="header-page-title">
+          {{ pageTitle }}
+        </h1>
       </div>
 
       <!-- MOBILE -->
@@ -75,41 +45,25 @@ function goToProfile() {
           class="mobile-logo"
         />
 
-        <span class="mobile-brand-name">Momentum</span>
+        <span class="mobile-brand-name">
+          Momentum
+        </span>
 
-        <span class="mobile-separator" aria-hidden="true">/</span>
+        <span class="mobile-separator" aria-hidden="true">
+          /
+        </span>
 
         <span class="mobile-page-name">
           {{ pageTitle }}
         </span>
       </div>
-
-      <!-- PERFIL -->
-      <button
-        type="button"
-        class="header-profile"
-        aria-label="Abrir perfil"
-        @click="goToProfile"
-      >
-        <div class="header-avatar">
-          <img
-            v-if="userPhoto"
-            :src="userPhoto"
-            :alt="`Foto de ${firstName}`"
-          />
-
-          <span v-else>{{ initials }}</span>
-        </div>
-
-        <span class="header-user-name">
-          {{ firstName }}
-        </span>
-      </button>
     </div>
   </header>
 </template>
 
 <style scoped>
+/* HEADER DESKTOP */
+
 .app-header {
   position: fixed;
   top: 0;
@@ -126,29 +80,17 @@ function goToProfile() {
 .header-content {
   display: flex;
   align-items: center;
-  justify-content: space-between;
 
   width: 100%;
   height: 100%;
 
   padding: 0 32px;
-  gap: 16px;
 }
 
-.header-page {
+.desktop-header-title {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 5px;
-
+  align-items: center;
   min-width: 0;
-}
-
-.header-brand {
-  color: #888888;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.2px;
 }
 
 .header-page-title {
@@ -164,67 +106,10 @@ function goToProfile() {
   text-overflow: ellipsis;
 }
 
+/* MOBILE OCULTO NO DESKTOP */
+
 .mobile-header-title {
   display: none;
-}
-
-.header-profile {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-
-  min-width: 0;
-  flex-shrink: 0;
-
-  padding: 5px;
-
-  border: none;
-  border-radius: 10px;
-
-  background: transparent;
-  cursor: pointer;
-
-  transition: background 0.2s ease;
-}
-
-.header-profile:hover {
-  background: #f5f5f5;
-}
-
-.header-user-name {
-  color: #171717;
-  font-size: 13px;
-  font-weight: 650;
-  line-height: 1.2;
-  white-space: nowrap;
-}
-
-.header-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 38px;
-  height: 38px;
-  flex-shrink: 0;
-
-  overflow: hidden;
-
-  border: 1px solid #eaeaea;
-  border-radius: 50%;
-
-  background: #f0f0f0;
-  color: #333333;
-
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.header-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 /* MOBILE */
@@ -240,7 +125,6 @@ function goToProfile() {
 
   .header-content {
     padding: 0 14px;
-    gap: 10px;
   }
 
   .desktop-header-title {
@@ -252,14 +136,15 @@ function goToProfile() {
     align-items: center;
     gap: 7px;
 
-    flex: 1;
+    width: 100%;
     min-width: 0;
+
     overflow: hidden;
   }
 
   .mobile-logo {
-    width: 32px;
-    height: 32px;
+    width: 44px;
+    height: 44px;
     flex-shrink: 0;
 
     object-fit: contain;
@@ -274,10 +159,11 @@ function goToProfile() {
   }
 
   .mobile-separator {
+    margin: 0 1px;
+
     color: #777770;
     font-size: 18px;
     font-weight: 300;
-    margin: 0 1px;
   }
 
   .mobile-page-name {
@@ -291,28 +177,6 @@ function goToProfile() {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
-  .header-profile {
-    gap: 0;
-    padding: 2px;
-  }
-
-  .header-profile:hover {
-    background: #30302d;
-  }
-
-  .header-avatar {
-    width: 38px;
-    height: 38px;
-
-    border: 1px solid #454540;
-    background: #30302d;
-    color: #ffffff;
-  }
-
-  .header-user-name {
-    display: none;
-  }
 }
 
 @media (max-width: 360px) {
@@ -325,8 +189,8 @@ function goToProfile() {
   }
 
   .mobile-logo {
-    width: 28px;
-    height: 28px;
+    width: 40px;
+    height: 40px;
   }
 
   .mobile-brand-name {

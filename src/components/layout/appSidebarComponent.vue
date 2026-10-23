@@ -1,8 +1,28 @@
-
 <script setup>
+import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
 
 const route = useRoute()
+const authStore = useAuthStore()
+
+const user = computed(() => authStore.user)
+
+const userName = computed(() => {
+  return user.value?.name?.trim() || 'Usuário'
+})
+
+const userUsername = computed(() => {
+  return user.value?.username || ''
+})
+
+const userPhoto = computed(() => {
+  return user.value?.profile_image?.url || null
+})
+
+const userInitial = computed(() => {
+  return userName.value.charAt(0).toUpperCase()
+})
 
 const navigationItems = [
   {
@@ -16,14 +36,14 @@ const navigationItems = [
     symbol: 'mdi mdi-list-box-outline',
   },
   {
-    label: 'Perfil',
-    to: '/profile',
-    symbol: 'mdi mdi-account-outline',
-  },
-  {
     label: 'Configurações',
     to: '/settings',
     symbol: 'mdi mdi-cog-outline',
+  },
+  {
+    label: 'Perfil',
+    to: '/profile',
+    symbol: 'mdi mdi-account-outline',
   },
 ]
 
@@ -41,20 +61,20 @@ function isActive(item) {
 
 <template>
   <aside class="app-sidebar">
+    <!-- LOGO -->
+    <RouterLink to="/home" class="sidebar-brand">
+      <img
+        src="/icons/momentum-192x192.png"
+        alt="Logo Momentum"
+        class="brand-mark"
+      />
 
-<RouterLink to="/home" class="sidebar-brand">
-  <img
-    src="/icons/momentum-192x192.png"
-    alt="Logo Momentum"
-    class="brand-mark"
-  />
+      <span class="brand-text">
+        <strong>Momentum</strong>
+      </span>
+    </RouterLink>
 
-  <span class="brand-text">
-    <strong>Momentum</strong>
-  </span>
-</RouterLink>
-
-
+    <!-- MENU -->
     <div class="sidebar-section">
       <span class="section-label">
         MENU PRINCIPAL
@@ -70,11 +90,30 @@ function isActive(item) {
           :to="item.to"
           class="navigation-link"
           :class="{
-            'navigation-link-active': isActive(item)
+            'navigation-link-active': isActive(item),
+            'navigation-profile-link': item.to === '/profile'
           }"
           :aria-current="isActive(item) ? 'page' : undefined"
         >
+          <!-- FOTO DE PERFIL -->
+          <template v-if="item.to === '/profile'">
+            <img
+              v-if="userPhoto"
+              :src="userPhoto"
+              alt=""
+              class="navigation-avatar"
+            />
+
+            <span
+              v-else
+              class="mdi mdi-account-outline"
+              aria-hidden="true"
+            ></span>
+          </template>
+
+          <!-- OUTROS ÍCONES -->
           <span
+            v-else
             :class="item.symbol"
             aria-hidden="true"
           ></span>
@@ -86,23 +125,50 @@ function isActive(item) {
       </nav>
     </div>
 
+    <!-- PERFIL NO RODAPÉ -->
     <div class="sidebar-bottom">
-      <div class="sidebar-status">
+      <RouterLink
+        to="/profile"
+        class="sidebar-user"
+        :class="{ 'sidebar-user-active': route.path === '/profile' }"
+        aria-label="Abrir meu perfil"
+      >
+        <div class="sidebar-user-avatar">
+          <img
+            v-if="userPhoto"
+            :src="userPhoto"
+            :alt="`Foto de ${userName}`"
+          />
+
+          <span v-else>
+            {{ userInitial }}
+          </span>
+        </div>
+
+        <div class="sidebar-user-info">
+          <strong>{{ userName }}</strong>
+
+          <small v-if="userUsername">
+            @{{ userUsername }}
+          </small>
+
+          <small v-else>
+            Meu perfil
+          </small>
+        </div>
+
         <span
-          class="status-dot"
+          class="mdi mdi-chevron-right sidebar-user-arrow"
           aria-hidden="true"
         ></span>
-
-        <div>
-          <strong>Seu espaço de trabalho</strong>
-          <small>Organize suas ideias</small>
-        </div>
-      </div>
+      </RouterLink>
     </div>
   </aside>
 </template>
 
 <style scoped>
+/* SIDEBAR */
+
 .app-sidebar {
   position: fixed;
   top: 0;
@@ -117,7 +183,7 @@ function isActive(item) {
   height: 100vh;
   height: 100dvh;
 
-  padding: 27px 17px 20px;
+  padding: 0 17px 20px;
 
   overflow-x: hidden;
   overflow-y: auto;
@@ -126,26 +192,19 @@ function isActive(item) {
   color: #f8f8f6;
 }
 
-/* LOGO */
-
-.sidebar-brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-
-  padding: 0 9px 32px;
-
-  color: inherit;
-  text-decoration: none;
-}
-
-
+/* LOGO ALINHADA AO HEADER */
 
 .sidebar-brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 5px 32px;
+
+  height: 76px;
+  min-height: 76px;
+
+  padding: 0 5px;
+  margin-bottom: 32px;
+
   color: inherit;
   text-decoration: none;
 }
@@ -153,8 +212,10 @@ function isActive(item) {
 .brand-mark {
   display: block;
   flex-shrink: 0;
+
   width: 60px;
   height: 60px;
+
   object-fit: contain;
   border-radius: 12px;
 }
@@ -166,17 +227,10 @@ function isActive(item) {
 }
 
 .brand-text strong {
-  color: #fff;
+  color: #ffffff;
   font-size: 22px;
   font-weight: 750;
   letter-spacing: -0.7px;
-}
-
-
-.brand-text small {
-  color: #92928c;
-  font-size: 10px;
-  white-space: nowrap;
 }
 
 /* MENU */
@@ -225,14 +279,16 @@ function isActive(item) {
 
 .navigation-link:hover {
   background: #252523;
-  color: #fff;
+  color: #ffffff;
 }
 
 .navigation-link-active {
   border-color: #3c3c38;
   background: #30302d;
-  color: #fff;
+  color: #ffffff;
 }
+
+/* ÍCONES */
 
 .mdi {
   display: inline-flex;
@@ -246,6 +302,23 @@ function isActive(item) {
   line-height: 1;
 }
 
+/* FOTO DO MENU */
+
+.navigation-avatar {
+  display: block;
+  flex-shrink: 0;
+
+  width: 24px;
+  height: 24px;
+
+  border: 1px solid #555555;
+  border-radius: 50%;
+
+  object-fit: cover;
+}
+
+/* TEXTO DOS LINKS */
+
 .navigation-label {
   overflow: hidden;
 
@@ -256,52 +329,116 @@ function isActive(item) {
   white-space: nowrap;
 }
 
-/* RODAPÉ */
+/* PERFIL DO RODAPÉ */
 
 .sidebar-bottom {
   margin-top: auto;
   padding-top: 20px;
 }
 
-.sidebar-status {
+.sidebar-user {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: center;
+  gap: 11px;
 
-  padding: 14px 10px;
+  width: 100%;
+  min-height: 68px;
+
+  padding: 11px 10px;
 
   border: 1px solid #30302d;
   border-radius: 11px;
 
   background: #232321;
+  color: #ffffff;
+  text-decoration: none;
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
-.status-dot {
+.sidebar-user:hover {
+  background: #2c2c29;
+  border-color: #454540;
+}
+
+.sidebar-user-active {
+  background: #30302d;
+  border-color: #454540;
+}
+
+.sidebar-user-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 38px;
+  height: 38px;
   flex-shrink: 0;
 
-  width: 8px;
-  height: 8px;
-  margin-top: 4px;
+  overflow: hidden;
 
+  border: 1px solid #454540;
   border-radius: 50%;
-  background: #8dba8b;
+
+  background: #3a3a36;
+  color: #ffffff;
+
+  font-size: 15px;
+  font-weight: 700;
 }
 
-.sidebar-status div {
+.sidebar-user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sidebar-user-info {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
+
+  min-width: 0;
 }
 
-.sidebar-status strong {
-  color: #e5e5e0;
-  font-size: 11px;
-  font-weight: 600;
+.sidebar-user-info strong {
+  overflow: hidden;
+
+  color: #f4f4f0;
+  font-size: 12px;
+  font-weight: 650;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.sidebar-status small {
+.sidebar-user-info small {
+  overflow: hidden;
+
   color: #96968f;
   font-size: 10px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-user-arrow {
+  width: auto;
+  flex-shrink: 0;
+
+  color: #85857e;
+  font-size: 18px;
+}
+
+/* PERFIL SOMENTE NO RODAPÉ DO DESKTOP */
+
+@media (min-width: 701px) {
+  .navigation-profile-link {
+    display: none;
+  }
 }
 
 /* MOBILE */
@@ -312,8 +449,6 @@ function isActive(item) {
     right: 0;
     bottom: 0;
     left: 0;
-
-    z-index: 1100;
 
     width: 100%;
     height: auto;
@@ -362,6 +497,11 @@ function isActive(item) {
     font-size: 20px;
   }
 
+  .navigation-avatar {
+    width: 24px;
+    height: 24px;
+  }
+
   .navigation-label {
     max-width: 100%;
     font-size: 10px;
@@ -369,8 +509,11 @@ function isActive(item) {
   }
 }
 
+/* ACESSIBILIDADE */
+
 @media (prefers-reduced-motion: reduce) {
-  .navigation-link {
+  .navigation-link,
+  .sidebar-user {
     transition: none;
   }
 }
