@@ -33,6 +33,7 @@ function drop(event, status) {
         v-for="task in tasks.filter((item) => item.status === status)"
         :key="task.id"
         :task="task"
+        :project="projects.find((item) => item.id === task.projeto)"
         :busy="busy"
         @open="emit('open', $event)"
       />
