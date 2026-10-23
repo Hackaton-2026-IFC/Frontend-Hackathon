@@ -398,6 +398,25 @@
   border: 0;
   min-width: 0;
 }
+.task-form-edit-options {
+  padding: 16px;
+  border: 1px solid #000;
+  border-radius: 12px;
+  background: #fafafa;
+}
+.task-form-edit-options h3 {
+  margin-bottom: 14px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.task-form-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.task-form-edit-grid .task-form-assignee {
+  grid-column: 1 / -1;
+}
 .task-fields-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -517,7 +536,8 @@
   .task-toolbar select {
     max-width: 100%;
   }
-  .task-fields-grid {
+  .task-fields-grid,
+  .task-form-edit-grid {
     grid-template-columns: 1fr;
   }
   .task-dialog-header,
