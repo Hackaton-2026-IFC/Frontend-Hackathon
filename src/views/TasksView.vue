@@ -59,7 +59,7 @@ function saved(task) {
 </script>
 
 <template>
-  <main class="tasks-page">
+  <section class="tasks-page">
     <div class="tasks-container">
       <RouterLink
         v-if="routeProject"
@@ -108,5 +108,5 @@ function saved(task) {
         </template>
       </template>
     </div>
-  </main>
+  </section>
 </template>
