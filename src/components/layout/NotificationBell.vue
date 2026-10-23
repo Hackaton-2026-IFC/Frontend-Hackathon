@@ -1,7 +1,9 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import notificationsApi from '@/api/notificationsApi'
 
+const router = useRouter()
 const open = ref(false)
 const loading = ref(false)
 const error = ref('')
@@ -47,6 +49,15 @@ async function markRead(item) {
     unread.value = Math.max(0, unread.value - 1)
   } catch (err) {
     error.value = message(err)
+  }
+}
+
+async function openNotification(item) {
+  await markRead(item)
+
+  if (item.link) {
+    open.value = false
+    await router.push(item.link)
   }
 }
 
@@ -117,7 +128,7 @@ onBeforeUnmount(() => {
           type="button"
           class="notification-item"
           :class="{ unread: !item.lida }"
-          @click="markRead(item)"
+          @click="openNotification(item)"
         >
           <span class="notification-dot" aria-hidden="true"></span>
 
