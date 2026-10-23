@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
-import taskApi, {
+import {
   TASK_PRIORITIES,
   TASK_STATUSES,
   formatDeadline,
@@ -18,12 +18,12 @@ const confirmDelete = ref(false)
 const checklistTitle = ref('')
 const resourceTitle = ref('')
 const resourceUrl = ref('')
-const resources = ref([])
-const resourceLoading = ref(true)
-const resourceBusy = ref(false)
-const resourceError = ref('')
+const resourceValidationError = ref('')
 const previousFocus = document.activeElement
-const busy = computed(() => store.busy || resourceBusy.value)
+const busy = computed(() => store.busy)
+const resources = computed(() => store.resourcesByTask[props.task.id] || [])
+const resourceLoading = computed(() => Boolean(store.resourcesLoading[props.task.id]))
+const resourceError = computed(() => store.resourceErrors[props.task.id] || '')
 const checklist = computed(() =>
   [...(props.task.microtarefas || [])].sort((a, b) => a.ordem - b.ordem),
 )
@@ -35,16 +35,10 @@ onBeforeUnmount(() => previousFocus?.focus())
 function close() {
   if (!busy.value) emit('close')
 }
-async function loadResources() {
-  resourceLoading.value = true
-  resourceError.value = ''
-  try {
-    resources.value = await taskApi.resources(props.task.id)
-  } catch (err) {
-    resourceError.value = taskError(err)
-  } finally {
-    resourceLoading.value = false
-  }
+function loadResources() {
+  store.loadResources(props.task.id).catch(() => {
+    // O erro é gerenciado pela store e exibido no modal.
+  })
 }
 function selectStatus(event) {
   changeStatus(event.target.value)
@@ -84,26 +78,22 @@ async function updateChecklist(item = null) {
 }
 async function addResource() {
   if (busy.value) return
-  resourceError.value = ''
+  resourceValidationError.value = ''
   const url = safeResourceUrl(resourceUrl.value)
   if (!url) {
-    resourceError.value = 'Informe um link HTTP ou HTTPS válido.'
+    resourceValidationError.value = 'Informe um link HTTP ou HTTPS válido.'
     return
   }
-  resourceBusy.value = true
   try {
-    const resource = await taskApi.addResource(props.task.id, {
+    await store.addResource(props.task.id, {
       titulo: resourceTitle.value.trim(),
       url,
       tipo: 'link',
     })
-    resources.value.unshift(resource)
     resourceTitle.value = ''
     resourceUrl.value = ''
-  } catch (err) {
-    resourceError.value = taskError(err)
-  } finally {
-    resourceBusy.value = false
+  } catch {
+    // A store guarda o erro do backend, sem alterar a lista.
   }
 }
 </script>
@@ -180,9 +170,9 @@ async function addResource() {
       <section class="task-detail-section">
         <h3>Materiais de apoio</h3>
         <p v-if="resourceLoading" role="status">Carregando links...</p>
-        <p v-if="resourceError" class="task-error" role="alert">
-          {{ resourceError }}
-          <button class="task-button" :disabled="resourceBusy" @click="loadResources">
+        <p v-if="resourceValidationError || resourceError" class="task-error" role="alert">
+          {{ resourceValidationError || resourceError }}
+          <button class="task-button" :disabled="busy || resourceLoading" @click="loadResources">
             Recarregar
           </button>
         </p>
@@ -213,7 +203,7 @@ async function addResource() {
               placeholder="https://"
               :disabled="busy" /></label
           ><button class="task-button" :disabled="busy || !resourceTitle.trim()">
-            {{ resourceBusy ? 'Adicionando...' : 'Adicionar link' }}
+            {{ store.busy ? 'Adicionando...' : 'Adicionar link' }}
           </button>
         </form>
       </section>

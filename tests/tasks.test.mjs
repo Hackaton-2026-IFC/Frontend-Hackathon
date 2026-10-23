@@ -95,6 +95,40 @@ try {
     assert.equal(safeResourceUrl('data:text/html,test'), null)
     assert.equal(safeResourceUrl('https://example.com/doc'), 'https://example.com/doc')
   })
+  await test('resource requests run through the store and stay scoped to each task', async () => {
+    setActivePinia(createPinia())
+    const store = useTaskStore()
+    const calls = []
+    handler = (config) => {
+      calls.push(`${config.method} ${config.url}`)
+      if (config.method === 'get') {
+        return [{ id: 8, titulo: 'Material existente', tarefa: 20 }]
+      }
+      return { id: 9, tarefa: 20, ...JSON.parse(config.data) }
+    }
+    await store.loadResources(20)
+    assert.equal(store.resourcesByTask[20][0].id, 8)
+    assert.deepEqual(store.resourcesByTask[21] || [], [])
+    await store.addResource(20, { titulo: 'Novo link', url: 'https://example.com', tipo: 'link' })
+    assert.deepEqual(store.resourcesByTask[20].map((item) => item.id), [9, 8])
+    assert.deepEqual(calls, ['get tarefas/20/recursos/', 'post tarefas/20/recursos/'])
+    assert.equal(store.resourcesLoading[20], false)
+    assert.equal(store.busy, false)
+  })
+  await test('resource API errors remain in the store without inserting fake entries', async () => {
+    setActivePinia(createPinia())
+    const store = useTaskStore()
+    handler = () => {
+      throw { response: { data: { url: ['Use um link HTTP ou HTTPS.'] } } }
+    }
+    await assert.rejects(store.loadResources(30))
+    assert.match(store.resourceErrors[30], /url/)
+    assert.equal(store.resourcesLoading[30], false)
+    await assert.rejects(store.addResource(30, { titulo: 'Inválido', url: 'ftp://x', tipo: 'link' }))
+    assert.match(store.resourceErrors[30], /HTTPS/)
+    assert.deepEqual(store.resourcesByTask[30] || [], [])
+    assert.equal(store.busy, false)
+  })
 } finally {
   await server.close()
 }

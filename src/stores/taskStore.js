@@ -8,6 +8,9 @@ export const useTaskStore = defineStore('tasks', () => {
   const loading = ref(false)
   const error = ref('')
   const busy = ref(false)
+  const resourcesByTask = ref({})
+  const resourcesLoading = ref({})
+  const resourceErrors = ref({})
 
   function replace(task) {
     const index = tasks.value.findIndex((item) => item.id === task.id)
@@ -22,6 +25,9 @@ export const useTaskStore = defineStore('tasks', () => {
     error.value = ''
     tasks.value = []
     projects.value = []
+    resourcesByTask.value = {}
+    resourcesLoading.value = {}
+    resourceErrors.value = {}
     try {
       const [allTasks, allProjects] = await Promise.all([taskApi.list(), taskApi.projects()])
       tasks.value = allTasks
@@ -53,6 +59,9 @@ export const useTaskStore = defineStore('tasks', () => {
     mutate(async () => {
       await taskApi.remove(id)
       tasks.value = tasks.value.filter((item) => item.id !== id)
+      delete resourcesByTask.value[id]
+      delete resourcesLoading.value[id]
+      delete resourceErrors.value[id]
     })
   async function checklist(taskId, item, title) {
     return mutate(async () => {
@@ -67,5 +76,50 @@ export const useTaskStore = defineStore('tasks', () => {
     })
   }
 
-  return { tasks, projects, loading, error, busy, load, create, update, remove, checklist }
+  async function loadResources(taskId) {
+    if (resourcesLoading.value[taskId]) return
+    resourcesLoading.value[taskId] = true
+    resourceErrors.value[taskId] = ''
+    try {
+      const resources = await taskApi.resources(taskId)
+      resourcesByTask.value[taskId] = resources
+      return resources
+    } catch (err) {
+      resourceErrors.value[taskId] = taskError(err)
+      throw err
+    } finally {
+      resourcesLoading.value[taskId] = false
+    }
+  }
+
+  const addResource = (taskId, payload) =>
+    mutate(async () => {
+      resourceErrors.value[taskId] = ''
+      try {
+        const resource = await taskApi.addResource(taskId, payload)
+        resourcesByTask.value[taskId] = [resource, ...(resourcesByTask.value[taskId] || [])]
+        return resource
+      } catch (err) {
+        resourceErrors.value[taskId] = taskError(err)
+        throw err
+      }
+    })
+
+  return {
+    tasks,
+    projects,
+    loading,
+    error,
+    busy,
+    resourcesByTask,
+    resourcesLoading,
+    resourceErrors,
+    load,
+    create,
+    update,
+    remove,
+    checklist,
+    loadResources,
+    addResource,
+  }
 })

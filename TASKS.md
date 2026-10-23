@@ -11,7 +11,7 @@
 - `src/components/tasks/TaskCard.vue`: resumo e seletor de situação, também utilizável no celular/teclado.
 - `src/components/tasks/TaskForm.vue`: criação e edição.
 - `src/components/tasks/TaskDetails.vue`: detalhes, exclusão confirmada, checklist e links.
-- `src/stores/taskStore.js`: estado e operações.
+- `src/stores/taskStore.js`: estado, carregamento, erros e operações de tarefas, checklist e materiais.
 - `src/api/taskApi.js`: contrato HTTP e funções auxiliares.
 - `src/assets/css/tasks.css`: estilos compartilhados e responsividade.
 
@@ -23,7 +23,7 @@ A listagem usa `tarefas/kanban/`, que já retorna todos os projetos autorizados.
 
 Criação/edição usam os campos reais `projeto`, `titulo`, `descricao`, `prioridade`, `status`, `responsavel`, `data_limite`. As prioridades são muito baixa, baixa, neutra, alta e muito alta; `planejado` é apresentado como “A fazer”. A edição preserva os campos avançados não expostos no formulário através de PATCH.
 
-Microtarefas seguem a ordem e as dependências validadas pelo servidor. Depois de alterá-las, o frontend relê a tarefa, pois o servidor pode recalcular sua situação. Links são criados em `tarefas/:id/recursos/`. URLs exibidas são limitadas a HTTP/HTTPS.
+Microtarefas seguem a ordem e as dependências validadas pelo servidor. Depois de alterá-las, o frontend relê a tarefa, pois o servidor pode recalcular sua situação. Links são carregados e criados em `tarefas/:id/recursos/` exclusivamente por ações da store; nenhum componente ou view faz requisições HTTP. URLs exibidas são limitadas a HTTP/HTTPS.
 
 ## Pendências do backend
 
@@ -37,6 +37,6 @@ node --test tests/tasks.test.mjs
 npm run build
 ```
 
-Os testes usam respostas HTTP simuladas para verificar paginação, CRUD, erros de validação, recálculo após checklist, prazos e links seguros. Não substituem testes com backend autenticado.
+Os testes usam respostas HTTP simuladas para verificar paginação, CRUD, erros de validação, recálculo após checklist, carregamento e criação de materiais pela store, prazos e links seguros. Não substituem testes com backend autenticado.
 
 Roteiro manual: entrar em `/tasks`, criar tarefa em um projeto, abrir detalhes, editar, movimentar com seletor ou arraste, concluir etapas em ordem, adicionar link e excluir com confirmação. Conferir filtros combinados e layout no celular. O build apresenta avisos existentes sobre Tailwind e `:deep` no CSS global/home; esses estilos não foram alterados nesta funcionalidade.
