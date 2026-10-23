@@ -3,12 +3,14 @@ import { useAuthStore } from '@/stores/authStore'
 
 import AuthLayout from '@/components/layout/AuthLayout.vue'
 import LoginView from '@/views/LoginView.vue'
-import RegisterView from '@/views/RegisterView.vue'
-import HomeView from '@/views/HomeView.vue'
-import ProfileView from '@/views/ProfileView.vue'
+import RegisterView from '@/views/registerView.vue'
+import HomeView from '@/views/homeView.vue'
+import ProfileView from '@/views/profileView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 
 const routes = [
+  { path: '/tasks', name: 'tasks', component: () => import('@/views/TasksView.vue'), meta: { requiresAuth: true } },
+  { path: '/projects/:projectId/tasks', name: 'project-tasks', component: () => import('@/views/TasksView.vue'), meta: { requiresAuth: true } },
   {
     path: '/',
     component: AuthLayout,

@@ -6,6 +6,7 @@ const route = useRoute()
 const authStore = useAuthStore()
 
 const navigationItems = [
+  { label: 'Tarefas', to: '/tasks', symbol: 'mdi mdi-checkbox-marked-outline' },
   { label: 'Início', to: '/home', symbol: 'mdi mdi-home-outline' },
   { label: 'Projetos', to: '/projects', symbol: 'mdi mdi-list-box-outline' },
   { label: 'Perfil', to: '/profile', symbol: 'mdi mdi-account-outline' },
@@ -14,10 +15,7 @@ const navigationItems = [
 
 function isActive(item) {
   if (item.to === '/projects') {
-    return (
-      route.path === '/projects' ||
-      route.path.startsWith('/projects/')
-    )
+    return route.path === '/projects' || route.path.startsWith('/projects/')
   }
 
   return route.path === item.to
@@ -38,10 +36,7 @@ function isActive(item) {
     <div class="sidebar-section">
       <span class="section-label">MENU PRINCIPAL</span>
 
-      <nav
-        class="sidebar-navigation"
-        aria-label="Navegação principal"
-      >
+      <nav class="sidebar-navigation" aria-label="Navegação principal">
         <RouterLink
           v-for="item in navigationItems"
           :key="item.to"
@@ -50,8 +45,7 @@ function isActive(item) {
           :class="{ 'navigation-link-active': isActive(item) }"
           :aria-current="isActive(item) ? 'page' : undefined"
         >
-          <span :class="item.symbol" aria-hidden="true">
-          </span>
+          <span :class="item.symbol" aria-hidden="true"> </span>
 
           <span class="navigation-label">
             {{ item.label }}
