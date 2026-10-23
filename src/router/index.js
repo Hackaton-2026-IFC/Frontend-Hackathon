@@ -3,9 +3,9 @@ import { useAuthStore } from '@/stores/authStore'
 
 import AuthLayout from '@/components/layout/AuthLayout.vue'
 import LoginView from '@/views/LoginView.vue'
-import CadastroView from '@/views/CadastroView.vue'
-import homeView from '@/views/homeView.vue'
-import profileView from '@/views/profileView.vue'
+import RegisterView from '@/views/RegisterView.vue'
+import HomeView from '@/views/HomeView.vue'
+import ProfileView from '@/views/ProfileView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 
 const routes = [
@@ -27,14 +27,14 @@ const routes = [
         path: 'registro',
         alias: ['cadastro', 'register'],
         name: 'register',
-        component: CadastroView,
+        component: RegisterView,
       },
     ],
   },
   {
     path: '/home',
     name: 'home',
-    component: homeView,
+    component: HomeView,
     meta: {
       requiresAuth: true,
     },
@@ -42,7 +42,7 @@ const routes = [
   {
     path: '/projects',
     name: 'projects',
-    component: homeView,
+    component: HomeView,
     meta: {
       requiresAuth: true,
     },
@@ -50,7 +50,7 @@ const routes = [
   {
     path: '/settings',
     name: 'settings',
-    component: homeView,
+    component: HomeView,
     meta: {
       requiresAuth: true,
     },
@@ -58,7 +58,7 @@ const routes = [
   {
     path: '/profile',
     name: 'profile',
-    component: profileView,
+    component: ProfileView,
     meta: {
       requiresAuth: true,
     },
@@ -82,7 +82,6 @@ const router = createRouter({
 router.beforeEach((to) => {
   const authStore = useAuthStore()
 
-  // Se a rota exige autenticação e o usuário NÃO está autenticado
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return {
       name: 'welcome',
@@ -90,7 +89,6 @@ router.beforeEach((to) => {
     }
   }
 
-  // Se a rota é exclusiva para convidados (welcome/register) e o usuário JÁ está autenticado
   if (to.meta.guestOnly && authStore.isAuthenticated) {
     return { name: 'home' }
   }

@@ -1,77 +1,65 @@
+
 <script setup>
-import { onMounted, ref } from 'vue'
-import { useRegisterStore } from '@/stores/registerStore'
-import { useTemplateStore } from '@/stores/templateStore'
+import { computed, ref } from 'vue'
+import CadastroForm from '@/components/auth/RegisterForm.vue'
+import { useRegisterStore } from '@/stores/registerStore.js'
 
 const registerStore = useRegisterStore()
-const templateStore = useTemplateStore()
 
-const name = ref('')
-const email = ref('')
-const password = ref('')
-const registrationComplete = ref(false)
+const loading = ref(false)
+const error = computed(() => registerStore.errorMessage)
 
-onMounted(() => {
-  registerStore.clearError()
-})
+async function handleCadastro(data) {
+  loading.value = true
 
-async function handleRegister() {
-  registrationComplete.value = await registerStore.register({
-    name: name.value.trim(),
-    email: email.value,
-    password: password.value,
-  })
+  try {
+    await registerStore.register(data)
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
 <template>
-  <h1>Cadastro</h1>
-
-  <template v-if="registrationComplete">
-    <p role="status">Cadastro realizado com sucesso.</p>
-    <RouterLink :to="{ name: 'welcome' }">Voltar para o login</RouterLink>
-  </template>
-
-  <form v-else @submit.prevent="handleRegister">
-    <label for="register-name">Nome completo</label>
-    <input
-      id="register-name"
-      v-model="name"
-      type="text"
-      autocomplete="name"
-      required
+  <div class="auth-form-panel auth-register-panel">
+    <CadastroForm
+      :loading="loading"
+      :error="error"
+      @submit="handleCadastro"
     />
-
-    <label for="register-email">E-mail</label>
-    <input
-      id="register-email"
-      v-model="email"
-      type="email"
-      autocomplete="email"
-      required
-    />
-
-    <label for="register-password">Senha (mínimo de 8 caracteres)</label>
-    <input
-      id="register-password"
-      v-model="password"
-      type="password"
-      autocomplete="new-password"
-      minlength="8"
-      required
-    />
-
-    <button type="submit" :disabled="templateStore.isLoading">
-      Criar conta
-    </button>
-  </form>
-
-  <p v-if="registerStore.errorMessage" role="alert">
-    {{ registerStore.errorMessage }}
-  </p>
-
-  <p v-if="!registrationComplete">
-    Já tem uma conta?
-    <RouterLink :to="{ name: 'welcome' }">Entrar</RouterLink>
-  </p>
+  </div>
 </template>
+
+<style scoped>
+.auth-form-panel {
+  position: absolute;
+  inset-block: 0;
+  right: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 50%;
+  min-width: 0;
+  padding: clamp(24px, 4vw, 56px);
+  box-sizing: border-box;
+}
+
+@media (max-width: 767px) {
+  .auth-form-panel {
+    inset-block: 0 150px;
+    right: auto;
+    left: 0;
+
+    width: 100%;
+    padding: 24px;
+  }
+}
+
+@media (max-width: 380px) {
+  .auth-form-panel {
+    padding: 18px;
+  }
+}
+</style>

@@ -22,17 +22,17 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: '/icons/icon-192x192.png',
+            src: '/icons/momentum-192x192.png',
             sizes: '192x192',
             type: 'image/png',
           },
           {
-            src: '/icons/icon-512x512.png',
+            src: '/icons/momentum-512x512.png',
             sizes: '512x512',
             type: 'image/png',
           },
           {
-            src: '/icons/icon-512x512.png',
+            src: '/icons/momentum-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
