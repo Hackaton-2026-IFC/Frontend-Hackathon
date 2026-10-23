@@ -19,11 +19,11 @@ const form = reactive({
   descricao: props.task?.descricao || '',
   prioridade: props.task?.prioridade || 'neutra',
   status: props.task?.status || props.initialStatus,
-  responsavel: props.task?.responsavel || '',
+  responsavel: props.task?.responsavel == null ? '' : String(props.task.responsavel),
   data_limite: props.task?.data_limite || '',
 })
 const members = computed(
-  () => props.projects.find((project) => project.id === Number(form.projeto))?.participantes || [],
+  () => props.projects.find((project) => String(project.id) === String(form.projeto))?.participantes || [],
 )
 onMounted(() => dialog.value.showModal())
 onBeforeUnmount(() => previousFocus?.focus())
@@ -38,7 +38,7 @@ async function save() {
       ...form,
       projeto: Number(form.projeto),
       titulo: form.titulo.trim(),
-      responsavel: form.responsavel ? Number(form.responsavel) : null,
+      responsavel: form.responsavel === '' ? null : Number(form.responsavel),
       data_limite: form.data_limite || null,
     }
     const task = props.task
@@ -86,38 +86,48 @@ async function save() {
             autofocus
             placeholder="O que precisa ser feito?"
         /></label>
-        <label
-          >Descrição<textarea
-            v-model="form.descricao"
-            rows="4"
-            placeholder="Detalhe a atividade..."
-          ></textarea>
+        <section class="task-form-edit-options" aria-labelledby="task-form-edit-options-title">
+          <h3 id="task-form-edit-options-title">Responsável, prioridade e prazo</h3>
+          <div class="task-form-edit-grid">
+            <label class="task-form-assignee">
+              Responsável
+              <select v-model="form.responsavel">
+                <option value="">Sem responsável</option>
+                <option
+                  v-for="member in members"
+                  :key="member.usuario"
+                  :value="String(member.usuario)"
+                >
+                  {{ member.usuario_detalhes?.name || member.usuario_detalhes?.username || 'Participante' }}
+                </option>
+              </select>
+            </label>
+            <label>
+              Prioridade
+              <select v-model="form.prioridade">
+                <option v-for="(label, value) in TASK_PRIORITIES" :key="value" :value="value">
+                  {{ label }}
+                </option>
+              </select>
+            </label>
+            <label>
+              Prazo
+              <input v-model="form.data_limite" type="date" />
+            </label>
+          </div>
+        </section>
+        <label>
+          Descrição
+          <textarea v-model="form.descricao" rows="4" placeholder="Detalhe a atividade..."></textarea>
         </label>
-        <div class="task-fields-grid">
-          <label
-            >Prioridade<select v-model="form.prioridade">
-              <option v-for="(label, value) in TASK_PRIORITIES" :key="value" :value="value">
-                {{ label }}
-              </option>
-            </select></label
-          >
-          <label
-            >Situação<select v-model="form.status">
-              <option v-for="(label, value) in TASK_STATUSES" :key="value" :value="value">
-                {{ label }}
-              </option>
-            </select></label
-          >
-          <label>Prazo<input v-model="form.data_limite" type="date" /></label>
-          <label
-            >Responsável<select v-model="form.responsavel">
-              <option value="">Sem responsável</option>
-              <option v-for="member in members" :key="member.usuario" :value="member.usuario">
-                {{ member.usuario_detalhes?.name || member.usuario_detalhes?.username }}
-              </option>
-            </select></label
-          >
-        </div>
+        <label>
+          Situação
+          <select v-model="form.status">
+            <option v-for="(label, value) in TASK_STATUSES" :key="value" :value="value">
+              {{ label }}
+            </option>
+          </select>
+        </label>
       </fieldset>
       <p v-if="error" class="task-error" role="alert">{{ error }}</p>
       <footer class="task-actions">
