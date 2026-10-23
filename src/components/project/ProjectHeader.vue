@@ -1,4 +1,6 @@
 <script setup>
+import { RouterLink } from 'vue-router'
+
 defineProps({
   project: {
     type: Object,
@@ -30,6 +32,13 @@ const statuses = {
     </div>
 
     <div class="project-actions">
+      <RouterLink
+        class="board-link"
+        :to="{ name: 'project-tasks', params: { projectId: project.id } }"
+      >
+        Ver tarefas no Kanban ↗
+      </RouterLink>
+
       <button type="button" @click="emit('edit')">
         Editar projeto
       </button>
@@ -92,7 +101,11 @@ p {
   gap: 10px;
 }
 
-button {
+button,
+.board-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 44px;
   padding: 10px 18px;
   border: 1px solid #000;
@@ -110,11 +123,19 @@ button {
   color: #000;
 }
 
-button:hover {
+.board-link {
+  background: #fff;
+  color: #000;
+  text-decoration: none;
+}
+
+button:hover,
+.board-link:hover {
   text-decoration: underline;
 }
 
-button:focus-visible {
+button:focus-visible,
+.board-link:focus-visible {
   outline: 2px solid #000;
   outline-offset: 4px;
 }
