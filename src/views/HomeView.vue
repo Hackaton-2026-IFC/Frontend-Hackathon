@@ -69,10 +69,10 @@ onMounted(() => {
   <main class="home-page">
     <section class="home-welcome">
       <div class="home-welcome-content">
-        <span class="home-eyebrow">MOMENTUM / SEU ESPAÇO</span>
+        <span class="home-eyebrow">SEU ESPAÇO DE TRABALHO</span>
         <h1>Olá, {{ firstName }}<span class="home-title-period">.</span></h1>
         <p class="home-welcome-description">
-          Veja o que merece sua atenção hoje e continue de onde o projeto parou.
+          Tudo em movimento, tudo no seu ritmo. Organize suas prioridades e siga em frente.
         </p>
         <div class="home-actions">
           <a href="#seu-foco" class="home-primary-button">
@@ -85,11 +85,16 @@ onMounted(() => {
         </div>
       </div>
       <div class="home-welcome-decoration" aria-hidden="true">
-        <span class="decoration-circle decoration-circle-one"></span>
-        <span class="decoration-circle decoration-circle-two"></span>
-        <span class="decoration-square"></span>
+        <div class="home-hero-preview">
+          <div class="home-hero-preview__top"><span class="home-hero-preview__mark"></span><span>VISÃO GERAL</span><span class="mdi mdi-arrow-top-right"></span></div>
+          <div class="home-hero-preview__title">Seu próximo passo começa aqui.</div>
+          <div class="home-hero-preview__line home-hero-preview__line--long"></div>
+          <div class="home-hero-preview__line"></div>
+          <div class="home-hero-preview__progress"><span></span></div>
+          <div class="home-hero-preview__bottom"><span>FOCO NO QUE IMPORTA</span><span>↗</span></div>
+        </div>
       </div>
-      <span class="home-welcome-index" aria-hidden="true">WORKSPACE / HOME</span>
+      
     </section>
 
     <section id="seu-foco" class="home-intelligence">
