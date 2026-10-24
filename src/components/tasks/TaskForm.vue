@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { TASK_PRIORITIES, TASK_STATUSES, taskError } from '@/api/taskApi'
 import { useTaskStore } from '@/stores/taskStore'
 
@@ -12,6 +12,9 @@ const props = defineProps({
 const emit = defineEmits(['cancel', 'saved'])
 const store = useTaskStore()
 const error = ref('')
+const weatherLoading = ref(false)
+const weatherError = ref('')
+const forecast = ref(null)
 
 const form = reactive({
   projeto: props.task?.projeto ?? props.projectId ?? props.projects[0]?.id ?? '',
@@ -21,11 +24,42 @@ const form = reactive({
   status: props.task?.status ?? 'planejado',
   responsavel: props.task?.responsavel == null ? '' : String(props.task.responsavel),
   data_limite: props.task?.data_limite ?? '',
+  clima_influencia: props.task?.clima_influencia ?? false,
+  localizacao: props.task?.localizacao ?? '',
 })
 
 const members = computed(() =>
   props.projects.find((project) => String(project.id) === String(form.projeto))?.participantes || [],
 )
+
+const forecastLabel = computed(() => {
+  if (!forecast.value?.disponivel) return forecast.value?.motivo || ''
+  const rain = forecast.value.probabilidade_chuva_pct
+  return rain == null
+    ? 'Probabilidade de chuva indisponível.'
+    : `Probabilidade de chuva: ${rain}%`
+})
+
+watch(() => [form.clima_influencia, form.localizacao, form.data_limite], () => {
+  forecast.value = null
+  weatherError.value = ''
+})
+
+async function checkWeather() {
+  if (!props.task?.id || !form.clima_influencia) return
+  weatherError.value = ''
+  forecast.value = null
+  weatherLoading.value = true
+  try {
+    const { default: api } = await import('@/api/config')
+    const response = await api.get(`tarefas/${encodeURIComponent(props.task.id)}/clima/`)
+    forecast.value = response.data
+  } catch (err) {
+    weatherError.value = taskError(err)
+  } finally {
+    weatherLoading.value = false
+  }
+}
 
 function changeProject() {
   form.responsavel = ''
@@ -33,6 +67,10 @@ function changeProject() {
 
 async function save() {
   if (store.busy || !form.titulo.trim() || !form.projeto) return
+  if (form.clima_influencia && (!form.localizacao.trim() || !form.data_limite)) {
+    error.value = 'Para tarefas influenciadas pelo clima, informe a cidade e o prazo.'
+    return
+  }
 
   error.value = ''
 
@@ -44,6 +82,8 @@ async function save() {
       descricao: form.descricao.trim(),
       responsavel: form.responsavel === '' ? null : Number(form.responsavel),
       data_limite: form.data_limite || null,
+      clima_influencia: Boolean(form.clima_influencia),
+      localizacao: form.clima_influencia ? form.localizacao.trim() : '',
     }
 
     const savedTask = props.task
@@ -130,6 +170,40 @@ async function save() {
           </div>
         </section>
 
+        <section class="task-weather" aria-labelledby="task-weather-title">
+          <div class="task-weather-top">
+            <span class="mdi mdi-weather-partly-cloudy" aria-hidden="true"></span>
+            <div>
+              <h2 id="task-weather-title">Clima e planejamento</h2>
+              <p>Marque se chuva ou outras condições meteorológicas podem atrapalhar a tarefa.</p>
+            </div>
+          </div>
+          <label class="task-weather-toggle">
+            <input v-model="form.clima_influencia" type="checkbox" />
+            O clima influencia esta tarefa
+          </label>
+          <div v-if="form.clima_influencia" class="task-weather-fields">
+            <label>
+              Cidade da tarefa
+              <input v-model.trim="form.localizacao" maxlength="255" required type="text" placeholder="Ex.: Joinville, SC" />
+            </label>
+            <p class="task-weather-note">A previsão utiliza o prazo cadastrado e fica disponível para até 15 dias. O relatório da IA considera esse dado quando a previsão estiver disponível.</p>
+            <p v-if="!form.data_limite" class="task-weather-note">Defina também o prazo da tarefa para consultar a previsão.</p>
+            <button v-if="task?.id && form.data_limite" type="button" class="task-button" :disabled="weatherLoading" @click="checkWeather">
+              {{ weatherLoading ? 'Consultando clima...' : 'Consultar previsão salva' }}
+            </button>
+            <p v-if="weatherError" class="task-error" role="alert">{{ weatherError }}</p>
+            <div v-if="forecast" class="task-weather-forecast" role="status">
+              <strong>{{ forecastLabel }}</strong>
+              <template v-if="forecast.disponivel">
+                <p>{{ forecast.localizacao?.nome }} · {{ forecast.data }}</p>
+                <p>Máxima: {{ forecast.temperatura_maxima_c ?? '—' }} °C · Mínima: {{ forecast.temperatura_minima_c ?? '—' }} °C</p>
+                <small>Fonte: Open-Meteo · Previsão sujeita a mudanças</small>
+              </template>
+            </div>
+          </div>
+        </section>
+
         <label>
           Descrição
           <textarea
@@ -166,3 +240,15 @@ async function save() {
     </form>
   </section>
 </template>
+
+<style scoped>
+.task-weather{padding:18px;border:1px solid #d1d1ca;border-radius:13px;background:#f8f8f5;display:grid;gap:15px}
+.task-weather-top{display:flex;align-items:flex-start;gap:12px}.task-weather-top .mdi{font-size:26px}.task-weather h2{margin:0 0 5px;font-size:16px;letter-spacing:-.3px}.task-weather p{margin:0;color:#595952;font-size:12px;line-height:1.55}
+.task-weather-toggle{display:flex!important;align-items:center;gap:10px;font-size:13px;font-weight:700;cursor:pointer}
+.task-weather-toggle input{width:17px;height:17px;accent-color:#171716;flex:none}
+.task-weather-fields{display:grid;gap:12px}.task-weather-fields label{display:grid;gap:7px;font-weight:700;font-size:12px}
+.task-weather-fields input[type="text"]{width:100%;box-sizing:border-box;border:1px solid #c9c9c3;border-radius:10px;padding:11px;background:#fff;color:#171716}
+.task-weather-note{font-size:11px!important;color:#686861!important}
+.task-weather-forecast{padding:12px 14px;border:1px solid #d1d1ca;border-radius:10px;background:#fff;font-size:12px}
+.task-weather-forecast strong{display:block;margin-bottom:5px}.task-weather-forecast p{margin:4px 0}.task-weather-forecast small{color:#686861}
+</style>
