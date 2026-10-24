@@ -59,7 +59,7 @@
   background: var(--momentum-surface);
 }
 
-.app-shell :is(.project-grid, .home-focus-grid, .home-resources-grid, .notes-grid, .task-dashboard, .task-page__summary) > * {
+.app-shell :is(.project-grid, .home-focus-grid, .home-resources-grid, .task-dashboard, .task-page__summary) > * {
   min-width: 0;
 }
 
@@ -102,7 +102,7 @@
     padding: 28px 24px 40px;
   }
 
-  .app-shell :is(.project-grid, .home-focus-grid, .home-resources-grid, .notes-grid) {
+  .app-shell :is(.project-grid, .home-focus-grid, .home-resources-grid) {
     min-width: 0;
   }
 }
@@ -121,7 +121,7 @@
     min-width: 0;
   }
 
-  .app-shell :is(.project-grid, .home-focus-grid, .home-resources-grid, .notes-grid) {
+  .app-shell :is(.project-grid, .home-focus-grid, .home-resources-grid) {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -141,7 +141,8 @@
     min-height: 44px;
   }
 
-  .app-shell :is(.tasks-page, .task-page, .workspace, .notes-page) {
+  /* Não aplicar overflow ao contêiner do mural: ele usa drag-and-drop. */
+  .app-shell :is(.tasks-page, .task-page, .workspace) {
     overflow-x: clip;
   }
 }
@@ -159,5 +160,18 @@
 @media (prefers-reduced-motion: reduce) {
   .app-shell :is(.button, .task-button, .task-page__edit-button, .refresh-button, .accept-button, .reject-button, .project-card, .invite-card, .note-card) {
     transition: none;
+  }
+}
+
+/* O mural utiliza masonry (CSS columns), não grid. Preserve a ordem e o arraste. */
+.app-shell .notes-page .notes-grid {
+  display: block;
+  columns: 3 280px;
+  column-gap: 18px;
+}
+
+@media (max-width: 700px) {
+  .app-shell .notes-page .notes-grid {
+    columns: 1;
   }
 }
