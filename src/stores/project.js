@@ -72,7 +72,6 @@ function prepararDados(dados) {
     status,
   }
 
-  // Envia os campos opcionais somente quando o formulário os informa.
   if (dados.icone !== undefined) {
     payload.icone = dados.icone
   }
@@ -156,14 +155,18 @@ export const useProjectStore = defineStore('projects', () => {
         let pagina = 1
 
         while (true) {
-          const { data } = await projectApi.listar({ page: pagina })
+          const { data } = await projectApi.listar({
+            page: pagina,
+          })
 
           const lista = Array.isArray(data)
             ? data
             : data?.results
 
           if (!Array.isArray(lista)) {
-            throw new Error('O servidor retornou uma lista de projetos inválida.')
+            throw new Error(
+              'O servidor retornou uma lista de projetos inválida.',
+            )
           }
 
           let novosProjetos = 0
@@ -178,7 +181,6 @@ export const useProjectStore = defineStore('projects', () => {
             }
           }
 
-          // Resposta sem paginação.
           if (Array.isArray(data)) {
             break
           }
@@ -192,7 +194,6 @@ export const useProjectStore = defineStore('projects', () => {
             break
           }
 
-          // Evita repetir a mesma página indefinidamente.
           if (novosProjetos === 0) {
             throw new Error(
               'Não foi possível avançar na paginação dos projetos. Confira se projectApi.listar envia o parâmetro page.',
