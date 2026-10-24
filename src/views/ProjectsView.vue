@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useProjectStore } from '@/stores/project'
 import ProjectEditModal from '@/components/project/ProjectEditModal.vue'
+import projectsApi from '@/api/projectsApi'
 
 const store = useProjectStore()
 
@@ -13,6 +14,29 @@ const error = ref('')
 const createError = ref('')
 const showCreate = ref(false)
 const saving = ref(false)
+const projectProgress = ref({})
+
+function progressFor(id) {
+  return projectProgress.value[String(id)] || { loading: true, total: 0, completed: 0, percent: 0 }
+}
+
+async function loadProgress(projects) {
+  const ids = new Set(projects.map(project => String(project.id)))
+  projectProgress.value = Object.fromEntries([...ids].map(id => [id, { loading: true, total: 0, completed: 0, percent: 0 }]))
+  await Promise.allSettled([...ids].map(async id => {
+    try {
+      const { data } = await projectsApi.kanban(id)
+      const board = data?.kanban || data
+      const groups = ['planejado', 'em_andamento', 'concluido']
+      const lists = groups.map(key => Array.isArray(board?.[key]) ? board[key] : [])
+      const total = lists.reduce((sum, list) => sum + list.length, 0)
+      const completed = lists[2].length
+      projectProgress.value[id] = { loading: false, total, completed, percent: total ? Math.round(completed / total * 100) : 0 }
+    } catch {
+      projectProgress.value[id] = { loading: false, unavailable: true, total: 0, completed: 0, percent: 0 }
+    }
+  }))
+}
 
 const statuses = {
   planned: 'Planejado',
@@ -44,6 +68,7 @@ async function loadProjects() {
 
   try {
     await store.fetchProjects()
+    await loadProgress(store.projects)
   } catch (e) {
     error.value = e.message || 'Não foi possível carregar os projetos.'
   }
@@ -72,7 +97,8 @@ async function createProject(data) {
   createError.value = ''
 
   try {
-    await store.createProject(data)
+    const created = await store.createProject(data)
+    await loadProgress([created, ...store.projects])
     clearFilters()
     showCreate.value = false
   } catch (e) {
@@ -161,18 +187,45 @@ onMounted(loadProjects)
               params: { id: project.id },
             }"
           >
-            <span class="project-status">
-              {{ statuses[project.status] || project.status }}
-            </span>
+            <div class="project-card__top">
+              <span class="project-status">
+                <span class="project-status__dot" aria-hidden="true"></span>
+                {{ statuses[project.status] || project.status }}
+              </span>
+              <span class="project-card__arrow" aria-hidden="true">↗</span>
+            </div>
 
-            <h2>{{ project.name }}</h2>
-            <p>
-              {{ project.description || 'Sem descrição por enquanto.' }}
-            </p>
+            <div class="project-card__body">
+              <h2>{{ project.name }}</h2>
+              <p>{{ project.description || 'Sem descrição por enquanto.' }}</p>
+            </div>
+
+            <div class="project-card__progress">
+              <div class="project-card__progress-heading">
+                <span>Progresso das tarefas</span>
+                <strong v-if="!progressFor(project.id).loading && !progressFor(project.id).unavailable">{{ progressFor(project.id).percent }}%</strong>
+                <span v-else class="project-card__progress-placeholder">{{ progressFor(project.id).loading ? 'Carregando' : 'Indisponível' }}</span>
+              </div>
+              <div
+                class="project-card__progress-track"
+                role="progressbar"
+                :aria-label="`Progresso do projeto ${project.name}`"
+                :aria-valuenow="progressFor(project.id).unavailable ? undefined : progressFor(project.id).percent"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              >
+                <span :style="{ width: `${progressFor(project.id).percent}%` }"></span>
+              </div>
+              <p class="project-card__progress-caption">
+                <template v-if="progressFor(project.id).loading">Buscando tarefas...</template>
+                <template v-else-if="progressFor(project.id).unavailable">Não foi possível carregar o progresso.</template>
+                <template v-else>{{ progressFor(project.id).completed }} de {{ progressFor(project.id).total }} tarefas concluídas</template>
+              </p>
+            </div>
 
             <span class="project-card__footer">
-              Abrir projeto
-              <span aria-hidden="true">↗</span>
+              Ver detalhes do projeto
+              <span aria-hidden="true">→</span>
             </span>
           </RouterLink>
         </div>
@@ -493,4 +546,27 @@ input::placeholder {
     transition: none;
   }
 }
+
+/* Cartões com hierarquia visual e progresso real das tarefas */
+.projects-page .project-card{align-items:stretch;gap:0;min-height:286px;padding:24px;border:1px solid #e5e5e5;border-radius:16px;box-shadow:0 2px 8px rgb(0 0 0 / 2%);transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.projects-page .project-card:hover{transform:translateY(-3px);border-color:#c9c9c9;box-shadow:0 12px 28px rgb(0 0 0 / 8%)}
+.project-card__top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.projects-page .project-status{display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border:1px solid #e7e7e7;border-radius:999px;background:#f8f8f8;color:#444;font-size:11px;font-weight:600}
+.project-status__dot{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#171717}
+.project-card__arrow{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:#f5f5f5;color:#555;font-size:16px}
+.project-card__body{flex:1 1 auto;min-width:0}
+.projects-page .project-card h2{margin:22px 0 8px;font-size:21px;letter-spacing:-.035em;line-height:1.3}
+.projects-page .project-card__body>p{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;margin:0 0 24px;color:#737373;font-size:13px;line-height:1.55}
+.project-card__progress{margin-top:auto;padding:15px 0 18px;border-top:1px solid #ededed}
+.project-card__progress-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;color:#5d5d5d;font-size:12px;font-weight:600}
+.project-card__progress-heading strong{color:#171717;font-size:14px;font-weight:750}
+.project-card__progress-placeholder{color:#888;font-size:11px;font-weight:400}
+.project-card__progress-track{height:8px;overflow:hidden;border-radius:999px;background:#ececec}
+.project-card__progress-track>span{display:block;height:100%;border-radius:inherit;background:#171717;transition:width .25s ease}
+.project-card__progress-caption{margin:9px 0 0;color:#888;font-size:11px;line-height:1.4}
+.projects-page .project-card__footer{align-items:center;padding-top:15px;margin-top:0;border-top:1px solid #ededed;color:#171717;font-size:12px;font-weight:700}
+.projects-page .project-card__footer>span{font-size:18px}
+.projects-page .project-card:focus-visible{outline:3px solid #737373;outline-offset:3px}
+@media(max-width:650px){.projects-page .project-card{min-height:260px;padding:20px}.projects-page .project-card h2{font-size:20px}}
+@media(prefers-reduced-motion:reduce){.projects-page .project-card,.project-card__progress-track>span{transition:none}}
 </style>
