@@ -26,3 +26,10 @@ prioridade automática em `src/utils/taskPresentation.js` foi preservada.
 
 Executar `node --test tests/task-roadmap.test.mjs tests/task-presentation.test.mjs tests/tasks.test.mjs`
 e `npm run build` no repositório local.
+
+## Rotas após a integração da DEV
+
+- `/tasks/:id` (rota `task-view`, usada pelos cards dentro dos projetos) renderiza **a mesma** `TasksView.vue` que contém o painel com roadmap. O parâmetro `id` seleciona a tarefa correta, e a troca de seleção atualiza o endereço sem perder o link direto.
+- `/tasks` e `/projects/:projectId/tasks` continuam disponíveis, mas o item `Tarefas` foi removido da sidebar. O acesso permanece pelos projetos e seus cards.
+- A antiga `src/views/TaskView.vue` foi removida. O módulo `src/api/tasksApi.js` foi mantido porque a página de projetos ainda o utiliza.
+- Nada foi alterado no backend, e a DEV não é modificada por esta mudança.

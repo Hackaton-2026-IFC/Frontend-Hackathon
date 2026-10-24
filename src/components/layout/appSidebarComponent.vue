@@ -26,11 +26,6 @@ const userInitial = computed(() => {
 
 const navigationItems = [
   {
-    label: 'Tarefas',
-    to: '/tasks',
-    symbol: 'mdi mdi-checkbox-marked-outline',
-  },
-  {
     label: 'Início',
     to: '/home',
     symbol: 'mdi mdi-home-outline',
@@ -58,13 +53,10 @@ const navigationItems = [
 ]
 
 function isActive(item) {
-  if (item.to === '/tasks') {
-    return route.name === 'tasks' || route.name === 'project-tasks'
-  }
-
   if (item.to === '/projects') {
     return route.path === '/projects' ||
-      (route.path.startsWith('/projects/') && route.name !== 'project-tasks')
+      route.path.startsWith('/projects/') ||
+      route.name === 'task-view'
   }
 
   return route.path === item.to

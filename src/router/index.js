@@ -10,7 +10,6 @@ import ProfileView from '@/views/ProfileView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import ProjectsView from '@/views/ProjectsView.vue'
 import ProjectView from '@/views/ProjectView.vue'
-import TaskView from '@/views/TaskView.vue'
 import DetalhesProjetoView from '@/views/DetalhesProjetoView.vue'
 import NotesView from '@/views/NotesView.vue'
 
@@ -86,8 +85,7 @@ const routes = [
   {
     path: '/tasks/:id',
     name: 'task-view',
-    component: TaskView,
-    props: true,
+    component: () => import('@/views/TasksView.vue'),
     meta: {
       requiresAuth: true,
     },

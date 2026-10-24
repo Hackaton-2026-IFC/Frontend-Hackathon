@@ -10,7 +10,7 @@ const pageTitle = computed(() => {
     '/': 'Início',
     '/home': 'Início',
     '/projects': 'Projetos',
-    '/tasks': 'Criar ou editar tarefa',
+    '/tasks': 'Tarefas',
     '/notes': 'Notas',
     '/profile': 'Perfil',
     '/settings': 'Configurações',
@@ -24,6 +24,10 @@ const pageTitle = computed(() => {
 
   if (route.name === 'project-tasks') {
     return 'Tarefas do projeto'
+  }
+
+  if (route.name === 'task-view') {
+    return 'Detalhes da tarefa'
   }
 
   if (path.startsWith('/projects/')) {

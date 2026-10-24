@@ -60,11 +60,19 @@ const filteredTasks = computed(() => {
     )
 })
 
+const requestedTaskId = computed(() => String(route.params.id || route.query.task || ''))
+
 const selectedTask = computed(() => {
-  const requestedId = String(route.query.task || '')
-  return filteredTasks.value.find((task) => String(task.id) === requestedId) ||
-    filteredTasks.value[0] || null
+  if (requestedTaskId.value) {
+    // Um link direto nunca deve abrir outra tarefa por engano.
+    return filteredTasks.value.find((task) => String(task.id) === requestedTaskId.value) || null
+  }
+  return filteredTasks.value[0] || null
 })
+
+const backProjectId = computed(() =>
+  routeProject.value || (route.name === 'task-view' ? selectedTask.value?.projeto : null),
+)
 
 const editingTask = computed(() =>
   store.tasks.find((task) => String(task.id) === editingId.value) || null,
@@ -82,7 +90,11 @@ watch(routeProject, () => {
 
 function selectTask(id) {
   notice.value = ''
-  router.replace({ query: { ...route.query, task: String(id) } })
+  if (route.name === 'task-view') {
+    // Links /tasks/:id dos cards de projeto preservam sua URL.
+    return router.replace({ name: 'task-view', params: { id: String(id) }, query: route.query })
+  }
+  return router.replace({ query: { ...route.query, task: String(id) } })
 }
 
 function closeForm() {
@@ -122,6 +134,10 @@ function savedTask({ task, additionalStored, additionalCount }) {
 
 function removedTask() {
   notice.value = 'Tarefa excluída com sucesso.'
+  if (route.name === 'task-view') {
+    router.replace({ name: 'tasks' })
+    return
+  }
   const nextQuery = { ...route.query }
   delete nextQuery.task
   router.replace({ query: nextQuery })
@@ -132,9 +148,9 @@ function removedTask() {
   <section class="tasks-page">
     <div class="tasks-container">
       <RouterLink
-        v-if="routeProject"
+        v-if="backProjectId"
         class="task-back-link"
-        :to="{ name: 'project-details', params: { id: routeProject } }"
+        :to="{ name: 'project-details', params: { id: backProjectId } }"
       >← Voltar ao projeto</RouterLink>
 
       <header class="tasks-page-heading">
@@ -248,8 +264,10 @@ function removedTask() {
               @removed="removedTask"
             />
             <div v-else class="task-dashboard__empty">
-              <h2>Nenhuma tarefa selecionada</h2>
-              <p>Altere os filtros ou crie uma tarefa para começar a acompanhar o roadmap.</p>
+              <h2>{{ requestedTaskId ? 'Tarefa não encontrada' : 'Nenhuma tarefa selecionada' }}</h2>
+              <p>{{ requestedTaskId
+                ? 'Esta tarefa não está disponível ou não corresponde aos filtros.'
+                : 'Altere os filtros ou crie uma tarefa para começar a acompanhar o roadmap.' }}</p>
               <button class="task-button task-primary" type="button" @click="createTask">+ Nova tarefa</button>
             </div>
           </div>
