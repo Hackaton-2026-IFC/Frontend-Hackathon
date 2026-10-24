@@ -747,6 +747,22 @@ onMounted(load)
           </button>
         </div>
 
+        <!-- Filtros recolhíveis -->
+        <div class="project-tasks__filter-toolbar">
+          <button
+            type="button"
+            class="project-tasks__filter-toggle"
+            :aria-expanded="filtersOpen"
+            aria-controls="project-task-filters"
+            @click="filtersOpen = !filtersOpen"
+          >
+            <span class="mdi mdi-filter-variant" aria-hidden="true"></span>
+            {{ filtersOpen ? 'Ocultar filtros' : 'Filtrar' }}
+            <span v-if="activeFiltersCount" class="project-tasks__filter-badge">{{ activeFiltersCount }}</span>
+            <span class="mdi" :class="filtersOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" aria-hidden="true"></span>
+          </button>
+        </div>
+
         <!-- Abas de status -->
 
         <div
@@ -774,22 +790,6 @@ onMounted(load)
           >
             {{ col.label }}
             <span>{{ counts[col.key] }}</span>
-          </button>
-        </div>
-
-        <!-- Filtros recolhíveis -->
-        <div class="project-tasks__filter-toolbar">
-          <button
-            type="button"
-            class="project-tasks__filter-toggle"
-            :aria-expanded="filtersOpen"
-            aria-controls="project-task-filters"
-            @click="filtersOpen = !filtersOpen"
-          >
-            <span class="mdi mdi-filter-variant" aria-hidden="true"></span>
-            {{ filtersOpen ? 'Ocultar filtros' : 'Filtrar' }}
-            <span v-if="activeFiltersCount" class="project-tasks__filter-badge">{{ activeFiltersCount }}</span>
-            <span class="mdi" :class="filtersOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" aria-hidden="true"></span>
           </button>
         </div>
 
@@ -989,7 +989,7 @@ onMounted(load)
 .project-tasks__filter-toolbar {
   display: flex;
   justify-content: flex-end;
-  margin: 14px 0;
+  margin: -14px 0 18px;
 }
 .project-tasks__filter-toggle {
   display: inline-flex;
