@@ -180,6 +180,7 @@ function obterMensagemErro(erro) {
 export const useProjectStore = defineStore(
   'projects',
   () => {
+
     // ==========================================
     // ESTADOS
     // ==========================================
@@ -218,36 +219,43 @@ export const useProjectStore = defineStore(
 
       try {
         return await executar(async () => {
-          const { data } =
-            await projectApi.listar()
-    try {
-      return await executar(async () => {
-        const encontrados = []
-        let pagina = 1
+          const encontrados = []
+          let pagina = 1
 
-        // O backend pode responder com array simples ou lista paginada.
-        while (true) {
-          const { data } = await projectApi.listar({ page: pagina })
+          // Aceita respostas em array ou paginadas.
+          while (true) {
+            const { data } = await projectApi.listar({
+              page: pagina,
+            })
 
-          if (Array.isArray(data)) {
-            encontrados.push(...data)
-            break
+            // Backend retorna array simples
+            if (Array.isArray(data)) {
+              encontrados.push(...data)
+              break
+            }
+
+            // Backend retorna lista paginada
+            const resultados = Array.isArray(data?.results)
+              ? data.results
+              : []
+
+            encontrados.push(...resultados)
+
+            // Verifica se existem mais páginas
+            const temProximaPagina =
+              data?.total_pages != null
+                ? pagina < data.total_pages
+                : Boolean(data?.next)
+
+            if (!temProximaPagina) {
+              break
+            }
+
+            pagina += 1
           }
 
-          encontrados.push(...(Array.isArray(data?.results) ? data.results : []))
-
-          if (data?.total_pages != null ? pagina >= data.total_pages : !data?.next) break
-          pagina += 1
-        }
-
-        projects.value = encontrados.map(adaptarProjeto)
-
-          const lista = Array.isArray(data)
-            ? data
-            : (data.results ?? [])
-
           projects.value =
-            lista.map(adaptarProjeto)
+            encontrados.map(adaptarProjeto)
 
           return projects.value
         })
