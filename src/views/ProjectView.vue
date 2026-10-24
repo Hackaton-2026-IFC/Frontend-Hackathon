@@ -17,6 +17,7 @@ import ProjectKanban from '@/components/project/ProjectKanban.vue'
 import ToastNotice from '@/components/ui/ToastNotice.vue'
 import ProjectResources from '@/components/project/ProjectResources.vue'
 import ProjectAgentModal from '@/components/project/ProjectAgentModal.vue'
+import ProjectCalendar from '@/components/project/ProjectCalendar.vue'
 
 import '@/assets/css/project.css'
 import '@/assets/css/project-tasks.css'
@@ -1009,6 +1010,9 @@ onMounted(load)
         <ToastNotice v-if="moveError" :message="moveError" type="error" />
         <ToastNotice :message="moveNotice" type="info" />
       </section>
+
+      <!-- Calendário colaborativo e Google Agenda -->
+      <ProjectCalendar :key="String(id)" :project-id="id" />
 
       <!-- Materiais de apoio -->
 

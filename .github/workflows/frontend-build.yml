@@ -24,6 +24,9 @@ jobs:
       - name: Testar integração Google
         run: npm run test:google
 
+      - name: Testar Google Agenda
+        run: npm run test:calendar
+
       - name: Validar build de produção
         run: npm run build
 
