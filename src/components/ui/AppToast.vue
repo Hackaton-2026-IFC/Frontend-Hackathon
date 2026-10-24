@@ -11,6 +11,7 @@ const props = defineProps({
     type: String,
     default: "success",
   },
+  toastId: { type: Number, default: 0 },
   duration: {
     type: Number,
     default: 5000,
@@ -25,9 +26,7 @@ const toastKey = ref(0);
 let timeoutId = null;
 
 const toastIcon = computed(() => {
-  return props.type === "error"
-    ? "mdi-alert-circle-outline"
-    : "mdi-check-circle-outline";
+  return props.type === "error" ? "mdi-alert-circle-outline" : props.type === "success" ? "mdi-check-circle-outline" : "mdi-information-outline";
 });
 
 function clearTimer() {
@@ -60,7 +59,7 @@ function showToast() {
 }
 
 watch(
-  () => props.message,
+  () => [props.message, props.toastId],
   () => showToast(),
   { immediate: true }
 );
@@ -179,6 +178,10 @@ onUnmounted(clearTimer);
   animation: toast-countdown linear forwards;
 }
 
+.app-toast.success .app-toast-icon { color: #16803c; }
+.app-toast.success .app-toast-progress { background: #16803c; }
+.app-toast.info .app-toast-icon, .app-toast.warning .app-toast-icon { color: #171717; }
+.app-toast.info .app-toast-progress, .app-toast.warning .app-toast-progress { background: #171717; }
 .app-toast.error .app-toast-icon {
   color: #b42318;
 }
