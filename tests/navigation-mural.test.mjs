@@ -45,7 +45,7 @@ test('o mural exibe botão flutuante e esconde o formulário até abrir o modal'
 test('editar abre o modal, salvar fecha e cancelar não descarta dados sem querer ao salvar', () => {
   const notes = load('src/views/NotesView.vue')
   assert.match(notes, /function edit\(note\)[\s\S]*?showComposer\(\)/)
-  assert.match(notes, /notes\.value = \[\.\.\.notes\.value\][\s\S]*?closeComposer\(true\)/)
+  assert.match(notes, /notes\.value = sortNotes\(notes\.value\)[\s\S]*?closeComposer\(true\)/)
   assert.match(notes, /function closeComposer\(force = false\)/)
   assert.match(notes, /if \(saving\.value && !force\) return/)
   assert.match(notes, /@click="closeComposer\(\)"/)
