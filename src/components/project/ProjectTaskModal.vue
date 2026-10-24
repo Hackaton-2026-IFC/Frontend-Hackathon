@@ -1,3 +1,4 @@
+import { projectToast } from '@/utils/projectToast'
 <script setup>
 import { ref } from 'vue'
 
@@ -175,13 +176,7 @@ function close() {
             />
           </div>
 
-          <p
-            v-if="error"
-            class="task-modal__error"
-            role="alert"
-          >
-            {{ error }}
-          </p>
+          
 
           <div class="task-modal__actions">
             <button
