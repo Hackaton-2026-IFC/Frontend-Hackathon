@@ -1,3 +1,4 @@
+import { projectToast } from '@/utils/projectToast'
 <script setup>
 import { computed, ref } from 'vue'
 import agentApi from '@/api/agentApi'
@@ -70,6 +71,7 @@ async function copyResult() {
     copied.value = false
   }
 }
+watch(error, (value, previous) => { if (value && value !== previous) projectToast(value, 'error') })
 </script>
 
 <template>
@@ -122,9 +124,7 @@ async function copyResult() {
       </div>
     </div>
 
-    <p v-if="error" class="agent-error" role="alert">
-      {{ error }}
-    </p>
+    
 
     <div v-if="result" class="agent-result">
       <div class="agent-result-heading">
