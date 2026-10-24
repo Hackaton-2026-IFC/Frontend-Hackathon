@@ -88,7 +88,7 @@ onMounted(loadProjects)
 <template>
   <div class="projects-page">
     <div class="projects-container">
-      <header class="page-heading">
+      <header class="page-heading projects-banner">
         <div>
           <span class="eyebrow">MOMENTUM / ORGANIZAÇÃO</span>
           <h1>Seus projetos.</h1>
@@ -106,6 +106,7 @@ onMounted(loadProjects)
           <span aria-hidden="true">+</span>
           Novo projeto
         </button>
+        <div class="projects-banner__decoration" aria-hidden="true"><span></span><span></span></div>
       </header>
 
       <div class="project-filters">
@@ -227,6 +228,18 @@ onMounted(loadProjects)
 </template>
 
 <style scoped>
+.projects-page .projects-banner{position:relative;display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:210px;padding:36px;border:0;border-radius:12px;background:#171717;color:#fff;overflow:hidden;isolation:isolate}
+.projects-page .projects-banner>div:first-child{position:relative;z-index:1;max-width:520px;min-width:0}
+.projects-page .projects-banner .eyebrow{display:block;margin-bottom:16px;color:#a3a3a3;font-size:.68rem;letter-spacing:.14em}
+.projects-page .projects-banner h1{margin:0;color:#fff;font-size:clamp(2.3rem,5vw,3.4rem);font-weight:600;letter-spacing:-.07em;line-height:1.08}
+.projects-page .projects-banner p{margin-top:14px;color:#b5b5b5;font-size:.9rem;line-height:1.7}
+.projects-page .projects-banner>.button{position:relative;z-index:2;flex-shrink:0;border-color:#fff;background:#fff;color:#171717}
+.projects-page .projects-banner>.button:hover:not(:disabled){background:#ededed}
+.projects-banner__decoration{position:absolute;top:-110px;right:70px;width:310px;height:310px;pointer-events:none}
+.projects-banner__decoration span{position:absolute;inset:0;border:1px solid rgb(255 255 255 / 8%);border-radius:50%}
+.projects-banner__decoration span:nth-child(2){inset:35px}
+@media(max-width:650px){.projects-page .projects-banner{min-height:0;flex-direction:column;align-items:stretch;padding:28px 22px}.projects-page .projects-banner>div:first-child{flex:auto}.projects-page .projects-banner>.button{width:100%}.projects-banner__decoration{right:-170px}}
+
 .projects-page {
   min-height: 100%;
   padding: clamp(20px, 4vw, 44px);
