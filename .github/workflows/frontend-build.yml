@@ -2,7 +2,7 @@ name: Frontend Vue build
 
 on:
   pull_request:
-    branches: [DEV, master]
+    branches: [DEV, master, FEAT-78]
   push:
     branches: [DEV, master]
 
