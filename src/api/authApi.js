@@ -19,6 +19,18 @@ const authApi = {
     })
   },
 
+  googleLogin(credential) {
+    return api.post('auth/google/', { credential })
+  },
+
+  googleLink(credential) {
+    return api.post('auth/google/vincular/', { credential })
+  },
+
+  googleLinkStatus() {
+    return api.get('auth/google/vincular/')
+  },
+
   me() {
     return api.get('usuarios/me/')
   },
