@@ -538,14 +538,14 @@ onBeforeUnmount(() => {
           <div class="composer-dialog-body">
 
       <div class="composer-top">
-        <input ref="titleField" v-model="form.titulo" maxlength="200" placeholder="Título" aria-label="Título da nota" />
+        <label class="composer-title-field"><span>Título da ideia</span><input ref="titleField" v-model="form.titulo" maxlength="200" placeholder="Dê um nome para sua ideia" aria-label="Título da nota" /></label>
         <label class="pin-check">
           <input v-model="form.fixada" type="checkbox" />
           Fixar
         </label>
       </div>
 
-      <textarea v-model="form.conteudo" rows="4" placeholder="Escreva sua ideia..." aria-label="Conteúdo da nota"></textarea>
+      <label class="composer-content-field"><span>Descrição</span><textarea v-model="form.conteudo" rows="4" placeholder="Escreva sua ideia..." aria-label="Conteúdo da nota"></textarea></label>
 
       <label class="idea-link">
         Link de referência (opcional)
@@ -901,4 +901,35 @@ onBeforeUnmount(() => {
 .notes-page .note-more-popover button:hover{background:#f3f3f3}
 .notes-page .note-more-popover .note-more-danger{color:#bb2525}
 .notes-page .note-more-popover .mdi{font-size:16px}
+</style>
+
+<style>
+/* Formulário de ideias: hierarquia e espaçamento consistentes com o Momentum */
+.composer-modal{width:min(620px,100%);max-height:min(90dvh,840px);border-radius:18px;background:#fff;border:1px solid #e8e8e8;box-shadow:0 22px 65px rgba(0,0,0,.18)}
+.composer-dialog-header{padding:24px 26px 20px;border-color:#ededed;background:#fff}
+.composer-dialog-eyebrow{color:#929292;font-size:10px;letter-spacing:1.2px}
+.composer-dialog-header h2{margin:8px 0 5px;font-size:25px;font-weight:750;letter-spacing:-.04em}
+.composer-dialog-header p{color:#888;font-size:12px}
+.composer-close{width:34px;height:34px;background:#f4f4f4;border-radius:9px}
+.composer-dialog-body{display:flex;flex-direction:column;gap:18px;padding:23px 26px;background:#fff}
+.composer-dialog-body .composer-top{display:flex;align-items:flex-end;gap:16px}
+.composer-dialog-body .composer-title-field{display:flex;flex:1;min-width:0;flex-direction:column;gap:8px}
+.composer-dialog-body .composer-title-field>span,.composer-dialog-body .composer-content-field>span{font-size:12px;font-weight:700;color:#292929}
+.composer-dialog-body .composer-title-field>input{box-sizing:border-box;width:100%;height:44px;padding:0 13px;border:1px solid #dedede;border-radius:9px;background:#fff;font-size:14px;font-weight:500;outline:none}
+.composer-dialog-body .composer-title-field>input:focus{border-color:#444;box-shadow:0 0 0 3px rgba(0,0,0,.06)}
+.composer-dialog-body .pin-check{display:flex;align-items:center;gap:7px;min-height:44px;white-space:nowrap;font-size:12px;color:#555}
+.composer-dialog-body .composer-content-field{display:flex;flex-direction:column;gap:8px}
+.composer-dialog-body .composer-content-field textarea{box-sizing:border-box;width:100%;min-height:104px;padding:12px 13px;border:1px solid #dedede;border-radius:9px;background:#fff;font-size:13px;resize:vertical}
+.composer-dialog-body .idea-link,.composer-dialog-body .photo-picker{display:flex;flex-direction:column;gap:8px;font-size:12px;font-weight:700;color:#333}
+.composer-dialog-body .idea-link input,.composer-dialog-body .photo-picker input{box-sizing:border-box;width:100%;min-height:42px;padding:10px 12px;border:1px solid #dedede;border-radius:9px;background:#fff;font-size:12px;font-weight:400}
+.composer-dialog-body .photo-editor{display:flex;flex-direction:column;gap:12px}
+.composer-dialog-body .photo-preview{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.composer-dialog-body .photo-preview img{width:110px;max-height:125px;object-fit:cover;border-radius:10px;border:1px solid #eee}
+.composer-dialog-body .photo-preview .button{font-size:12px}
+.composer-dialog-body .composer-grid{margin:0}
+.composer-dialog-body .palette{margin:0}
+.composer-dialog-footer{padding:16px 26px;border-color:#ededed;background:#fff}
+.composer-dialog-footer .composer-actions{display:flex;justify-content:flex-end;gap:10px}
+.composer-dialog-footer .button{border-radius:9px;min-height:40px;padding:0 16px;font-size:12px;font-weight:700}
+@media(max-width:700px){.composer-backdrop{padding:10px}.composer-modal{max-height:calc(100dvh - 20px);border-radius:15px}.composer-dialog-header{padding:19px 18px 16px}.composer-dialog-body{padding:18px;gap:15px}.composer-dialog-footer{padding:14px 18px calc(14px + env(safe-area-inset-bottom))}.composer-dialog-body .composer-top{align-items:stretch;flex-direction:column;gap:8px}.composer-dialog-body .pin-check{min-height:26px}}
 </style>
