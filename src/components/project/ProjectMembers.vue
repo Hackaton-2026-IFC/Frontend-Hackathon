@@ -1,4 +1,5 @@
 <script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { computed, ref, watch } from 'vue'
 import usersApi from '@/api/usersApi'
 import invitesApi from '@/api/invitesApi'
@@ -187,13 +188,7 @@ function closeAfterSuccess() {
 
     <!-- MENSAGEM DE SUCESSO -->
 
-    <p
-      v-if="success"
-      class="success-message"
-      role="status"
-    >
-      {{ success }}
-    </p>
+    <ToastNotice v-if="success" :message="success" type="success" />
 
     <!-- LISTA DE MEMBROS -->
 
@@ -340,13 +335,7 @@ function closeAfterSuccess() {
 
           <!-- ERRO -->
 
-          <p
-            v-if="error"
-            class="error-message"
-            role="alert"
-          >
-            {{ error }}
-          </p>
+          <ToastNotice v-if="error" :message="error" type="error" />
 
           <!-- AÇÕES -->
 

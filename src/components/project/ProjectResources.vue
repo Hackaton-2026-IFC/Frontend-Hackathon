@@ -1,4 +1,5 @@
 <script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { ref, watch } from 'vue'
 
 const props = defineProps({
@@ -212,13 +213,7 @@ function submit() {
               />
             </div>
 
-            <p
-              v-if="error"
-              class="resource-modal__error"
-              role="alert"
-            >
-              {{ error }}
-            </p>
+            <ToastNotice v-if="error" :message="error" type="error" />
 
             <div class="resource-modal__actions">
               <button

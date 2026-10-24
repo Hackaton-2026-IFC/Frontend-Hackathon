@@ -1,4 +1,5 @@
 <script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useTaskStore } from '@/stores/taskStore'
@@ -154,10 +155,10 @@ async function deleteComment(comment) {
 
     <div class="task-comments-body">
       <p v-if="loading && !comments.length" class="workspace-muted" role="status">Carregando comentários...</p>
-      <div v-if="error" class="task-error" role="alert">
-        {{ error }}
-        <button v-if="!comments.length" type="button" class="task-button" :disabled="loading" @click="reload">Tentar novamente</button>
-      </div>
+      <template v-if="error">
+        <ToastNotice :message="error" type="error" />
+<button v-if="!comments.length" type="button" class="task-button" :disabled="loading" @click="reload">Tentar novamente</button>
+      </template>
 
       <ul v-if="comments.length" class="task-comments-list">
         <li v-for="comment in comments" :key="comment.id" class="task-comment">

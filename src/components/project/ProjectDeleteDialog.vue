@@ -1,4 +1,5 @@
 <script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 
 const props = defineProps({
@@ -79,13 +80,7 @@ function confirmar() {
       Esta ação é permanente e não poderá ser desfeita.
     </p>
 
-    <p
-      v-if="error"
-      class="delete-dialog__error"
-      role="alert"
-    >
-      {{ error }}
-    </p>
+    <ToastNotice v-if="error" :message="error" type="error" />
 
     <footer class="delete-dialog__actions">
       <button

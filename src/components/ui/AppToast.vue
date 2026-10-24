@@ -1,5 +1,6 @@
 
 <script setup>
+import { cleanMessage } from '@/composables/useToasts'
 import { computed, ref, watch, onUnmounted } from "vue";
 
 const props = defineProps({
@@ -86,7 +87,7 @@ onUnmounted(clearTimer);
           ></span>
 
           <span class="app-toast-message">
-            {{ message }}
+            {{ cleanMessage(message) }}
           </span>
 
           <button

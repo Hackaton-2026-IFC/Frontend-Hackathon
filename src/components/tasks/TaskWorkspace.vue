@@ -1,4 +1,5 @@
 <script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { computed, ref, watch } from 'vue'
 import { useTaskStore } from '@/stores/taskStore'
 import { TASK_PRIORITIES, TASK_STATUSES, safeResourceUrl, taskError, formatDeadline } from '@/api/taskApi'
@@ -180,12 +181,12 @@ async function deleteTask() {
           </div>
 
           <p v-if="store.resourcesLoading[task.id]" class="workspace-muted" role="status">Carregando materiais...</p>
-          <p v-if="store.resourceErrors[task.id]" class="task-error" role="alert">
-            {{ store.resourceErrors[task.id] }}
-            <button type="button" class="task-button" @click="store.loadResources(task.id).catch(() => {})">
+          <template v-if="store.resourceErrors[task.id]">
+        <ToastNotice :message="store.resourceErrors[task.id]" type="error" />
+<button type="button" class="task-button" @click="store.loadResources(task.id).catch(() => {})">
               Tentar novamente
             </button>
-          </p>
+      </template>
 
           <ul v-if="resources.length" class="workspace-link-list">
             <li v-for="resource in resources" :key="resource.id">
@@ -210,7 +211,7 @@ async function deleteTask() {
                 <option value="outro">Outro</option>
               </select>
             </label>
-            <p v-if="linkError" class="task-error" role="alert">{{ linkError }}</p>
+            <ToastNotice v-if="linkError" :message="linkError" type="error" />
             <button type="submit" class="task-button task-primary" :disabled="store.busy || !linkTitle.trim() || !linkUrl.trim()">
               Salvar material
             </button>
@@ -294,7 +295,7 @@ async function deleteTask() {
     <dialog ref="confirmDialog" class="task-confirm-dialog" @cancel="deletingError = ''">
       <h3>Excluir tarefa?</h3>
       <p>Esta ação também remove as etapas relacionadas e não pode ser desfeita.</p>
-      <p v-if="deletingError" class="task-error" role="alert">{{ deletingError }}</p>
+      <ToastNotice v-if="deletingError" :message="deletingError" type="error" />
       <div>
         <button type="button" class="task-button" :disabled="store.busy" @click="confirmDialog?.close()">Cancelar</button>
         <button type="button" class="task-button task-button--danger" :disabled="store.busy" @click="deleteTask">

@@ -1,4 +1,5 @@
 <script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
@@ -162,7 +163,7 @@ onMounted(loadTask)
       >
         <h2>Não foi possível carregar a tarefa</h2>
 
-        <p>{{ error }}</p>
+        <ToastNotice :message="error" type="error" />
 
         <button @click="loadTask">
           Tentar novamente
@@ -197,13 +198,7 @@ onMounted(loadTask)
           </span>
         </header>
 
-        <p
-          v-if="error"
-          class="task-page__alert"
-          role="alert"
-        >
-          {{ error }}
-        </p>
+        <ToastNotice v-if="error" :message="error" type="error" />
 
         <!-- INFORMAÇÕES -->
 

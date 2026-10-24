@@ -1,4 +1,5 @@
 <script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import invitesApi from '@/api/invitesApi'
@@ -151,21 +152,9 @@ onMounted(loadInvites)
 
       <!-- MENSAGENS -->
 
-      <div
-        v-if="error"
-        class="feedback feedback-error"
-        role="alert"
-      >
-        {{ error }}
-      </div>
+      <ToastNotice v-if="error" :message="error" type="error" />
 
-      <div
-        v-if="success"
-        class="feedback feedback-success"
-        role="status"
-      >
-        {{ success }}
-      </div>
+      <ToastNotice v-if="success" :message="success" type="success" />
 
       <!-- CONVITES -->
 

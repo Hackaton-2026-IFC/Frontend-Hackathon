@@ -1,4 +1,5 @@
 <script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { computed, ref } from 'vue'
 import { useTaskStore } from '@/stores/taskStore'
 import { taskError } from '@/api/taskApi'
@@ -172,6 +173,6 @@ async function addStep() {
         </button>
       </div>
     </form>
-    <p v-if="error" class="task-error" role="alert">{{ error }}</p>
+    <ToastNotice v-if="error" :message="error" type="error" />
   </section>
 </template>

@@ -1,4 +1,5 @@
 <script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useTaskStore } from '@/stores/taskStore'
@@ -175,14 +176,14 @@ function removedTask() {
         >+ Nova tarefa</button>
       </header>
 
-      <p v-if="notice" class="task-notice" role="status">{{ notice }}</p>
+      <ToastNotice v-if="notice" :message="notice" type="success" />
       <p v-if="store.loading" class="task-state" role="status">Carregando tarefas...</p>
 
       <template v-else>
-        <div v-if="store.error" class="task-error" role="alert">
-          {{ store.error }}
-          <button type="button" class="task-button" :disabled="store.busy" @click="store.load()">Recarregar</button>
-        </div>
+        <template v-if="store.error">
+        <ToastNotice :message="store.error" type="error" />
+<button type="button" class="task-button" :disabled="store.busy" @click="store.load()">Recarregar</button>
+      </template>
 
         <div v-if="routeProject && !availableProjects.length" class="task-state">
           Projeto não encontrado ou sem acesso.

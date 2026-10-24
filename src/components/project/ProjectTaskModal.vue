@@ -1,4 +1,5 @@
 <script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { ref } from 'vue'
 
 const props = defineProps({
@@ -175,13 +176,7 @@ function close() {
             />
           </div>
 
-          <p
-            v-if="error"
-            class="task-modal__error"
-            role="alert"
-          >
-            {{ error }}
-          </p>
+          <ToastNotice v-if="error" :message="error" type="error" />
 
           <div class="task-modal__actions">
             <button

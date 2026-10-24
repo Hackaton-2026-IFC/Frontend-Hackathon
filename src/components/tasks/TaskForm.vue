@@ -1,4 +1,5 @@
 <script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { TASK_PRIORITIES, TASK_STATUSES, taskError } from '@/api/taskApi'
 import { automaticPriority } from '@/utils/taskPresentation'
@@ -272,8 +273,8 @@ async function save() {
                     Nenhum usuário encontrado.
                   </p>
                 </template>
-                <p v-if="userSearchError" class="task-error" role="alert">{{ userSearchError }}</p>
-                <p v-if="inviteNotice" class="task-assignee-invite-notice" role="status">{{ inviteNotice }}</p>
+                <ToastNotice v-if="userSearchError" :message="userSearchError" type="error" />
+                <ToastNotice v-if="inviteNotice" :message="inviteNotice" type="success" />
               </div>
 
               <p class="task-assignee-help">
@@ -324,7 +325,7 @@ async function save() {
         </label>
       </fieldset>
 
-      <p v-if="error" class="task-error" role="alert">{{ error }}</p>
+      <ToastNotice v-if="error" :message="error" type="error" />
 
       <footer class="task-actions">
         <button type="button" class="task-button" :disabled="store.busy || store.inviting" @click="close">

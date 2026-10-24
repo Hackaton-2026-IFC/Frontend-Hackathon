@@ -1,4 +1,5 @@
 <script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { computed, ref } from 'vue'
 import agentApi from '@/api/agentApi'
 
@@ -122,9 +123,7 @@ async function copyResult() {
       </div>
     </div>
 
-    <p v-if="error" class="agent-error" role="alert">
-      {{ error }}
-    </p>
+    <ToastNotice v-if="error" :message="error" type="error" />
 
     <div v-if="result" class="agent-result">
       <div class="agent-result-heading">
@@ -141,9 +140,7 @@ async function copyResult() {
         </button>
       </div>
 
-      <p v-if="result.aviso" class="agent-warning">
-        {{ result.aviso }}
-      </p>
+      <ToastNotice v-if="result.aviso" :message="result.aviso" type="info" />
 
       <pre>{{ result.analise }}</pre>
     </div>

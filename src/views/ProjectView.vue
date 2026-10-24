@@ -1,4 +1,5 @@
 <script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
@@ -104,7 +105,7 @@ async function moveTask({ taskId, status }) {
   board.value = [...allTasks.value]
   movingTask.value = true
   moveError.value = ''
-  moveNotice.value = 'Salvando movimentação...'
+  moveNotice.value = ''
   task.status = status
   try {
     const { data } = await tasksApi.update(task.id, { status })
@@ -115,7 +116,7 @@ async function moveTask({ taskId, status }) {
     if (String(currentId) !== String(id.value)) return
     task.status = previousStatus
     moveError.value = explain(e)
-    moveNotice.value = 'A tarefa voltou à coluna anterior.'
+    moveNotice.value = ''
   } finally {
     movingTask.value = false
   }
@@ -414,7 +415,7 @@ function explain(e) {
   if (data && typeof data === 'object') {
     return Object.entries(data)
       .map(([key, value]) =>
-        `${key}: ${
+        `${key === 'status' ? '' : key + ': '}${
           Array.isArray(value)
             ? value.join(', ')
             : value
@@ -715,21 +716,9 @@ onMounted(load)
       Carregando projeto...
     </p>
 
-    <p
-      v-if="error"
-      class="message-error"
-      role="alert"
-    >
-      {{ error }}
-    </p>
+    <ToastNotice v-if="error" :message="error" type="error" />
 
-    <p
-      v-if="success"
-      class="message-success"
-      role="status"
-    >
-      {{ success }}
-    </p>
+    <ToastNotice v-if="success" :message="success" type="success" />
 
     <template v-if="project">
       <ProjectEditModal
@@ -1002,8 +991,8 @@ onMounted(load)
           :saving="movingTask"
           @move="moveTask"
         />
-        <p v-if="moveError" class="message-error" role="alert">{{ moveError }}</p>
-        <p class="muted" role="status">{{ moveNotice }}</p>
+        <ToastNotice v-if="moveError" :message="moveError" type="error" />
+        <ToastNotice :message="moveNotice" type="info" />
       </section>
 
       <!-- Materiais de apoio -->
