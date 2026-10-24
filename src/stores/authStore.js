@@ -1,3 +1,4 @@
+
 import { defineStore } from 'pinia'
 import authApi from '@/api/authApi'
 import api from '@/api/config'
@@ -35,10 +36,13 @@ export const useAuthStore = defineStore('auth', () => {
     if (typeof responseMessage === 'string' && responseMessage.trim()) {
       return translateErrorMessage(responseMessage)
     }
+
     if (Array.isArray(responseMessage) && responseMessage.length) {
       return responseMessage
         .map((message) =>
-          typeof message === 'string' ? translateErrorMessage(message) : String(message),
+          typeof message === 'string'
+            ? translateErrorMessage(message)
+            : String(message),
         )
         .join(' ')
     }
@@ -52,6 +56,7 @@ export const useAuthStore = defineStore('auth', () => {
             .map((message) => `${field}: ${message}`)
         })
         .join(' ')
+
       if (fieldErrors) return fieldErrors
     }
 
@@ -81,12 +86,14 @@ export const useAuthStore = defineStore('auth', () => {
   async function loadCurrentUser() {
     errorMessage.value = ''
     templateStore.startLoading()
+
     try {
       const response = await authApi.me()
       const profile = response.data
 
       user.value = profile
       localStorage.setItem('user_profile_cache', JSON.stringify(profile))
+
       return profile
     } catch (error) {
       console.error('Erro ao buscar usuário atual:', error)
@@ -117,27 +124,31 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function saveJwtSession({ access, refresh }) {
+    if (!access || !refresh) {
+      throw new Error('O backend não retornou os tokens de autenticação.')
+    }
+    accessToken.value = access
+    refreshToken.value = refresh
+    localStorage.setItem('access_token', access)
+    localStorage.setItem('refresh_token', refresh)
+    setUserFromToken(access)
+    await loadCurrentUser()
+    await router.push('/home')
+  }
+
   async function login(credentials) {
     errorMessage.value = ''
     templateStore.startLoading()
+
     try {
       const response = await authApi.login(credentials)
-      const { access, refresh } = response.data
-
-      accessToken.value = access
-      refreshToken.value = refresh
-      localStorage.setItem('access_token', access)
-      localStorage.setItem('refresh_token', refresh)
-
-      setUserFromToken(access)
-      await loadCurrentUser()
-      await router.push('/home')
+      await saveJwtSession(response.data)
       return true
     } catch (error) {
       console.error('Login failed:', error)
       const message = getErrorMessage(
-        error,
-        'Não foi possível realizar o login. Verifique seus dados e tente novamente.',
+        error, 'Não foi possível realizar o login. Verifique seus dados e tente novamente.',
       )
       if (accessToken.value) logout()
       errorMessage.value = message
@@ -147,11 +158,55 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function loginWithGoogle(credential) {
+    errorMessage.value = ''
+    templateStore.startLoading()
+
+    try {
+      if (typeof credential !== 'string' || !credential.trim()) {
+        throw new Error('O Google não retornou uma credencial válida.')
+      }
+      const response = await authApi.googleLogin(credential)
+      await saveJwtSession(response.data)
+      return true
+    } catch (error) {
+      console.error('Google login failed:', error?.response?.status || error.message)
+      const message = getErrorMessage(
+        error, 'Não foi possível acessar sua conta com Google.',
+      )
+      if (accessToken.value) logout()
+      errorMessage.value = message
+      return false
+    } finally {
+      templateStore.stopLoading()
+    }
+  }
+
+  async function linkGoogle(credential) {
+    errorMessage.value = ''
+    try {
+      if (!credential || !isAuthenticated.value) {
+        throw new Error('Entre com sua senha antes de vincular a conta Google.')
+      }
+      const { data } = await authApi.googleLink(credential)
+      return data
+    } catch (error) {
+      errorMessage.value = getErrorMessage(error, 'Não foi possível vincular sua conta Google.')
+      throw error
+    }
+  }
+
+  async function googleLinkStatus() {
+    return (await authApi.googleLinkStatus()).data.google_vinculado === true
+  }
+
   async function refreshAccessToken() {
     errorMessage.value = ''
     templateStore.startLoading()
+
     try {
       const rToken = localStorage.getItem('refresh_token')
+
       if (!rToken) {
         console.warn('Nenhum refresh token encontrado no localStorage')
         throw new Error('Não há uma sessão válida. Entre novamente.')
@@ -189,12 +244,14 @@ export const useAuthStore = defineStore('auth', () => {
   async function updateUserAccount(userId, data) {
     errorMessage.value = ''
     templateStore.startLoading()
+
     try {
       const response = await api.patch(`/usuarios/${userId}/`, data, {
         headers: {
           Authorization: `Bearer ${accessToken.value}`,
         },
       })
+
       return response.data
     } catch (error) {
       console.error('Erro ao atualizar usuário:', error)
@@ -211,17 +268,62 @@ export const useAuthStore = defineStore('auth', () => {
   function updateUserData(newData) {
     if (user.value) {
       user.value = { ...user.value, ...newData }
+      localStorage.setItem('user_profile_cache', JSON.stringify(user.value))
+    }
+  }
+
+  async function uploadProfileImage(file) {
+    errorMessage.value = ''
+    templateStore.startLoading()
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const uploadResponse = await api.post('/media/images/', formData)
+      const image = uploadResponse.data
+
+      if (!image?.attachment_key) {
+        throw new Error('O servidor não retornou o identificador da imagem.')
+      }
+
+      const userId = user.value?.id ?? user.value?.user_id
+
+      if (!userId) {
+        throw new Error('Não foi possível identificar o usuário.')
+      }
+
+      const updatedUser = await updateUserAccount(userId, {
+        profile_image_attachment_key: image.attachment_key,
+      })
+
+      // Busca novamente os dados para confirmar a alteração.
+      await loadCurrentUser()
+
+      return updatedUser
+    } catch (error) {
+      console.error('Erro ao atualizar foto de perfil:', error)
+      errorMessage.value = getErrorMessage(
+        error,
+        'Não foi possível atualizar a foto de perfil.',
+      )
+      throw error
+    } finally {
+      templateStore.stopLoading()
     }
   }
 
   function logout() {
+    window.google?.accounts?.id?.disableAutoSelect?.()
     errorMessage.value = ''
     accessToken.value = null
     refreshToken.value = null
     user.value = null
+
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
     localStorage.removeItem('user_profile_cache')
+
     router.push('/')
   }
 
@@ -232,11 +334,15 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     errorMessage,
     login,
+    loginWithGoogle,
+    linkGoogle,
+    googleLinkStatus,
     logout,
     loadCurrentUser,
     refreshAccessToken,
     refreshUserSession,
     updateUserAccount,
     updateUserData,
+    uploadProfileImage,
   }
 })

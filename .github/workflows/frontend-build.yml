@@ -1,0 +1,34 @@
+name: Frontend Vue build
+
+on:
+  pull_request:
+    branches: [DEV, master, FEAT-78]
+  push:
+    branches: [DEV, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.12.0"
+          cache: "npm"
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Testar integração Google
+        run: npm run test:google
+
+      - name: Testar Google Agenda
+        run: npm run test:calendar
+
+      - name: Validar build de produção
+        run: npm run build
+
+      - name: Validar fotos de perfil e contraste dos ícones
+        run: node --test tests/profile-photo-colors.test.mjs

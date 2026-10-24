@@ -1,14 +1,32 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 
+// ==========================================
+// IMPORTAÇÃO DOS COMPONENTES
+// ==========================================
+
 import AuthLayout from '@/components/layout/AuthLayout.vue'
+
 import LoginView from '@/views/LoginView.vue'
-import CadastroView from '@/views/CadastroView.vue'
-import homeView from '@/views/homeView.vue'
-import profileView from '@/views/profileView.vue'
+import RegisterView from '@/views/RegisterView.vue'
+import HomeView from '@/views/HomeView.vue'
+import ProfileView from '@/views/ProfileView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
+import ProjectsView from '@/views/ProjectsView.vue'
+import ProjectView from '@/views/ProjectView.vue'
+const TasksView = () => import('@/views/TasksView.vue')
+import NotificationView from '@/views/NotificationView.vue'
+const NotesView = () => import('@/views/NotesView.vue')
+
+// ==========================================
+// DEFINIÇÃO DAS ROTAS
+// ==========================================
 
 const routes = [
+  // ==========================================
+  // AUTENTICAÇÃO
+  // ==========================================
+
   {
     path: '/',
     component: AuthLayout,
@@ -27,42 +45,148 @@ const routes = [
         path: 'registro',
         alias: ['cadastro', 'register'],
         name: 'register',
-        component: CadastroView,
+        component: RegisterView,
       },
     ],
   },
+
+  // ==========================================
+  // HOME
+  // ==========================================
+
   {
     path: '/home',
     name: 'home',
-    component: homeView,
+    component: HomeView,
     meta: {
       requiresAuth: true,
     },
   },
+
+  // ==========================================
+  // PAINEL DE TAREFAS
+  // ==========================================
+
+  {
+    path: '/tasks',
+    name: 'tasks',
+    component: TasksView,
+    meta: { requiresAuth: true },
+  },
+
+  // ==========================================
+  // PROJETOS
+  // ==========================================
+
   {
     path: '/projects',
     name: 'projects',
-    component: homeView,
+    component: ProjectsView,
     meta: {
       requiresAuth: true,
     },
   },
+
+  // ==========================================
+  // TAREFAS DO PROJETO
+  // ==========================================
+
+  {
+    path: '/projects/:projectId/tasks',
+    name: 'project-tasks',
+    component: TasksView,
+    meta: { requiresAuth: true },
+  },
+
+  // ==========================================
+  // DETALHES DO PROJETO
+  // ==========================================
+
+  {
+    path: '/projects/:id',
+    name: 'project-details',
+    component: ProjectView,
+    props: true,
+    meta: {
+      requiresAuth: true,
+    },
+  },
+
+  // ==========================================
+  // DETALHES DA TAREFA
+  // ==========================================
+
+  {
+    path: '/tasks/:id',
+    name: 'task-view',
+    component: TasksView,
+    meta: {
+      requiresAuth: true,
+    },
+  },
+
+  // ==========================================
+  // NOTAS E MURAL DE PROJETOS
+  // ==========================================
+
+  {
+    path: '/notes',
+    name: 'notes',
+    component: NotesView,
+    meta: { requiresAuth: true },
+  },
+
+  {
+    path: '/projects/:id/mural',
+    name: 'project-mural',
+    component: NotesView,
+    props: true,
+    meta: { requiresAuth: true },
+  },
+
+  // ==========================================
+  // NOTIFICAÇÕES
+  // ==========================================
+
+  {
+    path: '/notifications',
+    name: 'notifications',
+    component: NotificationView,
+    meta: {
+      requiresAuth: true,
+    },
+  },
+
+  // ==========================================
+  // CONFIGURAÇÕES
+  // ==========================================
+
   {
     path: '/settings',
     name: 'settings',
-    component: homeView,
+    component: HomeView,
     meta: {
       requiresAuth: true,
     },
   },
+
+  // ==========================================
+  // PERFIL
+  // ==========================================
+
   {
     path: '/profile',
     name: 'profile',
-    component: profileView,
+    component: ProfileView,
     meta: {
       requiresAuth: true,
     },
   },
+
+  // ==========================================
+  // PÁGINA NÃO ENCONTRADA
+  // ==========================================
+
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
@@ -74,25 +198,37 @@ const routes = [
   },
 ]
 
+// ==========================================
+// CONFIGURAÇÃO DO ROUTER
+// ==========================================
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
 })
 
+// ==========================================
+// PROTEÇÃO DAS ROTAS
+// ==========================================
+
 router.beforeEach((to) => {
   const authStore = useAuthStore()
 
-  // Se a rota exige autenticação e o usuário NÃO está autenticado
+  // Impede acesso a páginas protegidas sem login
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return {
       name: 'welcome',
-      query: { redirect: to.fullPath },
+      query: {
+        redirect: to.fullPath,
+      },
     }
   }
 
-  // Se a rota é exclusiva para convidados (welcome/register) e o usuário JÁ está autenticado
+  // Impede usuários autenticados de acessar login/cadastro
   if (to.meta.guestOnly && authStore.isAuthenticated) {
-    return { name: 'home' }
+    return {
+      name: 'home',
+    }
   }
 })
 

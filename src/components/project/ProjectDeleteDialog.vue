@@ -1,0 +1,213 @@
+<script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
+import { onMounted, onBeforeUnmount, ref } from 'vue'
+
+const props = defineProps({
+  project: {
+    type: Object,
+    required: true,
+  },
+  deleting: {
+    type: Boolean,
+    default: false,
+  },
+  error: {
+    type: String,
+    default: '',
+  },
+})
+
+const emit = defineEmits(['close', 'confirm'])
+
+const dialogo = ref(null)
+
+onMounted(() => {
+  dialogo.value?.showModal()
+})
+
+onBeforeUnmount(() => {
+  dialogo.value?.close()
+})
+
+function fechar() {
+  if (props.deleting) return
+
+  dialogo.value?.close()
+  emit('close')
+}
+
+function confirmar() {
+  if (props.deleting) return
+
+  emit('confirm', props.project.id)
+}
+</script>
+
+<template>
+  <dialog
+    ref="dialogo"
+    class="delete-dialog"
+    aria-labelledby="delete-dialog-title"
+    aria-describedby="delete-dialog-description"
+    :aria-busy="deleting"
+    @cancel.prevent="fechar"
+    @click.self="fechar"
+  >
+    <div
+      class="delete-dialog__icon"
+      aria-hidden="true"
+    >
+      !
+    </div>
+
+    <h2 id="delete-dialog-title">
+      Excluir projeto?
+    </h2>
+
+    <p id="delete-dialog-description">
+      Você está prestes a excluir
+      <strong>
+        {{
+          project.name ||
+          project.nome ||
+          project.title ||
+          'este projeto'
+        }}
+      </strong>.
+    </p>
+
+    <p>
+      Esta ação é permanente e não poderá ser desfeita.
+    </p>
+
+    <ToastNotice v-if="error" :message="error" type="error" />
+
+    <footer class="delete-dialog__actions">
+      <button
+        type="button"
+        class="button"
+        autofocus
+        :disabled="deleting"
+        @click="fechar"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="button"
+        class="button button--primary"
+        :disabled="deleting"
+        @click="confirmar"
+      >
+        {{ deleting ? 'Excluindo...' : 'Excluir projeto' }}
+      </button>
+    </footer>
+  </dialog>
+</template>
+<style scoped>
+.delete-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+
+  width: min(460px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: 0;
+  padding: 32px;
+  overflow-y: auto;
+  box-sizing: border-box;
+
+  border: 1px solid #000;
+  border-radius: 20px;
+  background: #fff;
+  color: #000;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 24%);
+}
+
+.delete-dialog::backdrop {
+  background: rgb(0 0 0 / 65%);
+}
+
+.delete-dialog__icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 24px;
+  border: 1px solid #000;
+  border-radius: 50%;
+  background: #000;
+  color: #fff;
+  font-size: 26px;
+  font-weight: 600;
+}
+
+h2 {
+  margin: 0 0 14px;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.8px;
+}
+
+p {
+  margin: 10px 0;
+  font-size: 14px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.button {
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid #000;
+  border-radius: 999px;
+  background: #fff;
+  color: #000;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button--primary {
+  background: #000;
+  color: #fff;
+}
+
+.button:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 3px;
+}
+
+.button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.delete-dialog__error {
+  padding: 12px;
+  border: 1px solid #000;
+  border-radius: 8px;
+}
+
+@media (max-width: 480px) {
+  .delete-dialog {
+    padding: 24px;
+  }
+
+  .button {
+    flex: 1 1 100%;
+  }
+}
+</style>
