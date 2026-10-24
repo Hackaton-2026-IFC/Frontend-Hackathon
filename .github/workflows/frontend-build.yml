@@ -23,3 +23,6 @@ jobs:
 
       - name: Validar build de produção
         run: npm run build
+
+      - name: Validar fotos de perfil e contraste dos ícones
+        run: node --test tests/profile-photo-colors.test.mjs
