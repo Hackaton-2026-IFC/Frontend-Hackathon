@@ -26,6 +26,9 @@ const error = ref('')
 const search = ref('')
 const filterProject = ref('')
 const editingId = ref(null)
+const openNoteMenuId = ref(null)
+function toggleNoteMenu(id) { openNoteMenuId.value = openNoteMenuId.value === id ? null : id }
+function closeNoteMenu() { openNoteMenuId.value = null }
 const orderSaving = ref(false)
 const draggingId = ref(null)
 const dropTargetId = ref(null)
@@ -424,6 +427,7 @@ async function save() {
 }
 
 function edit(note) {
+  closeNoteMenu()
   if (!isAuthor(note)) return
   editingId.value = note.id
   form.titulo = note.titulo || ''
@@ -451,6 +455,7 @@ async function togglePin(note) {
 }
 
 async function remove(note) {
+  closeNoteMenu()
   if (!isAuthor(note)) return
   if (!window.confirm('Excluir esta nota definitivamente?')) return
   try {
@@ -676,9 +681,14 @@ onBeforeUnmount(() => {
           <span v-for="tag in note.etiquetas" :key="tag">#{{ tag }}</span>
         </div>
 
-        <div v-if="isAuthor(note)" class="note-actions">
-          <button type="button" @click="edit(note)">Editar</button>
-          <button type="button" @click="remove(note)">Excluir</button>
+        <div v-if="isAuthor(note)" class="note-actions note-more-actions">
+          <button type="button" class="note-more-trigger" :aria-expanded="openNoteMenuId === note.id" aria-haspopup="true" :aria-label="'Opções da ideia ' + (note.titulo || 'sem título')" @click="toggleNoteMenu(note.id)">
+            <span class="mdi mdi-dots-horizontal" aria-hidden="true"></span>
+          </button>
+          <div v-if="openNoteMenuId === note.id" class="note-more-popover" role="group" aria-label="Ações da ideia">
+            <button type="button" @click="edit(note)"><span class="mdi mdi-pencil-outline" aria-hidden="true"></span> Editar</button>
+            <button type="button" class="note-more-danger" @click="remove(note)"><span class="mdi mdi-delete-outline" aria-hidden="true"></span> Excluir</button>
+          </div>
         </div>
       </article>
     </section>
@@ -880,4 +890,15 @@ onBeforeUnmount(() => {
 .notes-page .note-actions button { font-size:11px; font-weight:700; }
 .notes-page .mural-fab { box-shadow:0 10px 25px rgba(0,0,0,.14); }
 @media(max-width:700px){ .notes-page { padding:22px 16px 100px; } .notes-page .notes-hero { padding-top:8px; } .notes-page .notes-tools { padding:14px; } .notes-page .notes-hero h1 { font-size:30px; } }
+</style>
+
+<style>
+.notes-page .note-more-actions{position:relative;display:flex;justify-content:flex-end;margin-top:12px;padding-top:10px;border-top:1px solid rgba(0,0,0,.12);overflow:visible}
+.notes-page .note-more-trigger{display:inline-flex;align-items:center;justify-content:center;width:34px;height:30px;padding:0;border:1px solid rgba(0,0,0,.13);border-radius:9px;background:rgba(255,255,255,.48);color:#222;cursor:pointer;text-decoration:none}
+.notes-page .note-more-trigger .mdi{font-size:20px}
+.notes-page .note-more-popover{position:absolute;right:0;bottom:calc(100% + 4px);z-index:20;min-width:142px;padding:5px;border:1px solid #e8e8e8;border-radius:11px;background:#fff;box-shadow:0 12px 28px rgba(0,0,0,.13)}
+.notes-page .note-more-popover button{display:flex;align-items:center;gap:9px;width:100%;padding:10px 11px;border:0;border-radius:7px;background:transparent;color:#222;font:inherit;font-size:12px;font-weight:600;text-align:left;cursor:pointer;text-decoration:none}
+.notes-page .note-more-popover button:hover{background:#f3f3f3}
+.notes-page .note-more-popover .note-more-danger{color:#bb2525}
+.notes-page .note-more-popover .mdi{font-size:16px}
 </style>
