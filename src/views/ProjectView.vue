@@ -1069,7 +1069,7 @@ onMounted(load)
 
 .project-tasks__filter-toolbar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   margin: -14px 0 18px;
 }
 .project-tasks__filter-toggle {
