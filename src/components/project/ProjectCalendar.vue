@@ -186,15 +186,22 @@ onMounted(load)
     <Teleport to="body">
       <div v-if="showForm" class="calendar-overlay" @click.self="closeForm">
         <section class="calendar-modal" role="dialog" aria-modal="true" aria-labelledby="event-form-title">
-          <header><h2 id="event-form-title">{{ editingId ? 'Editar evento' : 'Novo evento' }}</h2><button type="button" aria-label="Fechar" @click="closeForm">✕</button></header>
+          <header class="calendar-modal__header">
+            <div class="calendar-modal__heading">
+              <span class="calendar-modal__eyebrow">CALENDÁRIO DO PROJETO</span>
+              <h2 id="event-form-title">{{ editingId ? 'Editar evento' : 'Novo evento' }}</h2>
+              <p>Organize os detalhes e mantenha a equipe alinhada.</p>
+            </div>
+            <button type="button" class="calendar-modal__close" aria-label="Fechar formulário" @click="closeForm">✕</button>
+          </header>
           <form @submit.prevent="save">
-            <label>Título <input v-model="form.titulo" required maxlength="200" /></label>
-            <label>Descrição <textarea v-model="form.descricao" rows="3"></textarea></label>
+            <label>Título <input v-model="form.titulo" required maxlength="200" placeholder="Ex.: Reunião de planejamento" /></label>
+            <label>Descrição <textarea v-model="form.descricao" rows="3" placeholder="Adicione informações importantes sobre o evento"></textarea></label>
             <label>Data <input v-model="form.data" required type="date" /></label>
             <div class="calendar-time-row"><label>Início <input v-model="form.hora_inicio" type="time" /></label><label>Fim <input v-model="form.hora_fim" type="time" /></label></div>
             <label>Localização <input v-model="form.localizacao" placeholder="Ex.: Laboratório IFC" /></label>
             <p v-if="error" class="calendar-error" role="alert">{{ error }}</p>
-            <footer><button type="button" class="calendar-secondary" @click="closeForm">Cancelar</button><button type="submit" class="calendar-primary" :disabled="saving">{{ saving ? 'Salvando...' : 'Salvar evento' }}</button></footer>
+            <footer class="calendar-modal__footer"><button type="button" class="calendar-secondary" :disabled="saving" @click="closeForm">Cancelar</button><button type="submit" class="calendar-primary" :disabled="saving">{{ saving ? 'Salvando...' : editingId ? 'Salvar alterações' : 'Criar evento' }}</button></footer>
           </form>
         </section>
       </div>
@@ -210,4 +217,40 @@ onMounted(load)
 .calendar-overlay{position:fixed;inset:0;z-index:10010;display:grid;place-items:center;background:#0009;padding:16px}.calendar-modal{width:min(100%,520px);max-height:92dvh;overflow:auto;background:#fff;border-radius:18px;padding:24px}.calendar-modal header{display:flex;justify-content:space-between;align-items:center}.calendar-modal header button{border:none;background:#eee;border-radius:50%;width:32px;height:32px;cursor:pointer}.calendar-modal form{display:grid;gap:15px}.calendar-modal label{display:grid;gap:6px;font-size:12px;font-weight:700}.calendar-time-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.calendar-modal footer{display:flex;justify-content:flex-end;gap:10px}
 @media(max-width:760px){.calendar-box{padding:16px}.calendar-columns{grid-template-columns:1fr}.calendar-head{align-items:flex-start;flex-direction:column}.calendar-item{flex-direction:column;gap:6px}}
 .calendar-exported{font-size:11px;font-weight:700;color:#176839;display:inline-flex;align-items:center}
+
+/* Modal de eventos alinhado à identidade visual do Momentum */
+.calendar-overlay{padding:20px;background:rgb(12 12 12 / 65%);backdrop-filter:blur(3px)}
+.calendar-modal{width:min(100%,540px);max-height:min(90dvh,800px);padding:0;overflow-y:auto;overscroll-behavior:contain;border:1px solid #e5e5e5;border-radius:18px;background:#fff;box-shadow:0 24px 70px rgb(0 0 0 / 24%);color:#171717}
+.calendar-modal__header{position:relative;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:28px 30px 22px;border-bottom:1px solid #ededed}
+.calendar-modal__heading{min-width:0}
+.calendar-modal__eyebrow{display:block;margin-bottom:9px;color:#737373;font-size:10px;font-weight:750;letter-spacing:.13em}
+.calendar-modal__header h2{margin:0;color:#171717;font-size:clamp(22px,3vw,28px);font-weight:700;letter-spacing:-.045em;line-height:1.2}
+.calendar-modal__header p{margin:9px 0 0;color:#737373;font-size:12px;line-height:1.55}
+.calendar-modal__header .calendar-modal__close{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border:1px solid #e5e5e5;border-radius:10px;background:#fafafa;color:#333;font-size:16px;cursor:pointer}
+.calendar-modal__header .calendar-modal__close:hover{background:#ededed}
+.calendar-modal form{display:grid;gap:19px;padding:24px 30px 30px}
+.calendar-modal form label{display:grid;gap:8px;min-width:0;color:#303030;font-size:12px;font-weight:650}
+.calendar-modal input,.calendar-modal textarea{display:block;width:100%;min-width:0;min-height:44px;box-sizing:border-box;padding:11px 13px;border:1px solid #dedede;border-radius:10px;background:#fff;color:#171717;font:inherit;font-size:14px;font-weight:400;transition:border-color .15s,box-shadow .15s}
+.calendar-modal textarea{min-height:86px;resize:vertical;line-height:1.5}
+.calendar-modal input::placeholder,.calendar-modal textarea::placeholder{color:#999}
+.calendar-modal input:hover,.calendar-modal textarea:hover{border-color:#aaa}
+.calendar-modal input:focus,.calendar-modal textarea:focus{outline:none;border-color:#171717;box-shadow:0 0 0 3px rgb(23 23 23 / 9%)}
+.calendar-modal .calendar-time-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.calendar-modal__footer{display:flex;justify-content:flex-end;gap:10px;margin-top:4px;padding-top:20px;border-top:1px solid #ededed}
+.calendar-modal__footer button{min-height:44px;padding:11px 18px;border-radius:10px;font-size:12px}
+.calendar-modal__footer .calendar-secondary:hover{background:#f5f5f5}
+.calendar-modal__footer .calendar-primary:hover:not(:disabled){background:#333}
+.calendar-modal button:focus-visible{outline:3px solid #777;outline-offset:3px}
+.calendar-modal button:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:600px){
+ .calendar-overlay{align-items:end;padding:0}
+ .calendar-modal{width:100%;max-height:94dvh;border-radius:18px 18px 0 0;border-bottom:0}
+ .calendar-modal__header{padding:22px 20px 18px}
+ .calendar-modal form{gap:16px;padding:20px 20px max(24px,env(safe-area-inset-bottom))}
+ .calendar-modal .calendar-time-row{gap:10px}
+ .calendar-modal__footer{display:grid;grid-template-columns:1fr 1fr}
+ .calendar-modal__footer button{width:100%;padding:10px}
+}
+@media(max-width:350px){.calendar-modal .calendar-time-row{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.calendar-modal input,.calendar-modal textarea{transition:none}}
 </style>
