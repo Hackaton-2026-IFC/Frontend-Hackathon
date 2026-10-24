@@ -59,3 +59,26 @@ test('botão + fica acima da navegação no celular sem trocar endpoint ou backe
   assert.match(notes, /notesApi\.listAll\(\{ projeto: projectId\.value/)
   assert.match(notes, /notesApi\.create\(payloadWithPhoto\(\)\)/)
 })
+
+
+test('mural permite ordenar cards com alça (mouse, touch, teclado) e manter posição', () => {
+  const source = load('src/views/NotesView.vue')
+  assert.match(source, /class="drag-handle"/)
+  assert.match(source, /@pointerdown="startDrag\(note, \$event\)"/)
+  assert.match(source, /@pointermove="moveDrag"/)
+  assert.match(source, /@pointerup="endDrag"/)
+  assert.match(source, /@keydown\.up\.prevent="moveWithKeyboard\(note, -1\)"/)
+  assert.match(source, /notesApi\.saveOrder\(projectId\.value/)
+  assert.match(source, /function sortNotes\(items\)/)
+  assert.match(source, /'notes-grid'|class="notes-grid"/)
+  assert.match(source, /grid-template-columns: repeat\(auto-fill/)
+})
+
+test('fixação não exige autoria nem modifica propriedade compartilhada', () => {
+  const source = load('src/views/NotesView.vue')
+  assert.match(source, /notesApi\.pinForMe\(note\.id, !note\.fixada\)/)
+  assert.doesNotMatch(source, /notesApi\.update\(note\.id, \{ fixada:/)
+  assert.match(source, /aria-pressed="Boolean\(note\.fixada\)"/)
+  assert.match(source, /Fixar só para mim/)
+  assert.match(source, /if \(Boolean\(a\.fixada\) !== Boolean\(b\.fixada\)\)/)
+})
