@@ -1644,3 +1644,173 @@
 @media (max-width: 700px) {
   .task-comments-desktop-button { display: none !important; }
 }
+
+
+/* Formulário: prazo, prioridades e planejamento no padrão dos cards. */
+.task-form .task-form-edit-options,
+.task-form .task-form-edit-options * {
+  box-sizing: border-box;
+}
+.task-form .task-form-edit-options {
+  padding: 20px;
+  border: 1px solid #e3e3e3;
+  border-radius: 14px;
+  background: #fafafa;
+}
+.task-form .task-form-edit-options h3 {
+  margin: 0 0 20px;
+  color: #171717;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.task-form .task-form-edit-grid {
+  align-items: start;
+  gap: 20px 16px;
+}
+.task-form .task-form-edit-options label {
+  align-content: start;
+  gap: 8px;
+  color: #303030;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.task-form .task-form-edit-options input:not([type="checkbox"]),
+.task-form .task-form-edit-options select {
+  width: 100%;
+  min-width: 0;
+  height: 46px;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid #d8d8d8;
+  border-radius: 10px;
+  background: #fff;
+  color: #171717;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.task-form .task-form-edit-options input:not([type="checkbox"]):hover,
+.task-form .task-form-edit-options select:hover {
+  border-color: #aaa;
+}
+.task-form .task-form-edit-options input:focus-visible,
+.task-form .task-form-edit-options select:focus-visible {
+  outline: 2px solid #171717;
+  outline-offset: 3px;
+}
+.task-form .task-form-edit-options small,
+.task-form .task-assignee-help,
+.task-form .task-form-priority-help {
+  color: #737373;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.65;
+}
+.task-form .task-assignee-help { margin: 12px 0 0; }
+.task-form .task-form-priority-help { margin: 16px 0 0; }
+
+.task-form .task-form-auto-priority {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  min-height: 60px;
+  padding: 12px 14px;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  background: #fff;
+}
+.task-form .task-form-auto-priority > span {
+  color: #666;
+  font-size: 12px;
+  font-weight: 500;
+}
+.task-form .task-form-auto-priority > strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: #f4f4f4;
+  color: #262626;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Mantém o checkbox nativo acessível, com aparência de interruptor. */
+.task-form label.task-weather-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 64px;
+  padding: 14px 16px;
+  border: 1px solid #e3e3e3;
+  border-radius: 10px;
+  background: #fff;
+  color: #303030;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.task-form .task-weather-checkbox input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  order: 1;
+  flex: 0 0 42px;
+  width: 42px;
+  min-width: 42px;
+  height: 24px;
+  min-height: 24px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #ccc;
+  border-radius: 999px;
+  background: #e5e5e5;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+.task-form .task-weather-checkbox input[type="checkbox"]::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 15%);
+  transition: transform 0.2s;
+}
+.task-form .task-weather-checkbox input[type="checkbox"]:checked {
+  border-color: #171717;
+  background: #171717;
+}
+.task-form .task-weather-checkbox input[type="checkbox"]:checked::before {
+  transform: translateX(18px);
+}
+.task-form .task-weather-checkbox:has(input:checked) { border-color: #bdbdbd; }
+.task-form .task-weather-checkbox:has(input:disabled),
+.task-form .task-weather-checkbox input:disabled { cursor: not-allowed; }
+.task-form .task-weather-checkbox + label { margin-top: 18px; }
+
+@media (max-width: 639px) {
+  .task-form .task-form-edit-options { padding: 16px; }
+  .task-form .task-form-edit-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .task-form label.task-weather-checkbox { padding: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .task-form .task-form-edit-options input,
+  .task-form .task-form-edit-options select,
+  .task-form .task-weather-checkbox input::before { transition: none; }
+}
