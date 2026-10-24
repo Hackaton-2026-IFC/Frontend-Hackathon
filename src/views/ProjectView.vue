@@ -14,6 +14,7 @@ import ProjectMembers from '@/components/project/ProjectMembers.vue'
 import ProjectDeleteDialog from '@/components/project/ProjectDeleteDialog.vue'
 import ProjectTaskModal from '@/components/project/ProjectTaskModal.vue'
 import ProjectKanban from '@/components/project/ProjectKanban.vue'
+import ProjectTaskCard from '@/components/project/ProjectTaskCard.vue'
 import ToastNotice from '@/components/ui/ToastNotice.vue'
 import ProjectAgentModal from '@/components/project/ProjectAgentModal.vue'
 import ProjectCalendar from '@/components/project/ProjectCalendar.vue'
@@ -766,7 +767,7 @@ onMounted(load)
         <!-- Abas de status -->
 
         <div
-          class="project-tasks__tabs"
+          class="project-tasks__tabs project-tasks__mobile-only"
           role="group"
           aria-label="Situação das tarefas"
         >
@@ -963,13 +964,41 @@ onMounted(load)
 
         <!-- Lista de tarefas -->
 
-<ProjectKanban
-          :key="String(id)"
-          :tasks="filteredTasks"
-          :columns="columns"
-          :saving="movingTask"
-          @move="moveTask"
-        />
+<div class="project-tasks__desktop-only">
+          <ProjectKanban
+            :key="String(id)"
+            :tasks="filteredTasks"
+            :columns="columns"
+            :saving="movingTask"
+            @move="moveTask"
+          />
+        </div>
+
+        <div class="project-tasks__mobile-list" aria-label="Lista de tarefas">
+          <p v-if="!filteredTasks.length" class="project-tasks__mobile-empty">
+            Nenhuma tarefa encontrada nesta situação.
+          </p>
+          <article
+            v-for="task in filteredTasks"
+            :key="task.id"
+            class="project-tasks__mobile-card"
+          >
+            <ProjectTaskCard :task="task" />
+            <label class="project-tasks__mobile-move">
+              Mover para
+              <select
+                :value="task.status"
+                :disabled="movingTask"
+                :aria-label="`Mover tarefa ${task.titulo} para`"
+                @change="moveTask({ taskId: task.id, status: $event.target.value }); $event.target.value = task.status"
+              >
+                <option v-for="col in columns" :key="col.key" :value="col.key">
+                  {{ col.label }}
+                </option>
+              </select>
+            </label>
+          </article>
+        </div>
         <ToastNotice v-if="moveError" :message="moveError" type="error" />
         <ToastNotice :message="moveNotice" type="info" />
       </section>
@@ -986,6 +1015,58 @@ onMounted(load)
   </main>
 </template>
 <style scoped>
+.project-tasks__mobile-list { display: none; }
+@media (min-width: 769px) {
+  .project-tasks__mobile-only { display: none !important; }
+}
+@media (max-width: 768px) {
+  .project-tasks__desktop-only { display: none; }
+  .project-tasks__mobile-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    min-width: 0;
+  }
+  .project-tasks__mobile-card {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid #dedede;
+    border-radius: 12px;
+    background: #fff;
+  }
+  .project-tasks__mobile-card :deep(.momentum-task) {
+    border: 0;
+    border-radius: 0;
+    height: auto;
+  }
+  .project-tasks__mobile-move {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+    border-top: 1px solid #e5e5e5;
+    color: #555;
+    font-size: 12px;
+  }
+  .project-tasks__mobile-move select {
+    min-height: 44px;
+    max-width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+  }
+  .project-tasks__mobile-empty {
+    padding: 24px 14px;
+    border: 1px dashed #dedede;
+    border-radius: 12px;
+    color: #666;
+    text-align: center;
+  }
+}
+
 .project-tasks__filter-toolbar {
   display: flex;
   justify-content: flex-end;
