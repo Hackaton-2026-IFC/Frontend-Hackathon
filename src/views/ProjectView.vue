@@ -581,6 +581,8 @@ async function addTask(dados) {
       descricao: dados.descricao,
       prioridade: dados.prioridade,
       status: dados.status,
+      clima_influencia: Boolean(dados.clima_influencia),
+      localizacao: dados.clima_influencia ? (dados.localizacao || '').trim() : '',
       ...(dados.data_limite
         ? { data_limite: dados.data_limite }
         : {}),
