@@ -3,13 +3,28 @@
 import { computed, ref } from 'vue'
 import CadastroForm from '@/components/auth/RegisterForm.vue'
 import { useRegisterStore } from '@/stores/registerStore.js'
+import { useAuthStore } from '@/stores/authStore.js'
 
 const registerStore = useRegisterStore()
+const authStore = useAuthStore()
+const googleError = ref('')
 
 const loading = ref(false)
-const error = computed(() => registerStore.errorMessage)
+const error = computed(() => googleError.value || registerStore.errorMessage)
+
+async function handleGoogle(credential) {
+  if (loading.value) return
+  loading.value = true
+  googleError.value = ''
+  try {
+    const ok = await authStore.loginWithGoogle(credential)
+    if (!ok) googleError.value = authStore.errorMessage
+  } catch (e) { googleError.value = e.message || 'Falha no cadastro com Google.' }
+  finally { loading.value = false }
+}
 
 async function handleCadastro(data) {
+  googleError.value = ''
   loading.value = true
 
   try {
@@ -26,6 +41,7 @@ async function handleCadastro(data) {
       :loading="loading"
       :error="error"
       @submit="handleCadastro"
+      @google="handleGoogle"
     />
   </div>
 </template>
