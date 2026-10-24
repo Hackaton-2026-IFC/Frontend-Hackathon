@@ -98,8 +98,8 @@ function backToTaskList() {
   if (route.name === 'task-view') {
     const projectId = selectedTask.value?.projeto
     return router.push(projectId
-      ? { name: 'project-tasks', params: { projectId } }
-      : { name: 'tasks' })
+      ? { name: 'project-details', params: { id: projectId } }
+      : { name: 'projects' })
   }
   const query = { ...route.query }
   delete query.task
@@ -195,7 +195,7 @@ function removedTask() {
         <template v-else>
           <div v-if="mobileDetailActive" class="task-mobile-back">
             <button type="button" class="task-mobile-back__button" @click="backToTaskList">
-              ← Voltar às tarefas
+              ← Voltar ao projeto
             </button>
           </div>
 
