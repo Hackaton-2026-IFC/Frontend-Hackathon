@@ -1,7 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-import NotificationBell from '@/components/layout/NotificationBell.vue'
+import { RouterLink, useRoute } from 'vue-router'
 
 const route = useRoute()
 
@@ -14,6 +13,7 @@ const pageTitle = computed(() => {
     '/notes': 'Notas',
     '/profile': 'Perfil',
     '/settings': 'Configurações',
+    '/notifications': 'Notificações',
   }
 
   const path = route.path.replace(/\/+$/, '') || '/'
@@ -30,6 +30,10 @@ const pageTitle = computed(() => {
     return 'Projetos'
   }
 
+  if (path.startsWith('/tasks/')) {
+    return 'Detalhes da tarefa'
+  }
+
   return String(route.meta?.title || route.name || 'Página')
 })
 </script>
@@ -37,6 +41,7 @@ const pageTitle = computed(() => {
 <template>
   <header class="app-header">
     <div class="header-content">
+
       <!-- DESKTOP -->
       <div class="desktop-header-title">
         <h1 class="header-page-title">
@@ -65,7 +70,30 @@ const pageTitle = computed(() => {
         </span>
       </div>
 
-      <NotificationBell />
+      <!-- SINO: ABRE DIRETAMENTE A VIEW -->
+      <RouterLink
+        to="/notifications"
+        class="notification-button"
+        aria-label="Abrir notificações"
+        title="Notificações"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="21"
+          height="21"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+          <path d="M10 21h4" />
+        </svg>
+      </RouterLink>
+
     </div>
   </header>
 </template>
@@ -115,6 +143,36 @@ const pageTitle = computed(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* BOTÃO DE NOTIFICAÇÕES */
+
+.notification-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  width: 40px;
+  height: 40px;
+
+  border-radius: 10px;
+  color: #555;
+  text-decoration: none;
+
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+
+.notification-button:hover {
+  background: #f2f2f2;
+  color: #171717;
+}
+
+.notification-button.router-link-active {
+  background: #f0f0f0;
+  color: #171717;
 }
 
 /* MOBILE OCULTO NO DESKTOP */
@@ -188,6 +246,16 @@ const pageTitle = computed(() => {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .notification-button {
+    color: #ffffff;
+  }
+
+  .notification-button:hover,
+  .notification-button.router-link-active {
+    background: #353532;
+    color: #ffffff;
   }
 }
 

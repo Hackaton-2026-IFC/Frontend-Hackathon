@@ -11,23 +11,36 @@ import NotFoundView from '@/views/NotFoundView.vue'
 import ProjectsView from '@/views/ProjectsView.vue'
 import ProjectView from '@/views/ProjectView.vue'
 import TaskView from '@/views/TaskView.vue'
-import DetalhesProjetoView from '@/views/DetalhesProjetoView.vue'
 import NotesView from '@/views/NotesView.vue'
+import NotificationView from '@/views/NotificationView.vue'
 
 const routes = [
-  // AUTENTICAÇÃO
+  // ==========================================
+  // TAREFAS
+  // ==========================================
+
   {
     path: '/tasks',
     name: 'tasks',
     component: () => import('@/views/TasksView.vue'),
-    meta: { requiresAuth: true },
+    meta: {
+      requiresAuth: true,
+    },
   },
+
   {
     path: '/projects/:projectId/tasks',
     name: 'project-tasks',
     component: () => import('@/views/TasksView.vue'),
-    meta: { requiresAuth: true },
+    meta: {
+      requiresAuth: true,
+    },
   },
+
+  // ==========================================
+  // AUTENTICAÇÃO
+  // ==========================================
+
   {
     path: '/',
     component: AuthLayout,
@@ -51,7 +64,10 @@ const routes = [
     ],
   },
 
+  // ==========================================
   // HOME
+  // ==========================================
+
   {
     path: '/home',
     name: 'home',
@@ -61,7 +77,10 @@ const routes = [
     },
   },
 
-  // LISTAGEM DE PROJETOS
+  // ==========================================
+  // PROJETOS
+  // ==========================================
+
   {
     path: '/projects',
     name: 'projects',
@@ -71,7 +90,6 @@ const routes = [
     },
   },
 
-  // DETALHES DO PROJETO
   {
     path: '/projects/:id',
     name: 'project-details',
@@ -82,7 +100,10 @@ const routes = [
     },
   },
 
+  // ==========================================
   // DETALHES DA TAREFA
+  // ==========================================
+
   {
     path: '/tasks/:id',
     name: 'task-view',
@@ -93,13 +114,36 @@ const routes = [
     },
   },
 
-  // CONFIGURAÇÕES
+  // ==========================================
+  // NOTIFICAÇÕES
+  // ==========================================
+
+  {
+    path: '/notifications',
+    name: 'notifications',
+    component: NotificationView,
+    meta: {
+      requiresAuth: true,
+    },
+  },
+
+  // ==========================================
+  // ANOTAÇÕES
+  // ==========================================
+
   {
     path: '/notes',
     name: 'notes',
     component: NotesView,
-    meta: { requiresAuth: true },
+    meta: {
+      requiresAuth: true,
+    },
   },
+
+  // ==========================================
+  // CONFIGURAÇÕES
+  // ==========================================
+
   {
     path: '/settings',
     name: 'settings',
@@ -109,7 +153,10 @@ const routes = [
     },
   },
 
+  // ==========================================
   // PERFIL
+  // ==========================================
+
   {
     path: '/profile',
     name: 'profile',
@@ -119,7 +166,10 @@ const routes = [
     },
   },
 
+  // ==========================================
   // PÁGINA NÃO ENCONTRADA
+  // ==========================================
+
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
@@ -131,12 +181,19 @@ const routes = [
   },
 ]
 
+// ==========================================
+// CRIAR ROUTER
+// ==========================================
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
 })
 
+// ==========================================
 // PROTEÇÃO DAS ROTAS
+// ==========================================
+
 router.beforeEach((to) => {
   const authStore = useAuthStore()
 
