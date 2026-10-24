@@ -15,7 +15,6 @@ const saving = ref(false)
 const exporting = ref(null)
 const error = ref('')
 const notice = ref('')
-const googleLinks = ref({})
 const editingId = ref(null)
 const showForm = ref(false)
 const today = () => {
@@ -43,6 +42,17 @@ function message(err) {
   if (typeof data?.detail === 'string') return data.detail
   if (data && typeof data === 'object') return Object.entries(data).map(([key,value]) => `${key}: ${Array.isArray(value)?value.join(', '):String(value)}`).join(' · ')
   return err?.message || 'Não foi possível realizar esta operação.'
+}
+function safeCalendarLink(value) {
+  if (typeof value !== 'string') return null
+  try {
+    const url = new URL(value)
+    if (url.protocol === 'https:' && (
+      url.hostname === 'calendar.google.com' ||
+      (url.hostname === 'www.google.com' && url.pathname.startsWith('/calendar/'))
+    )) return url.href
+  } catch { /* Link ausente ou inválido */ }
+  return null
 }
 function dateBr(date) {
   if (!date) return 'Sem data'
@@ -116,20 +126,16 @@ async function exportEvent(event) {
     // Consentimento OAuth durante o clique; não guardar access token em storage.
     const token = await authorizeCalendar()
     const { data } = await projectCalendarApi.exportGoogle(props.projectId, event.id, token)
-    if (typeof data.htmlLink === 'string') {
-      try {
-        const link = new URL(data.htmlLink)
-        if (link.protocol === 'https:' && (
-          link.hostname === 'calendar.google.com' ||
-          (link.hostname === 'www.google.com' && link.pathname.startsWith('/calendar/'))
-        )) googleLinks.value[event.id] = link.href
-      } catch { /* Resposta sem link válido: exportação segue concluída. */ }
+    const currentEvent = events.value.find(item => item.id === event.id)
+    if (currentEvent) {
+      currentEvent.exportado_google = true
+      currentEvent.google_event_url = data.htmlLink || null
     }
     notice.value = 'Evento exportado para seu Google Agenda!'
   } catch (err) { error.value = message(err) }
   finally { exporting.value = null }
 }
-watch(() => props.projectId, () => { showForm.value = false; googleLinks.value = {}; load() })
+watch(() => props.projectId, () => { showForm.value = false; load() })
 onMounted(load)
 </script>
 
@@ -158,10 +164,11 @@ onMounted(load)
             <p v-if="event.descricao">{{ event.descricao }}</p>
             <small v-if="event.localizacao"><span aria-hidden="true">⌖</span> {{ event.localizacao }}</small>
             <div class="calendar-actions">
-              <button type="button" :disabled="!!exporting" @click="exportEvent(event)">{{ exporting===event.id ? 'Exportando...' : 'Exportar para Google Agenda' }}</button>
+              <button v-if="!event.exportado_google" type="button" :disabled="!!exporting" @click="exportEvent(event)">{{ exporting===event.id ? 'Exportando...' : 'Exportar para Google Agenda' }}</button>
+              <span v-else class="calendar-exported" title="Exportação confirmada pelo servidor">✓ Exportado</span>
               <button type="button" @click="edit(event)">Editar</button>
               <button type="button" @click="remove(event)">Excluir</button>
-              <a v-if="googleLinks[event.id]" :href="googleLinks[event.id]" target="_blank" rel="noopener noreferrer">Abrir no Google ↗</a>
+              <a v-if="safeCalendarLink(event.google_event_url)" :href="safeCalendarLink(event.google_event_url)" target="_blank" rel="noopener noreferrer">Abrir no Google ↗</a>
             </div>
           </div>
         </div>
@@ -202,4 +209,5 @@ onMounted(load)
 .calendar-columns{display:grid;grid-template-columns:1fr 1fr;gap:20px}.calendar-section{min-width:0}.calendar-section h3{display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding-bottom:12px;font-size:15px}.calendar-section h3 span{color:#888}.calendar-item{display:flex;gap:14px;border:1px solid #eaeaea;padding:14px;margin:12px 0;border-radius:12px}.calendar-date{min-width:92px;font-weight:700;font-size:12px}.calendar-date small{display:block;font-weight:500;color:#777;margin-top:5px}.calendar-item-content{min-width:0;overflow-wrap:anywhere}.calendar-item-content strong{font-size:13px}.calendar-item-content p{font-size:12px;margin:7px 0;color:#555}.calendar-item-content small{display:block;color:#777;font-size:11px;margin-top:8px}.calendar-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:13px}.calendar-actions button,.calendar-actions a{border:0;background:transparent;padding:0;font-size:11px;font-weight:700;text-decoration:underline;cursor:pointer;color:#333}.calendar-guidance,.calendar-error,.calendar-success{font-size:12px;line-height:1.6;padding:12px;border-radius:9px}.calendar-guidance{background:#f7f7f5}.calendar-error{color:#9b2020;background:#fff1f1}.calendar-success{color:#176839;background:#e8f9ef}.calendar-empty{color:#888;font-size:12px}
 .calendar-overlay{position:fixed;inset:0;z-index:10010;display:grid;place-items:center;background:#0009;padding:16px}.calendar-modal{width:min(100%,520px);max-height:92dvh;overflow:auto;background:#fff;border-radius:18px;padding:24px}.calendar-modal header{display:flex;justify-content:space-between;align-items:center}.calendar-modal header button{border:none;background:#eee;border-radius:50%;width:32px;height:32px;cursor:pointer}.calendar-modal form{display:grid;gap:15px}.calendar-modal label{display:grid;gap:6px;font-size:12px;font-weight:700}.calendar-time-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.calendar-modal footer{display:flex;justify-content:flex-end;gap:10px}
 @media(max-width:760px){.calendar-box{padding:16px}.calendar-columns{grid-template-columns:1fr}.calendar-head{align-items:flex-start;flex-direction:column}.calendar-item{flex-direction:column;gap:6px}}
+.calendar-exported{font-size:11px;font-weight:700;color:#176839;display:inline-flex;align-items:center}
 </style>
