@@ -14,13 +14,15 @@ const api = axios.create({
 })
 
 let refreshPromise = null
+let sessionEnded = false
 
 function encerrarSessao() {
+  if (sessionEnded) return
+  sessionEnded = true
   localStorage.removeItem('access_token')
   localStorage.removeItem('refresh_token')
   localStorage.removeItem('user_profile_cache')
-
-  window.location.assign('/')
+  window.dispatchEvent(new Event('auth:session-expired'))
 }
 
 async function renovarToken() {
@@ -59,6 +61,7 @@ async function renovarToken() {
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token')
+    if (token) sessionEnded = false
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
@@ -93,7 +96,17 @@ api.interceptors.response.use(
       return Promise.reject(error)
     }
 
+    // Não tenta renovar solicitações anônimas nem dispara redirecionamentos.
+    if (!originalRequest.headers?.Authorization && !localStorage.getItem('access_token')) {
+      return Promise.reject(error)
+    }
+
     originalRequest._retry = true
+
+    if (!localStorage.getItem('refresh_token')) {
+      encerrarSessao()
+      return Promise.reject(error)
+    }
 
     let novoToken
 
