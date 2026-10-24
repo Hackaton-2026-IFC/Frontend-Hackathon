@@ -427,3 +427,40 @@
     grid-template-columns: 1fr;
   }
 }
+/* Mobile: opções de situação empilhadas, sem rolagem horizontal. */
+@media (max-width: 768px) {
+  .project-tasks .project-tasks__tabs {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    width: 100%;
+    overflow: visible;
+    padding-bottom: 16px;
+  }
+
+  .project-tasks.panel .project-tasks__tabs button {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 10px 14px;
+    text-align: left;
+  }
+
+  .project-tasks .project-tasks__filter-toolbar {
+    justify-content: stretch;
+    margin: 0 0 16px;
+  }
+
+  .project-tasks .project-tasks__filter-toggle {
+    width: 100%;
+  }
+}
+
+/* Desktop: botão Filtrar alinhado à esquerda, abaixo de Nova tarefa. */
+@media (min-width: 769px) {
+  .project-tasks .project-tasks__filter-toolbar {
+    justify-content: flex-start;
+  }
+}
