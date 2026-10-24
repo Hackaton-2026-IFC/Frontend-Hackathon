@@ -16,7 +16,8 @@
     "test:legal": "node --test tests/legal-acceptance.test.js",
     "start": "node server.cjs",
     "test:server": "node --test tests/production-server.test.cjs",
-    "test:task-modal": "node --test tests/unified-task-modal.test.js"
+    "test:task-modal": "node --test tests/unified-task-modal.test.js",
+    "test:visual-integration": "node --test tests/visual-integration.test.js"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",

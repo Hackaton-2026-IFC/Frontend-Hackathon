@@ -168,6 +168,11 @@ const toastStore = useToastStore()
     padding-bottom: 76px;
   }
 
+  /* Mantém a altura natural da tela de projeto, como na FEAT visual original. */
+  .page-content:has(> .workspace) {
+    min-height: 0;
+  }
+
   .app-error {
     right: 12px;
     bottom: 76px;

@@ -2,11 +2,14 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import invitesApi from '@/api/invitesApi'
+import projectsApi from '@/api/projectsApi'
+import { getProjectIcon } from '@/utils/projectIcons'
 import { useToastStore } from '@/stores/toastStore'
 
 const toast = useToastStore()
 
 const invites = ref([])
+const projectDetails = ref({})
 const loading = ref(true)
 const error = ref('')
 const processingId = ref(null)
@@ -21,35 +24,55 @@ const pendingInvites = computed(() =>
   })
 )
 
+function getProjectId(invite) {
+  const value = invite.projeto_detalhes ?? invite.projeto_detail ?? invite.projeto ?? invite.projeto_id ?? invite.project_id
+  return typeof value === 'object' ? value?.id : value
+}
+
+function getProject(invite) {
+  const embedded = invite.projeto_detalhes ?? invite.projeto_detail ?? invite.projeto ?? invite.project
+  const details = typeof embedded === 'object' && embedded ? embedded : {}
+  const fromInvite = { nome: invite.projeto_nome, cor: invite.projeto_cor, icone: invite.projeto_icone }
+  return { ...details, ...(projectDetails.value[String(getProjectId(invite))] || {}), ...Object.fromEntries(Object.entries(fromInvite).filter(([, value]) => value != null && value !== '')) }
+}
+
+function getProjectColor(invite) {
+  const color = getProject(invite).cor ?? getProject(invite).color ?? '#171717'
+  return /^#[0-9a-f]{3}([0-9a-f]{3})?$/i.test(String(color)) ? color : '#171717'
+}
+
+async function loadProjectDetails(items) {
+  const ids = [...new Set(items.map(getProjectId).filter(Boolean).map(String))]
+  await Promise.allSettled(ids.map(async (id) => {
+    if (projectDetails.value[id]) return
+    try {
+      const { data } = await projectsApi.get(id)
+      projectDetails.value = { ...projectDetails.value, [id]: data }
+    } catch {
+      // Projetos privados podem não estar disponíveis antes de aceitar o convite.
+    }
+  }))
+}
+
 function getProjectName(invite) {
-  const project =
-    invite.projeto_detalhes ??
-    invite.projeto_detail ??
-    invite.projeto
-
-  if (project && typeof project === 'object') {
-    return project.nome || project.name || `Projeto #${project.id}`
-  }
-
-  return invite.nome_projeto ||
-    invite.projeto_nome ||
-    `Projeto #${project ?? '?'}`
+  const project = getProject(invite)
+  const name = project.nome || project.name || project.titulo ||
+    invite.nome_projeto || invite.projeto_nome || invite.project_name ||
+    invite.projeto?.nome || invite.projeto?.name
+  if (name) return name
+  const id = getProjectId(invite)
+  return id != null ? 'Projeto #' + id : 'Projeto convidado'
 }
 
 function getSenderName(invite) {
-  const sender =
-    invite.remetente_detalhes ??
-    invite.convidado_por_detalhes ??
-    invite.criado_por_detalhes ??
-    invite.remetente
-
-  if (sender && typeof sender === 'object') {
-    return sender.nome || sender.name || sender.username || 'Um usuário'
-  }
-
-  return invite.remetente_nome ||
-    invite.convidado_por_nome ||
-    'Um usuário'
+  const sender = invite.remetente_detalhes ?? invite.convidado_por_detalhes ??
+    invite.criado_por_detalhes ?? invite.remetente ?? invite.convidado_por ??
+    invite.criado_por ?? invite.sender
+  const name = typeof sender === 'object' && sender
+    ? sender.nome || sender.name || sender.nome_completo || sender.username
+    : null
+  return name || invite.remetente_nome || invite.convidado_por_nome ||
+    invite.criado_por_nome || invite.enviado_por_nome || invite.sender_name || 'Um usuário'
 }
 
 function getErrorMessage(err) {
@@ -80,6 +103,7 @@ async function loadInvites() {
       : Array.isArray(data?.results)
         ? data.results
         : []
+    await loadProjectDetails(invites.value)
   } catch (err) {
     console.error('Erro ao buscar convites:', err)
     error.value = getErrorMessage(err)
@@ -223,8 +247,8 @@ onMounted(loadInvites)
           >
             <div class="invite-main">
 
-              <div class="invite-avatar" aria-hidden="true">
-                {{ getProjectName(invite).charAt(0).toUpperCase() }}
+              <div class="invite-avatar" aria-hidden="true" :style="{ backgroundColor: getProjectColor(invite) }">
+                <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path :d="getProjectIcon(getProject(invite).icone ?? getProject(invite).icon ?? '')" fill="currentColor" /></svg>
               </div>
 
               <div class="invite-content">
