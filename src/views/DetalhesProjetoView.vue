@@ -177,79 +177,16 @@ async function deleteProject(id) {
 </template>
 
 <style scoped>
-/* Mobile first para os detalhes de um projeto. */
-.project-page {
-  width: 100%;
-  min-width: 0;
-  min-height: 100%;
-  padding: 20px 16px;
-  background: #fff;
-  color: #000;
-}
-.project-container {
-  width: 100%;
-  max-width: 1200px;
-  min-width: 0;
-  margin: 0 auto;
-}
-.back-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  min-height: 44px;
-  max-width: 100%;
-  padding: 10px 16px;
-  margin-bottom: 24px;
-  border: 1px solid #000;
-  border-radius: 999px;
-  background: #fff;
-  color: #000;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
+.project-page { min-height: 100%; padding: clamp(20px, 4vw, 44px); box-sizing: border-box; background: #fff; color: #000; }
+.project-container { max-width: 1200px; margin: 0 auto; }
+.back-button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; padding: 10px 16px; margin-bottom: 24px; border: 1px solid #000; border-radius: 999px; background: #fff; color: #000; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 .back-button:hover { background: #000; color: #fff; }
 .back-button:focus-visible { outline: 2px solid #000; outline-offset: 4px; }
-
-.project-summary {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  align-items: start;
-  gap: 18px;
-  margin-top: 24px;
-}
-.project-summary > * { min-width: 0; }
-.page-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  min-height: 220px;
-  padding: 20px;
-  border: 1px solid #000;
-  border-radius: 18px;
-  text-align: center;
-  overflow-wrap: anywhere;
-}
-.page-state h1 { margin: 0; font-size: 22px; font-weight: 700; }
+.project-summary { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 24px; margin-top: 24px; }
+.page-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; min-height: 260px; padding: 24px; border: 1px solid #000; border-radius: 18px; text-align: center; }
+.page-state h1 { margin: 0; font-size: 24px; font-weight: 700; }
 .page-state p { margin: 0; font-size: 14px; line-height: 1.7; }
 .page-state .back-button { margin-bottom: 0; }
-
-@media (min-width: 768px) {
-  .project-page { padding: 28px; }
-  .project-summary { gap: 24px; margin-top: 28px; }
-  .page-state { min-height: 260px; padding: 24px; }
-  .page-state h1 { font-size: 24px; }
-}
-
-@media (min-width: 1150px) {
-  .project-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-@media (min-width: 1320px) {
-  .project-page { padding: clamp(28px, 3vw, 44px); }
-}
+@media (max-width: 900px) { .project-summary { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 650px) { .project-page { padding: 20px 16px; } .project-summary { gap: 18px; margin-top: 18px; } }
 </style>

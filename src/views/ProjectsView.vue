@@ -226,33 +226,33 @@ onMounted(loadProjects)
 </template>
 
 <style scoped>
-/* Mobile first: espaço e controles funcionam desde 320px. */
 .projects-page {
-  width: 100%;
-  min-width: 0;
   min-height: 100%;
-  padding: 20px 16px;
+  padding: clamp(20px, 4vw, 44px);
+  box-sizing: border-box;
   background: #fff;
   color: #000;
 }
 
 .projects-container {
-  width: 100%;
   max-width: 1200px;
-  min-width: 0;
   margin: 0 auto;
 }
 
 .page-heading {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 20px;
-  padding-bottom: 24px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding-bottom: 32px;
   border-bottom: 2px solid #000;
 }
 
-.page-heading > div { min-width: 0; }
+.page-heading > div {
+  flex: 1;
+  min-width: min(100%, 260px);
+}
 
 .eyebrow {
   font-size: 10px;
@@ -261,19 +261,17 @@ onMounted(loadProjects)
 }
 
 h1 {
-  margin: 12px 0;
-  font-size: clamp(29px, 7vw, 40px);
+  margin: 14px 0;
+  font-size: clamp(30px, 4vw, 46px);
   font-weight: 700;
-  letter-spacing: -1.3px;
+  letter-spacing: -1.5px;
   line-height: 1.1;
-  overflow-wrap: anywhere;
 }
 
 .page-heading p {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.7;
-  overflow-wrap: anywhere;
 }
 
 .button {
@@ -282,7 +280,7 @@ h1 {
   justify-content: center;
   gap: 10px;
   min-height: 44px;
-  padding: 10px 18px;
+  padding: 12px 20px;
   border: 1px solid #000;
   border-radius: 999px;
   background: #fff;
@@ -293,30 +291,42 @@ h1 {
   cursor: pointer;
 }
 
-.page-heading > .button { width: 100%; }
-
 .button--primary {
   background: #000;
   color: #fff;
 }
 
-.button > span { font-size: 22px; line-height: 1; }
-.button:disabled { opacity: .5; cursor: not-allowed; }
+.button > span {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 .project-filters {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 14px;
-  margin: 24px 0 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 28px 0 20px;
 }
 
 .project-filters label {
   display: grid;
   gap: 8px;
   min-width: 0;
-  width: 100%;
   font-size: 12px;
   font-weight: 600;
+}
+
+.search-field {
+  flex: 1 1 260px;
+}
+
+.status-field {
+  flex: 0 1 210px;
 }
 
 input,
@@ -325,6 +335,7 @@ select {
   min-width: 0;
   min-height: 46px;
   padding: 12px 14px;
+  box-sizing: border-box;
   border: 1px solid #000;
   border-radius: 10px;
   background: #fff;
@@ -334,13 +345,20 @@ select {
   font-weight: 400;
 }
 
-input::placeholder { color: #666; opacity: 1; }
-.results { margin: 0 0 16px; font-size: 12px; }
+input::placeholder {
+  color: #000;
+  opacity: 1;
+}
+
+.results {
+  margin: 0 0 20px;
+  font-size: 12px;
+}
 
 .project-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
 }
 
 .project-card {
@@ -348,20 +366,22 @@ input::placeholder { color: #666; opacity: 1; }
   flex-direction: column;
   align-items: flex-start;
   min-width: 0;
-  min-height: 210px;
-  padding: 20px;
+  min-height: 245px;
+  padding: 24px;
   border: 1px solid #000;
   border-radius: 18px;
   background: #fff;
   color: #000;
   text-decoration: none;
   overflow-wrap: anywhere;
-  transition: transform 160ms ease, box-shadow 160ms ease;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
 }
 
 .project-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 5px 0 #000;
+  box-shadow: 0 8px 0 #000;
 }
 
 .project-status {
@@ -372,22 +392,22 @@ input::placeholder { color: #666; opacity: 1; }
 }
 
 .project-card h2 {
-  margin: 18px 0 8px;
-  font-size: 20px;
+  margin: 22px 0 10px;
+  font-size: 22px;
   font-weight: 700;
   line-height: 1.3;
-  letter-spacing: -.5px;
-  overflow-wrap: anywhere;
+  letter-spacing: -0.6px;
 }
 
 .project-card > p {
   display: -webkit-box;
+  line-clamp: 3;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  margin: 0 0 20px;
+  margin: 0 0 28px;
   font-size: 13px;
-  line-height: 1.65;
+  line-height: 1.7;
 }
 
 .project-card__footer {
@@ -395,7 +415,7 @@ input::placeholder { color: #666; opacity: 1; }
   justify-content: space-between;
   gap: 12px;
   width: 100%;
-  padding-top: 14px;
+  padding-top: 16px;
   margin-top: auto;
   border-top: 1px solid #000;
   font-size: 12px;
@@ -406,8 +426,8 @@ input::placeholder { color: #666; opacity: 1; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
-  padding: 30px 18px;
+  gap: 16px;
+  padding: 48px 24px;
   border: 1px dashed #000;
   border-radius: 18px;
   text-align: center;
@@ -415,49 +435,48 @@ input::placeholder { color: #666; opacity: 1; }
 
 .empty-state h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
-  overflow-wrap: anywhere;
 }
-.empty-state p { margin: 0; font-size: 14px; line-height: 1.7; }
-.empty-state .button { width: 100%; }
+
+.empty-state p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+}
 
 :is(button, a, input, select):focus-visible {
   outline: 2px solid #000;
   outline-offset: 4px;
 }
 
-@media (min-width: 640px) {
-  .projects-page { padding: 28px 24px; }
-  .page-heading {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+@media (max-width: 1100px) {
+  .project-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .page-heading > div { flex: 1; }
-  .page-heading > .button { width: auto; flex-shrink: 0; }
-  .page-heading p { font-size: 14px; }
-  .project-filters {
-    grid-template-columns: minmax(0, 1fr) minmax(160px, 210px);
-  }
-  .empty-state { padding: 44px 24px; }
-  .empty-state .button { width: auto; }
 }
 
-@media (min-width: 960px) {
-  .project-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
-  .project-card { min-height: 235px; padding: 24px; }
-}
+@media (max-width: 650px) {
+  .projects-page {
+    padding: 24px 16px;
+  }
 
-@media (min-width: 1320px) {
-  .projects-page { padding: clamp(28px, 3vw, 44px); }
-  .page-heading { padding-bottom: 32px; }
-  h1 { font-size: 46px; }
-  .project-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
-  .project-card { min-height: 245px; }
+  .project-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .status-field {
+    flex: 1 1 100%;
+  }
+
+  .page-heading > .button {
+    width: 100%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .project-card { transition: none; }
+  .project-card {
+    transition: none;
+  }
 }
 </style>
