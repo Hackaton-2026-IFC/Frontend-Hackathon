@@ -48,6 +48,7 @@ try {
   await test('componentes novos e TasksView compilam como SFC', async () => {
     for (const modulePath of [
       '/src/components/tasks/TaskRoadmap.vue',
+      '/src/components/tasks/TaskForm.vue',
       '/src/components/tasks/TaskWorkspace.vue',
       '/src/components/tasks/TaskCommentsModal.vue',
       '/src/views/TasksView.vue',

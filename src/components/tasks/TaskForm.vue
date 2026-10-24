@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { TASK_PRIORITIES, TASK_STATUSES, taskError } from '@/api/taskApi'
 import { automaticPriority } from '@/utils/taskPresentation'
 import { useTaskStore } from '@/stores/taskStore'
@@ -16,6 +16,14 @@ const emit = defineEmits(['close', 'saved'])
 const store = useTaskStore()
 const dialog = ref(null)
 const error = ref('')
+const userSearch = ref('')
+const searchResults = ref([])
+const searchingUsers = ref(false)
+const userSearchError = ref('')
+const inviteNotice = ref('')
+const invitedUserIds = ref([])
+let searchTimer = null
+let searchRequest = 0
 
 const form = reactive({
   projeto: props.task?.projeto ?? props.projectId ?? props.projects[0]?.id ?? '',
@@ -35,6 +43,60 @@ const selectedAssigneeIds = ref([
 const members = computed(() =>
   props.projects.find((project) => String(project.id) === String(form.projeto))?.participantes || [],
 )
+const memberIds = computed(() => new Set(members.value.map((member) => String(member.usuario))))
+const filteredMembers = computed(() => {
+  const term = userSearch.value.trim().toLocaleLowerCase('pt-BR')
+  if (!term) return members.value
+  return members.value.filter((member) => {
+    const details = member.usuario_detalhes || {}
+    return [details.name, details.username]
+      .some((value) => String(value || '').toLocaleLowerCase('pt-BR').includes(term))
+  })
+})
+const outsideUsers = computed(() =>
+  searchResults.value.filter((user) => !memberIds.value.has(String(user.id))),
+)
+
+function resetUserSearch() {
+  clearTimeout(searchTimer)
+  searchRequest++
+  searchResults.value = []
+  searchingUsers.value = false
+  userSearchError.value = ''
+}
+
+watch([userSearch, () => form.projeto], () => {
+  resetUserSearch()
+  inviteNotice.value = ''
+  const term = userSearch.value.trim()
+  if (term.length < 2) return
+
+  searchingUsers.value = true
+  const requestId = searchRequest
+  searchTimer = setTimeout(async () => {
+    try {
+      const matches = await store.searchUsers(term)
+      if (requestId === searchRequest) searchResults.value = matches
+    } catch (err) {
+      if (requestId === searchRequest) userSearchError.value = taskError(err)
+    } finally {
+      if (requestId === searchRequest) searchingUsers.value = false
+    }
+  }, 350)
+})
+
+async function inviteUser(user) {
+  if (!user?.id || store.busy || store.inviting || memberIds.value.has(String(user.id))) return
+  userSearchError.value = ''
+  inviteNotice.value = ''
+  try {
+    await store.inviteProjectMember(form.projeto, user.id)
+    invitedUserIds.value = [...invitedUserIds.value, String(user.id)]
+    inviteNotice.value = `Convite enviado para ${user.name || user.username}. A pessoa poderá ser atribuída à tarefa depois que aceitar e entrar no projeto.`
+  } catch (err) {
+    userSearchError.value = taskError(err)
+  }
+}
 
 const priorityCode = computed(() => automaticPriority({
   status: form.status,
@@ -45,18 +107,24 @@ const priorityCode = computed(() => automaticPriority({
 const priorityLabel = computed(() => TASK_PRIORITIES[priorityCode.value] || 'Sem urgência')
 
 onMounted(() => dialog.value?.showModal())
-onBeforeUnmount(() => dialog.value?.close())
+onBeforeUnmount(() => {
+  resetUserSearch()
+  dialog.value?.close()
+})
 
 function close() {
-  if (!store.busy) emit('close')
+  if (!store.busy && !store.inviting) emit('close')
 }
 
 function changeProject() {
   selectedAssigneeIds.value = []
+  invitedUserIds.value = []
+  userSearch.value = ''
+  resetUserSearch()
 }
 
 async function save() {
-  if (store.busy || !form.titulo.trim() || !form.projeto) return
+  if (store.busy || store.inviting || !form.titulo.trim() || !form.projeto) return
 
   error.value = ''
 
@@ -110,13 +178,13 @@ async function save() {
         type="button"
         class="task-dialog-close"
         aria-label="Fechar formulário"
-        :disabled="store.busy"
+        :disabled="store.busy || store.inviting"
         @click="close"
       >×</button>
     </header>
 
     <form class="task-form" @submit.prevent="save">
-      <fieldset :disabled="store.busy">
+      <fieldset :disabled="store.busy || store.inviting">
         <label>
           Projeto
           <select
@@ -148,9 +216,18 @@ async function save() {
           <div class="task-form-edit-grid">
             <div class="task-form-assignee">
               <span class="task-assignee-title">Responsáveis</span>
-              <div v-if="members.length" class="task-assignee-choices" role="group" aria-label="Selecionar responsáveis">
+              <label class="task-assignee-search">
+                Buscar pelo nome ou username
+                <input
+                  v-model="userSearch"
+                  type="search"
+                  autocomplete="off"
+                  placeholder="Digite o nome de outro usuário..."
+                />
+              </label>
+              <div v-if="filteredMembers.length" class="task-assignee-choices" role="group" aria-label="Selecionar responsáveis">
                 <label
-                  v-for="member in members"
+                  v-for="member in filteredMembers"
                   :key="member.usuario"
                   class="task-assignee-option"
                   :class="{ 'task-assignee-option--selected': selectedAssigneeIds.includes(String(member.usuario)) }"
@@ -164,7 +241,41 @@ async function save() {
                   <span class="task-assignee-option__name">{{ assigneeDisplayName(member) }}</span>
                 </label>
               </div>
-              <p v-else class="task-form-priority-help">Nenhum participante disponível neste projeto.</p>
+              <p v-else class="task-form-priority-help">
+                {{ members.length ? 'Nenhum participante encontrado com esse nome.' : 'Nenhum participante disponível neste projeto.' }}
+              </p>
+
+              <div v-if="userSearch.trim().length >= 2" class="task-assignee-search-results" aria-live="polite">
+                <p v-if="searchingUsers" class="task-assignee-feedback">Pesquisando usuários...</p>
+                <template v-else>
+                  <p v-if="outsideUsers.length" class="task-assignee-feedback">
+                    Outros usuários encontrados (ainda não fazem parte do projeto):
+                  </p>
+                  <div v-for="user in outsideUsers" :key="user.id" class="task-assignee-search-result">
+                    <span class="task-assignee-search-result__avatar" aria-hidden="true">
+                      {{ (user.name || user.username || 'U').charAt(0).toUpperCase() }}
+                    </span>
+                    <span class="task-assignee-search-result__identity">
+                      <strong>{{ user.name || user.username || 'Usuário' }}</strong>
+                      <small v-if="user.username">@{{ user.username }}</small>
+                    </span>
+                    <button
+                      type="button"
+                      class="task-button"
+                      :disabled="store.inviting || invitedUserIds.includes(String(user.id))"
+                      @click="inviteUser(user)"
+                    >
+                      {{ invitedUserIds.includes(String(user.id)) ? 'Convidado' : store.inviting ? 'Enviando...' : 'Convidar' }}
+                    </button>
+                  </div>
+                  <p v-if="!outsideUsers.length && !filteredMembers.length && !userSearchError" class="task-assignee-feedback">
+                    Nenhum usuário encontrado.
+                  </p>
+                </template>
+                <p v-if="userSearchError" class="task-error" role="alert">{{ userSearchError }}</p>
+                <p v-if="inviteNotice" class="task-assignee-invite-notice" role="status">{{ inviteNotice }}</p>
+              </div>
+
               <p class="task-assignee-help">
                 Você pode selecionar várias pessoas. A primeira fica como responsável oficial na API;
                 as adicionais são salvas somente neste navegador e não aparecem para outros integrantes.
@@ -216,13 +327,13 @@ async function save() {
       <p v-if="error" class="task-error" role="alert">{{ error }}</p>
 
       <footer class="task-actions">
-        <button type="button" class="task-button" :disabled="store.busy" @click="close">
+        <button type="button" class="task-button" :disabled="store.busy || store.inviting" @click="close">
           Cancelar
         </button>
         <button
           type="submit"
           class="task-button task-primary"
-          :disabled="store.busy || !form.titulo.trim() || !form.projeto"
+          :disabled="store.busy || store.inviting || !form.titulo.trim() || !form.projeto"
         >
           {{ store.busy ? 'Salvando...' : task ? 'Salvar alterações' : 'Criar tarefa' }}
         </button>

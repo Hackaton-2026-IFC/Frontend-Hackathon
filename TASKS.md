@@ -53,3 +53,11 @@ e `npm run build` no repositório local.
 - O modal carrega comentários pela API existente, permite publicar, editar e excluir os próprios comentários, pagina os resultados e mostra erros sem perder o texto digitado.
 - As requisições ficam em `src/api/taskApi.js`, coordenadas pela `src/stores/taskStore.js`. Os endpoints existentes são `GET/POST /api/tarefas/:id/comentarios/` e `PATCH/DELETE /api/tarefas/:id/comentarios/:comentarioId/`.
 - Nenhum arquivo do backend foi alterado.
+
+## FEAT-35 — edição de etapas e pesquisa de usuários
+
+- Cada etapa do roadmap pode ter o título editado ou ser excluída mediante confirmação. As ações usam `PATCH/DELETE /api/microtarefas/:id/` pela `taskApi` e `taskStore`, e atualizam a tarefa completa ao concluir.
+- O formulário de tarefas permite procurar por nome ou username. Participantes do projeto podem ser selecionados diretamente como responsáveis.
+- Usuários que ainda não participam do projeto aparecem como candidatos a convite. O botão **Convidar** envia um convite pelo endpoint já usado na página de projetos; ele **não** atribui essa pessoa à tarefa automaticamente. O convite deve ser aceito antes de atribuí-la.
+- O backend só registra um responsável oficial por tarefa. Seleções adicionais continuam salvas localmente no navegador, como antes.
+- Não foram alterados arquivos do backend, do Vite/PWA, da autenticação ou das rotas.

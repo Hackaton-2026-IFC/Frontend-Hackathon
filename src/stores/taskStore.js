@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import taskApi, { taskError } from '@/api/taskApi'
+import usersApi from '@/api/usersApi'
+import invitesApi from '@/api/invitesApi'
 
 export const useTaskStore = defineStore('tasks', () => {
   const authStore = useAuthStore()
@@ -10,6 +12,7 @@ export const useTaskStore = defineStore('tasks', () => {
   const loading = ref(false)
   const error = ref('')
   const busy = ref(false)
+  const inviting = ref(false)
   const resourcesByTask = ref({})
   const resourcesLoading = ref({})
   const resourceErrors = ref({})
@@ -135,6 +138,40 @@ export const useTaskStore = defineStore('tasks', () => {
         persistAdditionalAssignees()
       }
     })
+  async function updateChecklistStep(taskId, stepId, title) {
+    const trimmed = title?.trim()
+    if (!trimmed) throw new Error('Informe o nome da etapa.')
+    return mutate(async () => {
+      await taskApi.updateChecklist(stepId, { titulo: trimmed })
+      return replace(await taskApi.get(taskId))
+    })
+  }
+
+  async function removeChecklistStep(taskId, stepId) {
+    return mutate(async () => {
+      await taskApi.removeChecklist(stepId)
+      return replace(await taskApi.get(taskId))
+    })
+  }
+
+  async function searchUsers(term) {
+    const query = String(term || '').trim()
+    if (query.length < 2) return []
+    const response = await usersApi.search(query)
+    const data = response.data
+    return Array.isArray(data) ? data : (data?.results || [])
+  }
+
+  async function inviteProjectMember(projectId, userId) {
+    if (inviting.value || busy.value) throw new Error('Aguarde a operação atual terminar.')
+    inviting.value = true
+    try {
+      return (await invitesApi.create(projectId, userId, 'member')).data
+    } finally {
+      inviting.value = false
+    }
+  }
+
   async function checklist(taskId, item, title) {
     return mutate(async () => {
       if (item) await taskApi.updateChecklist(item.id, { concluida: !item.concluida })
@@ -258,6 +295,7 @@ export const useTaskStore = defineStore('tasks', () => {
     loading,
     error,
     busy,
+    inviting,
     resourcesByTask,
     resourcesLoading,
     resourceErrors,
@@ -278,6 +316,10 @@ export const useTaskStore = defineStore('tasks', () => {
     update,
     remove,
     checklist,
+    updateChecklistStep,
+    removeChecklistStep,
+    searchUsers,
+    inviteProjectMember,
     loadResources,
     addResource,
   }

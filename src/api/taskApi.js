@@ -83,6 +83,9 @@ export default {
   async updateChecklist(id, payload) {
     return (await api.patch(`microtarefas/${id}/`, payload)).data
   },
+  async removeChecklist(id) {
+    await api.delete(`microtarefas/${id}/`)
+  },
   async comments(id, page = 1) {
     return (await api.get(`tarefas/${id}/comentarios/`, { params: { page } })).data
   },

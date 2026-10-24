@@ -11,6 +11,9 @@ const props = defineProps({
 const store = useTaskStore()
 const stepTitle = ref('')
 const error = ref('')
+const editingId = ref(null)
+const editingTitle = ref('')
+const deletingId = ref(null)
 
 const steps = computed(() => orderedRoadmapSteps(props.task))
 const progress = computed(() => roadmapProgress(steps.value))
@@ -25,6 +28,44 @@ async function toggle(step, index) {
   error.value = ''
   try {
     await store.checklist(props.task.id, step)
+  } catch (err) {
+    error.value = taskError(err)
+  }
+}
+
+function startEdit(step) {
+  editingId.value = step.id
+  editingTitle.value = step.titulo
+  deletingId.value = null
+  error.value = ''
+}
+
+async function saveEdit(step) {
+  const title = editingTitle.value.trim()
+  if (!title || title.length > 150 || store.busy) return
+  error.value = ''
+  try {
+    await store.updateChecklistStep(props.task.id, step.id, title)
+    editingId.value = null
+    editingTitle.value = ''
+  } catch (err) {
+    error.value = taskError(err)
+  }
+}
+
+function confirmDelete(step) {
+  deletingId.value = step.id
+  editingId.value = null
+  editingTitle.value = ''
+  error.value = ''
+}
+
+async function deleteStep(step) {
+  if (store.busy) return
+  error.value = ''
+  try {
+    await store.removeChecklistStep(props.task.id, step.id)
+    deletingId.value = null
   } catch (err) {
     error.value = taskError(err)
   }
@@ -84,6 +125,32 @@ async function addStep() {
           <span class="roadmap__step-status">
             {{ step.concluida ? 'Concluída' : canToggle(step, index) ? 'Próxima etapa' : 'Aguardando etapas anteriores' }}
           </span>
+
+          <div v-if="editingId !== step.id && deletingId !== step.id" class="roadmap__step-actions">
+            <button type="button" :disabled="store.busy" :aria-label="`Editar etapa ${index + 1}`" @click="startEdit(step)">
+              <span class="mdi mdi-pencil-outline" aria-hidden="true"></span> Editar
+            </button>
+            <button type="button" :disabled="store.busy" :aria-label="`Excluir etapa ${index + 1}`" @click="confirmDelete(step)">
+              <span class="mdi mdi-trash-can-outline" aria-hidden="true"></span> Excluir
+            </button>
+          </div>
+
+          <form v-if="editingId === step.id" class="roadmap__step-edit" @submit.prevent="saveEdit(step)">
+            <label :for="`roadmap-edit-${step.id}`">Nome da etapa</label>
+            <input :id="`roadmap-edit-${step.id}`" v-model="editingTitle" type="text" maxlength="150" required :disabled="store.busy" />
+            <div>
+              <button type="button" class="task-button" :disabled="store.busy" @click="editingId = null">Cancelar</button>
+              <button type="submit" class="task-button task-primary" :disabled="store.busy || !editingTitle.trim()">Salvar</button>
+            </div>
+          </form>
+
+          <div v-if="deletingId === step.id" class="roadmap__step-delete">
+            <p>Excluir esta etapa? Essa ação não pode ser desfeita.</p>
+            <div>
+              <button type="button" class="task-button" :disabled="store.busy" @click="deletingId = null">Cancelar</button>
+              <button type="button" class="task-button task-button--danger" :disabled="store.busy" @click="deleteStep(step)">Excluir etapa</button>
+            </div>
+          </div>
         </div>
       </li>
     </ol>
