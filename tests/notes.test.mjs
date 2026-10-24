@@ -61,6 +61,39 @@ try {
     const { data } = await notesApi.update(12, { link: 'https://example.org', imagem: null })
     assert.equal(data.imagem_url, null)
   })
+  await test('mural de projeto solicita apenas notas do projeto e mantém paginação', async () => {
+    const calls = []
+    handler = (config) => {
+      calls.push({ url: config.url, params: config.params })
+      assert.equal(config.url, 'notas/')
+      assert.equal(config.params.projeto, 42)
+      assert.equal(config.params.arquivada, false)
+      return {
+        page: config.params.page,
+        total_pages: 2,
+        results: [{ id: config.params.page, projeto: 42, usuario: 7, usuario_nome: 'Colega' }],
+      }
+    }
+    const notes = await notesApi.listAll({ projeto: 42, arquivada: false })
+    assert.deepEqual(notes.map((n) => n.id), [1, 2])
+    assert.ok(notes.every((n) => n.projeto === 42 && n.usuario_nome === 'Colega'))
+    assert.deepEqual(calls.map((c) => c.params.page), [1, 2])
+  })
+
+  await test('participante publica no mural com projeto determinado', async () => {
+    handler = (config) => {
+      assert.equal(config.url, 'notas/')
+      assert.equal(config.method, 'post')
+      const note = JSON.parse(config.data)
+      assert.equal(note.projeto, 42)
+      assert.equal(note.titulo, 'Proposta')
+      return { id: 81, ...note, usuario: 7, usuario_nome: 'Colega' }
+    }
+    const response = await notesApi.create({ projeto: 42, titulo: 'Proposta' })
+    assert.equal(response.data.projeto, 42)
+    assert.equal(response.data.usuario_nome, 'Colega')
+  })
+
 } finally {
   await server.close()
 }

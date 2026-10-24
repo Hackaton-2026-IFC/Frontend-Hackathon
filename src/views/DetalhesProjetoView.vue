@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useProjectStore } from '@/stores/project'
 
 import ProjectHeader from '@/components/project/ProjectHeader.vue'
@@ -141,6 +141,15 @@ async function deleteProject(id) {
           @delete="openDelete"
         />
 
+        <RouterLink
+          :to="{ name: 'project-mural', params: { id: project.id } }"
+          class="mural-entry"
+        >
+          <span class="mdi mdi-lightbulb-on-outline mural-entry-icon" aria-hidden="true"></span>
+          <span><strong>Mural de ideias</strong><small>Fotos, links e textos compartilhados com a equipe</small></span>
+          <span aria-hidden="true">Acessar →</span>
+        </RouterLink>
+
         <div class="project-summary">
           <ProjectMembers :project="project" />
 
@@ -189,4 +198,12 @@ async function deleteProject(id) {
 .page-state .back-button { margin-bottom: 0; }
 @media (max-width: 900px) { .project-summary { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 650px) { .project-page { padding: 20px 16px; } .project-summary { gap: 18px; margin-top: 18px; } }
+.mural-entry{display:flex;align-items:center;gap:15px;margin-top:22px;padding:17px 20px;background:#f6f6ef;border:1px solid #d7d7cb;border-radius:14px;color:#171716;text-decoration:none}
+.mural-entry:hover{background:#f0f4dc;border-color:#9aa56c}
+.mural-entry-icon{font-size:28px}
+.mural-entry span:nth-child(2){display:grid;gap:3px;flex:1}
+.mural-entry strong{font-size:15px}
+.mural-entry small{font-size:12px;color:#62625c}
+.mural-entry span:last-child{font-size:12px;font-weight:700}
+@media(max-width:650px){.mural-entry{padding:15px 13px}.mural-entry span:last-child{font-size:11px}}
 </style>

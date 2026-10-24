@@ -72,6 +72,13 @@ const routes = [
     },
   },
   {
+    path: '/projects/:id/mural',
+    name: 'project-mural',
+    component: NotesView,
+    props: true,
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/notes',
     name: 'notes',
     component: NotesView,
