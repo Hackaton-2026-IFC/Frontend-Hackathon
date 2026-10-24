@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [DEV, master, FEAT-78]
   push:
-    branches: [DEV, master, FEAT-81]
+    branches: [DEV, master]
 
 jobs:
   build:
