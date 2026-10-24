@@ -16,7 +16,7 @@ async function listAll(params = {}) {
 
     items.push(...(Array.isArray(data?.results) ? data.results : []))
 
-    if (!data?.total_pages || page >= data.total_pages) break
+    if (data?.total_pages != null ? page >= data.total_pages : !data?.next) break
     page += 1
   }
 
@@ -28,6 +28,8 @@ const notesApi = {
   create: (payload) => api.post('notas/', payload),
   update: (id, payload) => api.patch(`notas/${encodeURIComponent(id)}/`, payload),
   remove: (id) => api.delete(`notas/${encodeURIComponent(id)}/`),
+  pinForMe: (id, fixada) => api.patch(`notas/${encodeURIComponent(id)}/preferencia/`, { fixada }),
+  saveOrder: (projectId, ids) => api.post('notas/ordenar/', { projeto: Number(projectId), ids }),
 }
 
 export default notesApi

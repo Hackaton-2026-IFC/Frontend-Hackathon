@@ -16,6 +16,7 @@ import ProjectsView from '@/views/ProjectsView.vue'
 import ProjectView from '@/views/ProjectView.vue'
 import TaskView from '@/views/TaskView.vue'
 import NotificationView from '@/views/NotificationView.vue'
+const NotesView = () => import('@/views/NotesView.vue')
 
 // ==========================================
 // DEFINIÇÃO DAS ROTAS
@@ -116,6 +117,25 @@ const routes = [
     meta: {
       requiresAuth: true,
     },
+  },
+
+  // ==========================================
+  // NOTAS / MURAL ESTILO GOOGLE KEEP
+  // ==========================================
+
+  {
+    path: '/notes',
+    name: 'notes',
+    component: NotesView,
+    meta: { requiresAuth: true },
+  },
+
+  {
+    path: '/projects/:id/mural',
+    name: 'project-mural',
+    component: NotesView,
+    props: true,
+    meta: { requiresAuth: true },
   },
 
   // ==========================================
