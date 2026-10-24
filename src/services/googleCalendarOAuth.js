@@ -1,4 +1,4 @@
-import { googleClientId, loadGoogleIdentity } from './googleIdentity'
+import { googleClientId, loadGoogleIdentity } from './googleIdentity.js'
 
 // Consentimento separado do login. O token OAuth não é persistido.
 export const CALENDAR_SCOPES = 'openid https://www.googleapis.com/auth/calendar.events'
