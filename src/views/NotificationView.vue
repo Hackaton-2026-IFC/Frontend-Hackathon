@@ -32,7 +32,8 @@ function getProjectId(invite) {
 function getProject(invite) {
   const embedded = invite.projeto_detalhes ?? invite.projeto_detail ?? invite.projeto ?? invite.project
   const details = typeof embedded === 'object' && embedded ? embedded : {}
-  return { ...details, ...(projectDetails.value[String(getProjectId(invite))] || {}) }
+  const fromInvite = { nome: invite.projeto_nome, cor: invite.projeto_cor, icone: invite.projeto_icone }
+  return { ...details, ...(projectDetails.value[String(getProjectId(invite))] || {}), ...Object.fromEntries(Object.entries(fromInvite).filter(([, value]) => value != null && value !== '')) }
 }
 
 function getProjectColor(invite) {
@@ -71,7 +72,7 @@ function getSenderName(invite) {
     ? sender.nome || sender.name || sender.nome_completo || sender.username
     : null
   return name || invite.remetente_nome || invite.convidado_por_nome ||
-    invite.criado_por_nome || invite.sender_name || 'Um usuário'
+    invite.criado_por_nome || invite.enviado_por_nome || invite.sender_name || 'Um usuário'
 }
 
 function getErrorMessage(err) {
