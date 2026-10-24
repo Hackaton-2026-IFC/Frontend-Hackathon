@@ -124,7 +124,6 @@ const projectDeadline = computed(() => {
         @click="mobileMenuOpen = !mobileMenuOpen"
       >
         <span class="mdi" :class="mobileMenuOpen ? 'mdi-close' : 'mdi-menu'" aria-hidden="true"></span>
-        <span class="momentum-project-header__menu-label">Ações</span>
       </button>
       <div
         id="project-mobile-actions"
@@ -192,6 +191,12 @@ const projectDeadline = computed(() => {
     cursor: pointer;
   }
   .momentum-project-header__menu-toggle .mdi { font-size: 22px; }
+  .momentum-project-header__action-area:hover .momentum-project-header__actions,
+  .momentum-project-header__action-area:focus-within .momentum-project-header__actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
   .momentum-project-header__menu-toggle:focus-visible {
     outline: 3px solid #666;
     outline-offset: 2px;
