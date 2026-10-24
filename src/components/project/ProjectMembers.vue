@@ -2,7 +2,6 @@
 <script setup>
 import { computed, ref, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-
 import { useAuthStore } from '@/stores/authStore'
 import { useToastStore } from '@/stores/toastStore'
 import projectsApi from '@/api/projectsApi'
@@ -11,10 +10,7 @@ import invitesApi from '@/api/invitesApi'
 import api from '@/api/config'
 
 const props = defineProps({
-  project: {
-    type: Object,
-    required: true,
-  },
+  project: { type: Object, required: true },
 })
 
 const emit = defineEmits(['invite-sent'])
@@ -22,17 +18,9 @@ const router = useRouter()
 const authStore = useAuthStore()
 const toast = useToastStore()
 
-// ==========================================
-// USUÁRIO LOGADO
-// ==========================================
-
 const currentUserId = computed(
   () => authStore.user?.id ?? authStore.user?.user_id ?? null,
 )
-
-// ==========================================
-// MEMBROS
-// ==========================================
 
 const members = ref([])
 const loadingMembers = ref(false)
@@ -58,14 +46,12 @@ function getErrorMessage(error, fallback) {
   if (data && typeof data === 'object') {
     const messages = Object.values(data)
       .flat(Infinity)
-      .filter((item) => item !== null && item !== undefined)
-      .map((item) =>
+      .filter(item => item !== null && item !== undefined)
+      .map(item =>
         typeof item === 'string' ? item : JSON.stringify(item),
       )
 
-    if (messages.length) {
-      return messages.join(' ')
-    }
+    if (messages.length) return messages.join(' ')
   }
 
   return fallback
@@ -77,6 +63,19 @@ function listFrom(data) {
   if (Array.isArray(data?.membros)) return data.membros
   if (Array.isArray(data?.participantes)) return data.participantes
   return []
+}
+
+function getProfileImage(user) {
+  const image = user?.profile_image
+
+  if (typeof image === 'string') return image
+
+  return (
+    image?.url ||
+    user?.profile_image_url ||
+    user?.google_photo_url ||
+    null
+  )
 }
 
 function normalizeMember(item) {
@@ -114,6 +113,7 @@ function normalizeMember(item) {
       `Usuário #${userId ?? item.id}`,
     username: user.username || item.username || '',
     role: item.cargo || item.role || 'member',
+    profileImage: getProfileImage(user),
   }
 }
 
@@ -137,7 +137,6 @@ async function loadMembers() {
     members.value = listFrom(response.data).map(normalizeMember)
   } catch (error) {
     console.error('Erro ao carregar membros:', error)
-
     toast.error(
       getErrorMessage(error, 'Não foi possível carregar os membros.'),
     )
@@ -161,12 +160,9 @@ watch(
 const currentMember = computed(() => {
   if (currentUserId.value == null) return null
 
-  return (
-    members.value.find(
-      (member) =>
-        String(member.userId) === String(currentUserId.value),
-    ) || null
-  )
+  return members.value.find(
+    member => String(member.userId) === String(currentUserId.value),
+  ) || null
 })
 
 const currentRole = computed(
@@ -177,19 +173,15 @@ const isOwner = computed(() => currentRole.value === 'owner')
 const isAdmin = computed(() => currentRole.value === 'admin')
 
 const canLeaveProject = computed(
-  () =>
-    currentMember.value !== null &&
-    currentRole.value !== 'owner',
+  () => currentMember.value !== null && !isOwner.value,
 )
 
 function getRoleLabel(role) {
-  return (
-    {
-      owner: 'Proprietário',
-      admin: 'Administrador',
-      member: 'Membro',
-    }[role] || role
-  )
+  return {
+    owner: 'Proprietário',
+    admin: 'Administrador',
+    member: 'Membro',
+  }[role] || role
 }
 
 function canChangeRole(member) {
@@ -266,9 +258,7 @@ async function changeRole(member, event) {
 
 async function removeMember(member) {
   if (!canRemoveMember(member)) {
-    toast.error(
-      'Você não tem permissão para remover este participante.',
-    )
+    toast.error('Você não tem permissão para remover este participante.')
     return
   }
 
@@ -291,7 +281,6 @@ async function removeMember(member) {
     )
 
     toast.success(`${member.name} foi removido do projeto.`)
-
     await loadMembers()
   } catch (error) {
     console.error('Erro ao remover membro:', error)
@@ -330,7 +319,6 @@ async function leaveProject() {
     )
 
     toast.success('Você saiu do projeto com sucesso.')
-
     await router.push('/projects')
   } catch (error) {
     console.error('Erro ao sair do projeto:', error)
@@ -357,7 +345,7 @@ const sending = ref(false)
 let searchTimer = null
 let searchRequest = 0
 
-watch(search, (value) => {
+watch(search, value => {
   clearTimeout(searchTimer)
   searchRequest++
 
@@ -380,25 +368,23 @@ watch(search, (value) => {
 
       if (requestId !== searchRequest) return
 
-      const results = listFrom(response.data)
-
-      users.value = results.filter(
-        (user) =>
+      users.value = listFrom(response.data)
+        .filter(user =>
           !members.value.some(
-            (member) =>
-              String(member.userId) === String(user.id),
+            member => String(member.userId) === String(user.id),
           ),
-      )
+        )
+        .map(user => ({
+          ...user,
+          profileImage: getProfileImage(user),
+        }))
     } catch (error) {
       if (requestId !== searchRequest) return
 
       console.error('Erro ao pesquisar usuários:', error)
 
       toast.error(
-        getErrorMessage(
-          error,
-          'Não foi possível pesquisar os usuários.',
-        ),
+        getErrorMessage(error, 'Não foi possível pesquisar os usuários.'),
       )
     } finally {
       if (requestId === searchRequest) {
@@ -434,10 +420,6 @@ function selectUser(user) {
   selectedUser.value = user
 }
 
-// ==========================================
-// ENVIAR CONVITE
-// ==========================================
-
 async function sendInvite() {
   if (!selectedUser.value || sending.value) return
 
@@ -462,38 +444,27 @@ async function sendInvite() {
 
     toast.success(
       `Convite enviado para ${
-        invitedUser.name ||
-        invitedUser.username ||
-        'o usuário'
+        invitedUser.name || invitedUser.username || 'o usuário'
       }!`,
     )
 
     emit('invite-sent')
     await loadMembers()
   } catch (error) {
-    const data = error.response?.data
-
     console.error('Erro ao enviar convite:', {
       status: error.response?.status,
-      respostaBackend: data,
+      respostaBackend: error.response?.data,
       url: error.config?.url,
       payload: error.config?.data,
     })
 
-    const message = getErrorMessage(
-      error,
-      'Não foi possível enviar o convite.',
+    toast.error(
+      getErrorMessage(error, 'Não foi possível enviar o convite.'),
     )
-
-    toast.error(message)
   } finally {
     sending.value = false
   }
 }
-
-// ==========================================
-// LIMPEZA
-// ==========================================
 
 onUnmounted(() => {
   clearTimeout(searchTimer)
@@ -502,10 +473,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section
-    class="members"
-    aria-labelledby="project-members-title"
-  >
+  <section class="members" aria-labelledby="project-members-title">
     <header class="members-header">
       <div class="members-title">
         <h2 id="project-members-title">
@@ -528,8 +496,6 @@ onUnmounted(() => {
       </button>
     </header>
 
-    <!-- CARREGAMENTO -->
-
     <p v-if="loadingMembers" class="empty">
       Carregando membros...
     </p>
@@ -543,11 +509,21 @@ onUnmounted(() => {
         class="member-item"
       >
         <span class="avatar">
-          {{
-            String(member.name || 'M')
-              .charAt(0)
-              .toUpperCase()
-          }}
+          <img
+            v-if="member.profileImage"
+            :src="member.profileImage"
+            :alt="`Foto de perfil de ${member.name}`"
+            class="avatar-image"
+            @error="member.profileImage = null"
+          />
+
+          <span v-else>
+            {{
+              String(member.name || 'M')
+                .charAt(0)
+                .toUpperCase()
+            }}
+          </span>
         </span>
 
         <div class="member-info">
@@ -561,8 +537,6 @@ onUnmounted(() => {
         </div>
 
         <div class="member-actions">
-          <!-- ALTERAR CARGO -->
-
           <label class="role-control">
             <span class="sr-only">
               Permissão de {{ member.name }}
@@ -594,8 +568,6 @@ onUnmounted(() => {
             </select>
           </label>
 
-          <!-- REMOVER MEMBRO -->
-
           <button
             v-if="canRemoveMember(member)"
             type="button"
@@ -616,10 +588,7 @@ onUnmounted(() => {
       </li>
     </ul>
 
-    <p
-      v-else-if="!loadingMembers"
-      class="empty"
-    >
+    <p v-else-if="!loadingMembers" class="empty">
       Nenhum membro encontrado.
     </p>
 
@@ -652,9 +621,7 @@ onUnmounted(() => {
     <!-- AVISO AO PROPRIETÁRIO -->
 
     <div v-if="isOwner" class="owner-notice">
-      <strong>
-        Você é o proprietário deste projeto.
-      </strong>
+      <strong>Você é o proprietário deste projeto.</strong>
 
       <p>
         Para sair, primeiro transfira a propriedade
@@ -678,9 +645,7 @@ onUnmounted(() => {
         >
           <div class="invite-modal-header">
             <div>
-              <h2 id="invite-title">
-                Convidar membro
-              </h2>
+              <h2 id="invite-title">Convidar membro</h2>
 
               <p>
                 Pesquise pelo nome ou username do perfil.
@@ -698,8 +663,6 @@ onUnmounted(() => {
             </button>
           </div>
 
-          <!-- PESQUISA -->
-
           <div class="search-field">
             <label for="member-search">
               Buscar usuário
@@ -714,13 +677,8 @@ onUnmounted(() => {
             />
           </div>
 
-          <!-- RESULTADOS -->
-
           <div class="search-results">
-            <p
-              v-if="searching"
-              class="search-feedback"
-            >
+            <p v-if="searching" class="search-feedback">
               Pesquisando usuários...
             </p>
 
@@ -743,17 +701,25 @@ onUnmounted(() => {
               :key="user.id"
               type="button"
               class="user-result"
-              :class="{
-                selected: selectedUser?.id === user.id,
-              }"
+              :class="{ selected: selectedUser?.id === user.id }"
               @click="selectUser(user)"
             >
               <span class="user-avatar">
-                {{
-                  (user.name || user.username || 'U')
-                    .charAt(0)
-                    .toUpperCase()
-                }}
+                <img
+                  v-if="user.profileImage"
+                  :src="user.profileImage"
+                  :alt="`Foto de perfil de ${user.name || user.username}`"
+                  class="avatar-image"
+                  @error="user.profileImage = null"
+                />
+
+                <span v-else>
+                  {{
+                    (user.name || user.username || 'U')
+                      .charAt(0)
+                      .toUpperCase()
+                  }}
+                </span>
               </span>
 
               <span class="user-details">
@@ -775,8 +741,6 @@ onUnmounted(() => {
             </button>
           </div>
 
-          <!-- AÇÕES -->
-
           <div class="invite-actions">
             <button
               type="button"
@@ -794,9 +758,7 @@ onUnmounted(() => {
               @click="sendInvite"
             >
               {{
-                sending
-                  ? 'Enviando...'
-                  : 'Enviar convite'
+                sending ? 'Enviando...' : 'Enviar convite'
               }}
             </button>
           </div>
@@ -882,15 +844,38 @@ onUnmounted(() => {
   border-bottom: none;
 }
 
-.avatar {
+/* AVATARES */
+
+.avatar,
+.user-avatar {
   display: grid;
   place-items: center;
-  flex: 0 0 40px;
-  height: 40px;
+  overflow: hidden;
   border-radius: 50%;
-  background: #000;
+  background: #111;
   color: #fff;
   font-weight: 700;
+}
+
+.avatar {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+}
+
+.user-avatar {
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  font-size: 15px;
+}
+
+.avatar-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .member-info {
@@ -1037,6 +1022,8 @@ onUnmounted(() => {
   font-size: 13px;
 }
 
+/* MODAL DE CONVITE */
+
 .invite-overlay {
   position: fixed;
   inset: 0;
@@ -1159,18 +1146,6 @@ onUnmounted(() => {
 .user-result.selected {
   border-color: #111;
   background: #f5f5f5;
-}
-
-.user-avatar {
-  display: grid;
-  place-items: center;
-  flex: 0 0 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: #111;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 700;
 }
 
 .user-details {
