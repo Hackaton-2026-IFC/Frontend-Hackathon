@@ -2,9 +2,9 @@ name: Frontend Vue build
 
 on:
   pull_request:
-    branches: [DEV, master]
+    branches: [DEV, master, FEAT-60]
   push:
-    branches: [DEV, master]
+    branches: [DEV, master, FEAT-61]
 
 jobs:
   build:
@@ -23,3 +23,6 @@ jobs:
 
       - name: Validar build de produção
         run: npm run build
+
+      - name: Testar lógica das APIs de tarefas e notas
+        run: node --test tests/tasks.test.mjs tests/notes.test.mjs
