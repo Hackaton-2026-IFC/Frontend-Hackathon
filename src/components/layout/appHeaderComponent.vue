@@ -1,8 +1,27 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, onBeforeUnmount, watch, ref } from 'vue'
+import { useNotificationStore } from '@/stores/notificationStore'
+import { useAuthStore } from '@/stores/authStore'
 import { RouterLink, useRoute } from 'vue-router'
 
 const route = useRoute()
+const notifications = useNotificationStore()
+const auth = useAuthStore()
+const ringing = ref(false)
+let shakeTimeout = null
+watch(() => notifications.unreadCount, (count, previous) => {
+  if (!notifications.loaded || count <= (previous ?? 0)) return
+  ringing.value = false
+  requestAnimationFrame(() => { ringing.value = true })
+  clearTimeout(shakeTimeout)
+  shakeTimeout = setTimeout(() => { ringing.value = false }, 1000)
+})
+watch(() => auth.isAuthenticated, (active) => {
+  if (active) notifications.startPolling()
+  else { notifications.stopPolling(); notifications.refresh() }
+})
+onMounted(() => { if (auth.isAuthenticated) notifications.startPolling() })
+onBeforeUnmount(() => { notifications.stopPolling(); clearTimeout(shakeTimeout) })
 
 const pageTitle = computed(() => {
   const titles = {
@@ -74,7 +93,8 @@ const pageTitle = computed(() => {
       <RouterLink
         to="/notifications"
         class="notification-button"
-        aria-label="Abrir notificações"
+        :class="{ 'notification-button--ringing': ringing }"
+        :aria-label="'Abrir notificações: ' + notifications.unreadCount + ' convites pendentes'"
         title="Notificações"
       >
         <svg
@@ -92,6 +112,7 @@ const pageTitle = computed(() => {
           <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
           <path d="M10 21h4" />
         </svg>
+        <span v-if="notifications.unreadCount > 0" class="notification-badge" aria-hidden="true">{{ notifications.unreadCount > 99 ? '99+' : notifications.unreadCount }}</span>
       </RouterLink>
 
     </div>
@@ -175,6 +196,12 @@ const pageTitle = computed(() => {
   color: #171717;
 }
 
+.notification-button{position:relative}
+.notification-badge{position:absolute;top:-3px;right:-6px;display:grid;place-items:center;min-width:19px;height:19px;padding:0 4px;border:2px solid #fff;border-radius:999px;background:#e02020;color:#fff;font-size:10px;font-weight:800;line-height:1}
+.notification-button--ringing svg{transform-origin:50% 12%;animation:bell-ring .9s ease-in-out}
+@keyframes bell-ring{0%,100%{transform:rotate(0)}15%,45%{transform:rotate(17deg)}30%,60%{transform:rotate(-17deg)}75%{transform:rotate(7deg)}}
+@media(max-width:700px){.notification-badge{border-color:#171716}}
+@media(prefers-reduced-motion:reduce){.notification-button--ringing svg{animation:none}}
 /* MOBILE OCULTO NO DESKTOP */
 
 .mobile-header-title {
