@@ -24,6 +24,12 @@ const error = ref('')
 const search = ref('')
 const filterProject = ref('')
 const editingId = ref(null)
+const orderSaving = ref(false)
+const draggingId = ref(null)
+const dropTargetId = ref(null)
+const dragXY = ref({ x: 0, y: 0 })
+let pointerId = null
+let dragHandle = null
 const composerOpen = ref(false)
 const titleField = ref(null)
 const modalDialog = ref(null)
@@ -185,7 +191,7 @@ async function load() {
     if (isProjectMural.value) {
       const { data: project } = await projectsApi.get(projectId.value)
       projectInfo.value = project
-      notes.value = await notesApi.listAll({ projeto: projectId.value, arquivada: false })
+      notes.value = sortNotes(await notesApi.listAll({ projeto: projectId.value, arquivada: false }))
     } else {
       projectInfo.value = null
       const [loadedNotes] = await Promise.all([
@@ -203,9 +209,98 @@ async function load() {
   }
 }
 
+
+function sortNotes(items) {
+  return [...items].sort((a, b) => {
+    if (Boolean(a.fixada) !== Boolean(b.fixada)) return a.fixada ? -1 : 1
+    const left = Number.isInteger(a.ordem) ? a.ordem : Number.MAX_SAFE_INTEGER
+    const right = Number.isInteger(b.ordem) ? b.ordem : Number.MAX_SAFE_INTEGER
+    if (left !== right) return left - right
+    const ad = Date.parse(a.atualizada_em || a.criada_em || '') || 0
+    const bd = Date.parse(b.atualizada_em || b.criada_em || '') || 0
+    return bd - ad || Number(b.id) - Number(a.id)
+  })
+}
+
+const dragAllowed = computed(() =>
+  isProjectMural.value && !!projectInfo.value && !search.value.trim()
+  && !filterProject.value && !loading.value && !orderSaving.value,
+)
+const draggingNote = computed(() => notes.value.find((item) => item.id === draggingId.value) || null)
+
+async function moveCard(fromId, toId) {
+  if (!dragAllowed.value || fromId === toId) return
+  const current = sortNotes(notes.value)
+  const fromIndex = current.findIndex((item) => item.id === fromId)
+  const targetIndex = current.findIndex((item) => item.id === toId)
+  if (fromIndex < 0 || targetIndex < 0) return
+  if (Boolean(current[fromIndex].fixada) !== Boolean(current[targetIndex].fixada)) {
+    error.value = 'Os cards fixados ficam no topo. Arraste entre cards da mesma seção.'
+    return
+  }
+  const next = [...current]
+  const [moved] = next.splice(fromIndex, 1)
+  next.splice(targetIndex, 0, moved)
+  const previous = notes.value
+  notes.value = next.map((note, index) => ({ ...note, ordem: index }))
+  orderSaving.value = true
+  error.value = ''
+  try {
+    await notesApi.saveOrder(projectId.value, next.map((note) => note.id))
+  } catch (err) {
+    notes.value = previous
+    error.value = apiError(err, 'Não foi possível salvar a ordem dos cards.')
+  } finally {
+    orderSaving.value = false
+  }
+}
+
+function startDrag(note, event) {
+  if (!dragAllowed.value || (event.pointerType === 'mouse' && event.button !== 0)) return
+  pointerId = event.pointerId
+  dragHandle = event.currentTarget
+  dragHandle.setPointerCapture(pointerId)
+  draggingId.value = note.id
+  dropTargetId.value = note.id
+  dragXY.value = { x: event.clientX, y: event.clientY }
+  error.value = ''
+}
+
+function moveDrag(event) {
+  if (pointerId !== event.pointerId || draggingId.value === null) return
+  dragXY.value = { x: event.clientX, y: event.clientY }
+  const element = document.elementFromPoint(event.clientX, event.clientY)
+  const card = element?.closest?.('[data-note-id]')
+  const target = Number(card?.dataset.noteId)
+  dropTargetId.value = card && notes.value.some((note) => note.id === target) ? target : null
+}
+
+function resetDrag() {
+  pointerId = null
+  dragHandle = null
+  draggingId.value = null
+  dropTargetId.value = null
+}
+
+function endDrag(event) {
+  if (pointerId !== event.pointerId) return
+  const from = draggingId.value
+  const to = dropTargetId.value
+  resetDrag()
+  if (from !== null && to !== null) void moveCard(from, to)
+}
+
+function moveWithKeyboard(note, direction) {
+  if (!dragAllowed.value) return
+  const section = sortNotes(notes.value).filter((item) => Boolean(item.fixada) === Boolean(note.fixada))
+  const index = section.findIndex((item) => item.id === note.id)
+  const target = section[index + direction]
+  if (target) void moveCard(note.id, target.id)
+}
+
 const visibleNotes = computed(() => {
   const query = search.value.trim().toLowerCase()
-  return notes.value.filter((note) => {
+  return sortNotes(notes.value).filter((note) => {
     const matchesText =
       !query ||
       note.titulo?.toLowerCase().includes(query) ||
@@ -263,7 +358,7 @@ async function save() {
     const index = notes.value.findIndex((item) => item.id === saved.id)
     if (index >= 0) notes.value[index] = saved
     else notes.value.unshift(saved)
-    notes.value = [...notes.value].sort((a, b) => Number(b.fixada) - Number(a.fixada))
+    notes.value = sortNotes(notes.value)
     closeComposer(true)
   } catch (err) {
     error.value = apiError(err, 'Não foi possível salvar a nota.')
@@ -289,11 +384,11 @@ function edit(note) {
 }
 
 async function togglePin(note) {
-  if (!isAuthor(note)) return
+  if (orderSaving.value) return
   try {
-    const { data } = await notesApi.update(note.id, { fixada: !note.fixada })
+    const { data } = await notesApi.pinForMe(note.id, !note.fixada)
     notes.value = notes.value.map((item) => item.id === data.id ? data : item)
-    notes.value = [...notes.value].sort((a, b) => Number(b.fixada) - Number(a.fixada))
+    notes.value = sortNotes(notes.value)
   } catch (err) {
     error.value = apiError(err, 'Não foi possível fixar a nota.')
   }
@@ -328,6 +423,7 @@ function projectName(id) {
 
 onMounted(load)
 watch(projectId, () => {
+  resetDrag()
   if (composerOpen.value) closeComposer(true)
   resetForm()
   filterProject.value = ''
@@ -336,6 +432,7 @@ watch(projectId, () => {
   load()
 })
 onBeforeUnmount(() => {
+  resetDrag()
   clearTemporaryPhoto()
   if (composerOpen.value) document.body.style.overflow = previousBodyOverflow
 })
