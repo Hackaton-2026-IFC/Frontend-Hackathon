@@ -12,7 +12,7 @@ import ProjectProgress from '@/components/project/ProjectProgress.vue'
 import ProjectMembers from '@/components/project/ProjectMembers.vue'
 import ProjectDeleteDialog from '@/components/project/ProjectDeleteDialog.vue'
 import ProjectTaskModal from '@/components/project/ProjectTaskModal.vue'
-import ProjectTaskCard from '@/components/project/ProjectTaskCard.vue'
+import ProjectKanban from '@/components/project/ProjectKanban.vue'
 import ProjectResources from '@/components/project/ProjectResources.vue'
 
 import '@/assets/css/project.css'
@@ -88,6 +88,38 @@ const allTasks = computed(() => {
     return Array.isArray(tasks) ? tasks : []
   })
 })
+
+// Movimentação otimista; mantém os cards e contadores sincronizados.
+const movingTask = ref(false)
+const moveError = ref('')
+const moveNotice = ref('')
+
+async function moveTask({ taskId, status }) {
+  if (movingTask.value || loading.value || !columns.some(column => column.key === status)) return
+  const task = allTasks.value.find(item => String(item.id) === String(taskId))
+  if (!task || task.status === status) return
+  const currentId = id.value
+  const previousStatus = task.status
+  // Normaliza também respostas agrupadas em colunas.
+  board.value = [...allTasks.value]
+  movingTask.value = true
+  moveError.value = ''
+  moveNotice.value = 'Salvando movimentação...'
+  task.status = status
+  try {
+    const { data } = await tasksApi.update(task.id, { status })
+    if (String(currentId) !== String(id.value)) return
+    Object.assign(task, data || { status })
+    moveNotice.value = 'Tarefa movida com sucesso.'
+  } catch (e) {
+    if (String(currentId) !== String(id.value)) return
+    task.status = previousStatus
+    moveError.value = explain(e)
+    moveNotice.value = 'A tarefa voltou à coluna anterior.'
+  } finally {
+    movingTask.value = false
+  }
+}
 
 // Estatísticas
 
@@ -658,6 +690,8 @@ watch(id, (newId, oldId) => {
     board.value = null
     resources.value = []
 
+    moveError.value = ''
+    moveNotice.value = ''
     clearFilters()
     load()
   }
@@ -961,20 +995,15 @@ onMounted(load)
 
         <!-- Lista de tarefas -->
 
-<div class="project-tasks__list momentum-tasks-grid">
-  <ProjectTaskCard
-    v-for="task in filteredTasks"
-    :key="task.id"
-    :task="task"
-  />
-
-  <p
-    v-if="!filteredTasks.length"
-    class="project-tasks__empty"
-  >
-    Nenhuma tarefa corresponde aos filtros selecionados.
-  </p>
-</div>
+<ProjectKanban
+          :key="String(id)"
+          :tasks="filteredTasks"
+          :columns="columns"
+          :saving="movingTask"
+          @move="moveTask"
+        />
+        <p v-if="moveError" class="message-error" role="alert">{{ moveError }}</p>
+        <p class="muted" role="status">{{ moveNotice }}</p>
       </section>
 
       <!-- Materiais de apoio -->
