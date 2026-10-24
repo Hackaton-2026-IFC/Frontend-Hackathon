@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { getProjectIcon } from '@/utils/projectIcons'
 import { DEFAULT_PROJECT_COLOR, projectIconTextColor } from '@/utils/projectColors'
 
@@ -11,6 +11,12 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['edit', 'delete', 'open-agent'])
+const mobileMenuOpen = ref(false)
+
+function selectAction(action) {
+  mobileMenuOpen.value = false
+  emit(action)
+}
 
 const statuses = {
   planned: 'Planejado',
@@ -108,11 +114,26 @@ const projectDeadline = computed(() => {
       </div>
     </div>
 
-    <div class="momentum-project-header__actions">
+    <div class="momentum-project-header__action-area">
+      <button
+        type="button"
+        class="momentum-project-header__menu-toggle"
+        :aria-expanded="mobileMenuOpen"
+        aria-controls="project-mobile-actions"
+        aria-label="Menu do projeto"
+        @click="mobileMenuOpen = !mobileMenuOpen"
+      >
+        <span class="mdi" :class="mobileMenuOpen ? 'mdi-close' : 'mdi-menu'" aria-hidden="true"></span>
+      </button>
+      <div
+        id="project-mobile-actions"
+        class="momentum-project-header__actions"
+        :class="{ 'momentum-project-header__actions--open': mobileMenuOpen }"
+      >
       <button
         type="button"
         class="momentum-project-header__button board-link"
-        @click="emit('open-agent')"
+        @click="selectAction('open-agent')"
       >
         <span class="mdi mdi-auto-fix" aria-hidden="true"></span>
         Agente de IA
@@ -121,7 +142,7 @@ const projectDeadline = computed(() => {
       <button
         type="button"
         class="momentum-project-header__button momentum-project-header__button--edit"
-        @click="emit('edit')"
+        @click="selectAction('edit')"
       >
         Editar projeto
       </button>
@@ -129,15 +150,24 @@ const projectDeadline = computed(() => {
       <button
         type="button"
         class="momentum-project-header__button momentum-project-header__button--delete"
-        @click="emit('delete')"
+        @click="selectAction('delete')"
       >
         Excluir projeto
       </button>
+      </div>
     </div>
   </header>
 </template>
 
 <style scoped>
+.momentum-project-header__action-area {
+  position: relative;
+  flex: 0 1 auto;
+}
+.momentum-project-header__menu-toggle {
+  display: none;
+}
+
 .momentum-project-header {
   display: flex;
   align-items: center;
@@ -394,6 +424,88 @@ const projectDeadline = computed(() => {
 
   .momentum-project-header__icon {
     flex-basis: auto;
+  }
+}
+
+/* Menu compacto: não ocupa uma linha inteira no cartão. */
+@media (max-width: 600px) {
+  .momentum-project-header {
+    position: relative;
+    display: block;
+    padding: 18px;
+    overflow: visible;
+  }
+  .momentum-project-header__main {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding-right: 44px;
+  }
+  .momentum-project-header__icon {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+  }
+  .momentum-project-header__action-area {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 30;
+    display: block;
+    width: auto;
+  }
+  .momentum-project-header__menu-toggle {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    min-height: 42px;
+    padding: 0;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    background: #fff;
+    color: #171717;
+    cursor: pointer;
+  }
+  .momentum-project-header__menu-toggle .mdi { font-size: 24px; }
+  .momentum-project-header__menu-toggle:focus-visible {
+    outline: 3px solid #737373;
+    outline-offset: 2px;
+  }
+  .momentum-project-header__actions {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 40;
+    width: min(224px, calc(100vw - 64px));
+    padding: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .momentum-project-header__actions--open {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+  .momentum-project-header__actions .momentum-project-header__button {
+    width: 100%;
+    min-height: 42px;
+    padding: 9px 12px;
+    font-size: 12px;
+  }
+  .momentum-project-header__actions .board-link { grid-column: auto; }
+}
+@media (max-width: 600px) and (hover: hover) and (pointer: fine) {
+  .momentum-project-header__action-area:hover .momentum-project-header__actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
   }
 }
 </style>

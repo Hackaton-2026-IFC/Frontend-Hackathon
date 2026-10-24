@@ -98,8 +98,8 @@ function backToTaskList() {
   if (route.name === 'task-view') {
     const projectId = selectedTask.value?.projeto
     return router.push(projectId
-      ? { name: 'project-tasks', params: { projectId } }
-      : { name: 'tasks' })
+      ? { name: 'project-details', params: { id: projectId } }
+      : { name: 'projects' })
   }
   const query = { ...route.query }
   delete query.task
@@ -154,15 +154,15 @@ function removedTask() {
 </script>
 
 <template>
-  <section class="tasks-page">
+  <section class="tasks-page" :class="{ 'tasks-page--detail': mobileDetailActive }">
     <div class="tasks-container">
       <RouterLink
-        v-if="backProjectId"
+        v-if="backProjectId && !mobileDetailActive"
         class="task-back-link"
         :to="{ name: 'project-details', params: { id: backProjectId } }"
       >← Voltar ao projeto</RouterLink>
 
-      <header class="tasks-page-heading">
+      <header v-if="!mobileDetailActive" class="tasks-page-heading">
         <div>
           <p class="task-eyebrow">MOMENTUM / ORGANIZAÇÃO</p>
           <h1>{{ routeProject ? 'Tarefas do projeto' : 'Painel de tarefas' }}</h1>
@@ -195,7 +195,7 @@ function removedTask() {
         <template v-else>
           <div v-if="mobileDetailActive" class="task-mobile-back">
             <button type="button" class="task-mobile-back__button" @click="backToTaskList">
-              ← Voltar às tarefas
+              ← Voltar ao projeto
             </button>
           </div>
 

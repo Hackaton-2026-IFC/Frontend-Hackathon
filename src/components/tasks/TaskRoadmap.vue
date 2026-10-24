@@ -176,3 +176,27 @@ async function addStep() {
     <ToastNotice v-if="error" :message="error" type="error" />
   </section>
 </template>
+
+<style scoped>
+/* Ações discretas: aparecem ao interagir com a etapa no desktop. */
+@media (hover: hover) and (pointer: fine) {
+  .roadmap__step-actions {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-3px);
+    transition: opacity .16s ease, transform .16s ease, visibility .16s ease;
+  }
+  .roadmap__step:hover .roadmap__step-actions,
+  .roadmap__step:focus-within .roadmap__step-actions {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+}
+/* Em telas touch, os botões continuam acessíveis. */
+@media (hover: none), (pointer: coarse) {
+  .roadmap__step-actions { opacity: 1; visibility: visible; pointer-events: auto; transform: none; }
+}
+</style>

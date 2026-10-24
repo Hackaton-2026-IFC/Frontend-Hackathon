@@ -917,26 +917,51 @@ onUnmounted(() => {
 }
 
 .remove-button {
-  padding: 9px 13px;
-  border: 1px solid #fecaca;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 10px 16px;
+  border: 1px solid #b91c1c;
   border-radius: 9px;
-  background: #fff5f5;
-  color: #dc2626;
+  background: #dc2626;
+  color: #fff;
   font-family: inherit;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: .01em;
   cursor: pointer;
-  transition: 0.2s;
+  box-shadow: 0 3px 8px rgb(185 28 28 / 18%);
+  transition: background-color .18s ease, box-shadow .18s ease, transform .18s ease;
 }
 
-.remove-button:hover {
-  background: #fee2e2;
-  border-color: #f87171;
+.remove-button:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: #991b1b;
+  box-shadow: 0 5px 12px rgb(185 28 28 / 24%);
+  transform: translateY(-1px);
+}
+
+.remove-button:active:not(:disabled) {
+  background: #991b1b;
+  transform: translateY(0);
+}
+
+.remove-button:focus-visible {
+  outline: 3px solid #fca5a5;
+  outline-offset: 3px;
 }
 
 .remove-button:disabled {
-  opacity: 0.5;
+  opacity: .55;
   cursor: not-allowed;
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .remove-button { transition: none; }
+  .remove-button:hover:not(:disabled) { transform: none; }
 }
 
 .leave-section {

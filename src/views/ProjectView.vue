@@ -13,9 +13,10 @@ import ProjectProgress from '@/components/project/ProjectProgress.vue'
 import ProjectMembers from '@/components/project/ProjectMembers.vue'
 import ProjectDeleteDialog from '@/components/project/ProjectDeleteDialog.vue'
 import TaskForm from '@/components/tasks/TaskForm.vue'
-import ProjectKanban from '@/components/project/ProjectKanban.vue'
-import ToastNotice from '@/components/ui/ToastNotice.vue'
 import ProjectResources from '@/components/project/ProjectResources.vue'
+import ProjectKanban from '@/components/project/ProjectKanban.vue'
+import ProjectTaskCard from '@/components/project/ProjectTaskCard.vue'
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import ProjectAgentModal from '@/components/project/ProjectAgentModal.vue'
 import ProjectCalendar from '@/components/project/ProjectCalendar.vue'
 
@@ -34,6 +35,7 @@ const id = computed(() => route.params.id)
 const project = ref(null)
 const board = ref(null)
 const resources = ref([])
+const filtersOpen = ref(false)
 
 const error = ref('')
 const editError = ref('')
@@ -44,16 +46,16 @@ const resourceError = ref('')
 const loading = ref(false)
 const saving = ref(false)
 const savingProject = ref(false)
-const deletingProject = ref(false)
 const savingResource = ref(false)
+const deletingProject = ref(false)
 
 const showEditModal = ref(false)
 const showDeleteDialog = ref(false)
 const showTaskForm = ref(false)
 const taskFormProjects = computed(() => project.value ? [project.value] : [])
+const resourceSuccessCount = ref(0)
 const showAgentModal = ref(false)
 
-const resourceSuccessCount = ref(0)
 
 // Colunas do kanban
 
@@ -776,10 +778,26 @@ onMounted(load)
           </button>
         </div>
 
+        <!-- Filtros recolhíveis -->
+        <div class="project-tasks__filter-toolbar">
+          <button
+            type="button"
+            class="project-tasks__filter-toggle"
+            :aria-expanded="filtersOpen"
+            aria-controls="project-task-filters"
+            @click="filtersOpen = !filtersOpen"
+          >
+            <span class="mdi mdi-filter-variant" aria-hidden="true"></span>
+            {{ filtersOpen ? 'Ocultar filtros' : 'Filtrar' }}
+            <span v-if="activeFiltersCount" class="project-tasks__filter-badge">{{ activeFiltersCount }}</span>
+            <span class="mdi" :class="filtersOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" aria-hidden="true"></span>
+          </button>
+        </div>
+
         <!-- Abas de status -->
 
         <div
-          class="project-tasks__tabs"
+          class="project-tasks__tabs project-tasks__mobile-only"
           role="group"
           aria-label="Situação das tarefas"
         >
@@ -806,8 +824,7 @@ onMounted(load)
           </button>
         </div>
 
-        <!-- Filtros -->
-
+        <div v-show="filtersOpen" id="project-task-filters" class="project-tasks__filter-panel">
         <div class="project-tasks__filters">
           <label class="project-tasks__search">
             Pesquisar por nome
@@ -958,6 +975,8 @@ onMounted(load)
           </button>
         </div>
 
+        </div>
+
         <!-- Contador -->
 
         <p
@@ -975,13 +994,41 @@ onMounted(load)
 
         <!-- Lista de tarefas -->
 
-<ProjectKanban
-          :key="String(id)"
-          :tasks="filteredTasks"
-          :columns="columns"
-          :saving="movingTask"
-          @move="moveTask"
-        />
+<div class="project-tasks__desktop-only">
+          <ProjectKanban
+            :key="String(id)"
+            :tasks="filteredTasks"
+            :columns="columns"
+            :saving="movingTask"
+            @move="moveTask"
+          />
+        </div>
+
+        <div class="project-tasks__mobile-list" aria-label="Lista de tarefas">
+          <p v-if="!filteredTasks.length" class="project-tasks__mobile-empty">
+            Nenhuma tarefa encontrada nesta situação.
+          </p>
+          <article
+            v-for="task in filteredTasks"
+            :key="task.id"
+            class="project-tasks__mobile-card"
+          >
+            <ProjectTaskCard :task="task" />
+            <label class="project-tasks__mobile-move">
+              Mover para
+              <select
+                :value="task.status"
+                :disabled="movingTask"
+                :aria-label="`Mover tarefa ${task.titulo} para`"
+                @change="moveTask({ taskId: task.id, status: $event.target.value }); $event.target.value = task.status"
+              >
+                <option v-for="col in columns" :key="col.key" :value="col.key">
+                  {{ col.label }}
+                </option>
+              </select>
+            </label>
+          </article>
+        </div>
         <ToastNotice v-if="moveError" :message="moveError" type="error" />
         <ToastNotice :message="moveNotice" type="info" />
       </section>
@@ -1008,6 +1055,98 @@ onMounted(load)
   </main>
 </template>
 <style scoped>
+.project-tasks__mobile-list { display: none; }
+@media (min-width: 769px) {
+  .project-tasks__mobile-only { display: none !important; }
+}
+@media (max-width: 768px) {
+  .project-tasks__desktop-only { display: none; }
+  .project-tasks__mobile-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    min-width: 0;
+  }
+  .project-tasks__mobile-card {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid #dedede;
+    border-radius: 12px;
+    background: #fff;
+  }
+  .project-tasks__mobile-card :deep(.momentum-task) {
+    border: 0;
+    border-radius: 0;
+    height: auto;
+  }
+  .project-tasks__mobile-move {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+    border-top: 1px solid #e5e5e5;
+    color: #555;
+    font-size: 12px;
+  }
+  .project-tasks__mobile-move select {
+    min-height: 44px;
+    max-width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+  }
+  .project-tasks__mobile-empty {
+    padding: 24px 14px;
+    border: 1px dashed #dedede;
+    border-radius: 12px;
+    color: #666;
+    text-align: center;
+  }
+}
+
+.project-tasks__filter-toolbar {
+  display: flex;
+  justify-content: flex-start;
+  margin: -14px 0 18px;
+}
+.project-tasks__filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 9px 14px;
+  border: 1px solid #dedede;
+  border-radius: 10px;
+  background: #fff;
+  color: #171717;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.project-tasks__filter-toggle:hover { background: #f7f7f7; }
+.project-tasks__filter-toggle:focus-visible { outline: 3px solid #737373; outline-offset: 2px; }
+.project-tasks__filter-toggle .mdi { font-size: 19px; }
+.project-tasks__filter-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 6px;
+  background: #171717;
+  color: #fff;
+  font-size: 11px;
+}
+.project-tasks__filter-panel {
+  padding: 16px 0;
+  border-top: 1px solid #ededed;
+}
+
 .momentum-mural-link{display:flex;align-items:center;gap:15px;margin:18px 0 22px;padding:17px 20px;border:1px solid #dedede;border-radius:16px;background:#fff;color:#111;text-decoration:none;transition:border-color .2s,background .2s}
 .momentum-mural-link:hover{background:#fafafa;border-color:#999}
 .momentum-mural-link>.mdi{font-size:26px}

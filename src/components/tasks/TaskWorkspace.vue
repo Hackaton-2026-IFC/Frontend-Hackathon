@@ -148,6 +148,10 @@ async function deleteTask() {
         </div>
       </div>
       <div class="task-workspace__actions">
+        <button type="button" class="task-button task-comments-desktop-button" :disabled="store.busy" aria-label="Abrir comentários desta tarefa" @click="commentsOpen = true">
+          <span class="mdi mdi-comment-text-outline" aria-hidden="true"></span>
+          Comentários
+        </button>
         <button type="button" class="task-button task-primary" :disabled="store.busy" @click="emit('edit', task.id)">
           Editar tarefa
         </button>
