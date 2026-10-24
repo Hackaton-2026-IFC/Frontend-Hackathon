@@ -16,6 +16,7 @@ import ProjectsView from '@/views/ProjectsView.vue'
 import ProjectView from '@/views/ProjectView.vue'
 import TaskView from '@/views/TaskView.vue'
 import NotificationView from '@/views/NotificationView.vue'
+import NotesView from '@/views/NotesView.vue'
 
 // ==========================================
 // DEFINIÇÃO DAS ROTAS
@@ -102,6 +103,14 @@ const routes = [
     meta: {
       requiresAuth: true,
     },
+  },
+
+  {
+    path: '/projects/:id/mural',
+    name: 'project-mural',
+    component: NotesView,
+    props: true,
+    meta: { requiresAuth: true },
   },
 
   // ==========================================
