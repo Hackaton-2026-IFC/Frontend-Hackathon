@@ -15,7 +15,6 @@ import ProjectDeleteDialog from '@/components/project/ProjectDeleteDialog.vue'
 import ProjectTaskModal from '@/components/project/ProjectTaskModal.vue'
 import ProjectKanban from '@/components/project/ProjectKanban.vue'
 import ToastNotice from '@/components/ui/ToastNotice.vue'
-import ProjectResources from '@/components/project/ProjectResources.vue'
 import ProjectAgentModal from '@/components/project/ProjectAgentModal.vue'
 import ProjectCalendar from '@/components/project/ProjectCalendar.vue'
 
@@ -32,26 +31,22 @@ const id = computed(() => route.params.id)
 
 const project = ref(null)
 const board = ref(null)
-const resources = ref([])
 
 const error = ref('')
 const editError = ref('')
 const deleteError = ref('')
 const taskError = ref('')
-const resourceError = ref('')
 
 const loading = ref(false)
 const saving = ref(false)
 const savingProject = ref(false)
 const deletingProject = ref(false)
-const savingResource = ref(false)
 
 const showEditModal = ref(false)
 const showDeleteDialog = ref(false)
 const showTaskForm = ref(false)
 const showAgentModal = ref(false)
 
-const resourceSuccessCount = ref(0)
 
 // Colunas do kanban
 
@@ -439,11 +434,10 @@ async function load() {
 
   const currentId = id.value
 
-  const [projectResult, kanbanResult, resourcesResult] =
+  const [projectResult, kanbanResult] =
     await Promise.allSettled([
       projectsApi.get(currentId),
       projectsApi.kanban(currentId),
-      projectsApi.resources(currentId),
     ])
 
   if (String(currentId) !== String(id.value)) {
@@ -473,21 +467,6 @@ async function load() {
     )
 
     errors.push('tarefas')
-  }
-
-  if (resourcesResult.status === 'fulfilled') {
-    const data = resourcesResult.value.data
-
-    resources.value = Array.isArray(data)
-      ? data
-      : (data?.results ?? [])
-  } else {
-    console.error(
-      'Erro ao carregar materiais:',
-      resourcesResult.reason,
-    )
-
-    errors.push('materiais de apoio')
   }
 
   if (errors.length) {
@@ -639,38 +618,6 @@ async function addTask(dados) {
 }
 
 
-// Materiais de apoio
-
-async function addResource(dados) {
-  if (savingResource.value) return
-
-  savingResource.value = true
-  resourceError.value = ''
-  error.value = ''
-
-  try {
-    await projectsApi.addResource(id.value, {
-      titulo: dados.titulo.trim(),
-      url: dados.url.trim(),
-      tipo: dados.tipo || 'link',
-    })
-
-    const response = await projectsApi.resources(id.value)
-
-    resources.value = Array.isArray(response.data)
-      ? response.data
-      : (response.data?.results ?? [])
-
-    resourceSuccessCount.value += 1
-
-    toast.success('Material adicionado com sucesso.')
-  } catch (e) {
-    resourceError.value = explain(e)
-  } finally {
-    savingResource.value = false
-  }
-}
-
 // Convites
 
 async function onInviteSent() {
@@ -689,11 +636,9 @@ watch(id, (newId, oldId) => {
     editError.value = ''
     deleteError.value = ''
     taskError.value = ''
-    resourceError.value = ''
 
     project.value = null
     board.value = null
-    resources.value = []
 
     clearFilters()
     load()
@@ -1013,16 +958,6 @@ onMounted(load)
 
       <!-- Calendário colaborativo e Google Agenda -->
       <ProjectCalendar :key="String(id)" :project-id="id" />
-
-      <!-- Materiais de apoio -->
-
-      <ProjectResources
-        :resources="resources"
-        :saving="savingResource"
-        :error="resourceError"
-        :success-count="resourceSuccessCount"
-        @add-resource="addResource"
-      />
 
       <ProjectMembers
         :project="project"
