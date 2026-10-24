@@ -175,3 +175,90 @@
     columns: 1;
   }
 }
+
+/* Refinamento por tela: linguagem visual do perfil, sem alterar autenticação. */
+.app-shell .projects-page .page-heading {
+  border-bottom: 1px solid var(--momentum-line);
+  padding-bottom: 26px;
+}
+.app-shell .projects-page .page-heading h1,
+.app-shell .notifications-page .notifications-header h1,
+.app-shell .tasks-page .tasks-page-heading h1 {
+  font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+  line-height: 1.12;
+  letter-spacing: -.045em;
+}
+.app-shell .projects-page .project-card {
+  border-color: var(--momentum-line);
+  border-radius: 14px;
+  padding: clamp(18px, 2.5vw, 26px);
+  min-height: 220px;
+}
+.app-shell .projects-page .project-card__footer {
+  border-top-color: var(--momentum-line);
+}
+.app-shell .projects-page .project-card:hover {
+  box-shadow: 0 8px 24px rgb(0 0 0 / 6%);
+}
+.app-shell .projects-page .project-status {
+  border-color: var(--momentum-line);
+  background: var(--momentum-subtle);
+}
+.app-shell .projects-page .project-filters input,
+.app-shell .projects-page .project-filters select {
+  border: 1px solid #d4d4d4;
+  border-radius: 9px;
+  background: #fff;
+}
+.app-shell .projects-page .project-filters input::placeholder {
+  color: var(--momentum-muted);
+}
+.app-shell .projects-page .empty-state {
+  border-color: var(--momentum-line);
+  border-radius: 14px;
+  background: var(--momentum-subtle);
+}
+.app-shell .notifications-page .notifications-section {
+  border-color: var(--momentum-line);
+  border-radius: 14px;
+}
+.app-shell .notifications-page .invite-card {
+  border-color: var(--momentum-line);
+  border-radius: 12px;
+}
+.app-shell .home-page .home-mural-panel {
+  border: 1px solid var(--momentum-line);
+  border-radius: 12px;
+}
+.app-shell .tasks-page .task-browser,
+.app-shell .task-page .task-page__panel,
+.app-shell .workspace .panel {
+  border-color: var(--momentum-line);
+}
+.app-shell .notes-page .notes-hero {
+  min-width: 0;
+}
+.app-shell .notes-page .note-card {
+  border-radius: 12px;
+}
+@media (max-width: 700px) {
+  .app-shell .projects-page .project-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+  .app-shell .projects-page .page-heading > .button {
+    width: 100%;
+  }
+  .app-shell .projects-page .project-filters {
+    gap: 12px;
+  }
+  .app-shell .notifications-page .notifications-section {
+    padding: 18px;
+  }
+  .app-shell .notifications-page .invite-card {
+    padding: 16px;
+  }
+  .app-shell .notes-page .notes-tools {
+    max-width: 100%;
+  }
+}
