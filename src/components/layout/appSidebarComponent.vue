@@ -1,23 +1,65 @@
 <script setup>
+import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 
 const route = useRoute()
 const authStore = useAuthStore()
 
+const user = computed(() => authStore.user)
+
+const userName = computed(() => {
+  return user.value?.name?.trim() || 'Usuário'
+})
+
+const userUsername = computed(() => {
+  return user.value?.username || ''
+})
+
+const userPhoto = computed(() => {
+  return user.value?.profile_image?.url || null
+})
+
+const userInitial = computed(() => {
+  return userName.value.charAt(0).toUpperCase()
+})
+
 const navigationItems = [
-  { label: 'Início', to: '/home', symbol: 'mdi mdi-home-outline' },
-  { label: 'Projetos', to: '/projects', symbol: 'mdi mdi-list-box-outline' },
-  { label: 'Perfil', to: '/profile', symbol: 'mdi mdi-account-outline' },
-  { label: 'Configurações', to: '/settings', symbol: 'mdi mdi-cog-outline' },
+  {
+    label: 'Tarefas',
+    to: '/tasks',
+    symbol: 'mdi mdi-checkbox-marked-outline',
+  },
+  {
+    label: 'Início',
+    to: '/home',
+    symbol: 'mdi mdi-home-outline',
+  },
+  {
+    label: 'Projetos',
+    to: '/projects',
+    symbol: 'mdi mdi-list-box-outline',
+  },
+  {
+    label: 'Configurações',
+    to: '/settings',
+    symbol: 'mdi mdi-cog-outline',
+  },
+  {
+    label: 'Perfil',
+    to: '/profile',
+    symbol: 'mdi mdi-account-outline',
+  },
 ]
 
 function isActive(item) {
+  if (item.to === '/tasks') {
+    return route.name === 'tasks' || route.name === 'project-tasks'
+  }
+
   if (item.to === '/projects') {
-    return (
-      route.path === '/projects' ||
-      route.path.startsWith('/projects/')
-    )
+    return route.path === '/projects' ||
+      (route.path.startsWith('/projects/') && route.name !== 'project-tasks')
   }
 
   return route.path === item.to
@@ -26,17 +68,24 @@ function isActive(item) {
 
 <template>
   <aside class="app-sidebar">
+    <!-- LOGO -->
     <RouterLink to="/home" class="sidebar-brand">
-      <span class="brand-mark" aria-hidden="true">H</span>
+      <img
+        src="/icons/momentum-192x192.png"
+        alt="Logo Momentum"
+        class="brand-mark"
+      />
 
       <span class="brand-text">
-        <strong>Hackathon</strong>
-        <small>Workspace</small>
+        <strong>Momentum</strong>
       </span>
     </RouterLink>
 
+    <!-- MENU -->
     <div class="sidebar-section">
-      <span class="section-label">MENU PRINCIPAL</span>
+      <span class="section-label">
+        MENU PRINCIPAL
+      </span>
 
       <nav
         class="sidebar-navigation"
@@ -47,11 +96,34 @@ function isActive(item) {
           :key="item.to"
           :to="item.to"
           class="navigation-link"
-          :class="{ 'navigation-link-active': isActive(item) }"
+          :class="{
+            'navigation-link-active': isActive(item),
+            'navigation-profile-link': item.to === '/profile'
+          }"
           :aria-current="isActive(item) ? 'page' : undefined"
         >
-          <span :class="item.symbol" aria-hidden="true">
-          </span>
+          <!-- FOTO DE PERFIL -->
+          <template v-if="item.to === '/profile'">
+            <img
+              v-if="userPhoto"
+              :src="userPhoto"
+              alt=""
+              class="navigation-avatar"
+            />
+
+            <span
+              v-else
+              class="mdi mdi-account-outline"
+              aria-hidden="true"
+            ></span>
+          </template>
+
+          <!-- OUTROS ÍCONES -->
+          <span
+            v-else
+            :class="item.symbol"
+            aria-hidden="true"
+          ></span>
 
           <span class="navigation-label">
             {{ item.label }}
@@ -60,73 +132,115 @@ function isActive(item) {
       </nav>
     </div>
 
+    <!-- PERFIL NO RODAPÉ -->
     <div class="sidebar-bottom">
-      <div class="sidebar-status">
-        <span class="status-dot" aria-hidden="true"></span>
+      <RouterLink
+        to="/profile"
+        class="sidebar-user"
+        :class="{ 'sidebar-user-active': route.path === '/profile' }"
+        aria-label="Abrir meu perfil"
+      >
+        <div class="sidebar-user-avatar">
+          <img
+            v-if="userPhoto"
+            :src="userPhoto"
+            :alt="`Foto de ${userName}`"
+          />
 
-        <div>
-          <strong>Seu espaço de trabalho</strong>
-          <small>Organize suas ideias</small>
+          <span v-else>
+            {{ userInitial }}
+          </span>
         </div>
-      </div>
+
+        <div class="sidebar-user-info">
+          <strong>{{ userName }}</strong>
+
+          <small v-if="userUsername">
+            @{{ userUsername }}
+          </small>
+
+          <small v-else>
+            Meu perfil
+          </small>
+        </div>
+
+        <span
+          class="mdi mdi-chevron-right sidebar-user-arrow"
+          aria-hidden="true"
+        ></span>
+      </RouterLink>
     </div>
   </aside>
 </template>
 
 <style scoped>
+/* SIDEBAR */
+
 .app-sidebar {
   position: fixed;
-  inset: 0 auto 0 0;
-  z-index: 1000;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 1100;
+
   display: flex;
   flex-direction: column;
+
   width: 250px;
   height: 100vh;
   height: 100dvh;
-  padding: 27px 17px 20px;
+
+  padding: 0 17px 20px;
+
   overflow-x: hidden;
   overflow-y: auto;
+
   background: #171716;
   color: #f8f8f6;
 }
 
+/* LOGO ALINHADA AO HEADER */
+
 .sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 9px 32px;
+  gap: 10px;
+
+  height: 76px;
+  min-height: 76px;
+
+  padding: 0 5px;
+  margin-bottom: 32px;
+
   color: inherit;
   text-decoration: none;
 }
 
 .brand-mark {
-  display: grid;
+  display: block;
   flex-shrink: 0;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 13px;
-  background: #fff;
-  color: #171716;
-  font-size: 22px;
-  font-weight: 800;
+
+  width: 60px;
+  height: 60px;
+
+  object-fit: contain;
+  border-radius: 12px;
 }
 
 .brand-text {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  align-items: center;
+  min-width: 0;
 }
 
 .brand-text strong {
-  font-size: 17px;
-  letter-spacing: -0.5px;
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 750;
+  letter-spacing: -0.7px;
 }
 
-.brand-text small {
-  color: #92928c;
-  font-size: 11px;
-}
+/* MENU */
 
 .sidebar-section {
   display: flex;
@@ -136,6 +250,7 @@ function isActive(item) {
 
 .section-label {
   padding: 0 12px;
+
   color: #85857e;
   font-size: 10px;
   font-weight: 700;
@@ -152,95 +267,203 @@ function isActive(item) {
   display: flex;
   align-items: center;
   gap: 13px;
+
   min-width: 0;
   min-height: 46px;
+
   padding: 0 12px;
+
   border: 1px solid transparent;
   border-radius: 10px;
+
   color: #b7b7b0;
   text-decoration: none;
+
   transition:
-    background 0.2s ease,
+    background-color 0.2s ease,
     color 0.2s ease;
 }
 
 .navigation-link:hover {
   background: #252523;
-  color: #fff;
+  color: #ffffff;
 }
 
 .navigation-link-active {
   border-color: #3c3c38;
   background: #30302d;
-  color: #fff;
+  color: #ffffff;
 }
+
+/* ÍCONES */
 
 .mdi {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
+
   width: 22px;
+
   font-size: 22px;
   line-height: 1;
 }
 
+/* FOTO DO MENU */
+
+.navigation-avatar {
+  display: block;
+  flex-shrink: 0;
+
+  width: 24px;
+  height: 24px;
+
+  border: 1px solid #555555;
+  border-radius: 50%;
+
+  object-fit: cover;
+}
+
+/* TEXTO DOS LINKS */
+
 .navigation-label {
   overflow: hidden;
+
   font-size: 13px;
   font-weight: 500;
+
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* PERFIL DO RODAPÉ */
 
 .sidebar-bottom {
   margin-top: auto;
   padding-top: 20px;
 }
 
-.sidebar-status {
+.sidebar-user {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 14px 10px;
+  align-items: center;
+  gap: 11px;
+
+  width: 100%;
+  min-height: 68px;
+
+  padding: 11px 10px;
+
   border: 1px solid #30302d;
   border-radius: 11px;
+
   background: #232321;
+  color: #ffffff;
+  text-decoration: none;
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
-.status-dot {
-  flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  margin-top: 4px;
-  border-radius: 50%;
-  background: #8dba8b;
+.sidebar-user:hover {
+  background: #2c2c29;
+  border-color: #454540;
 }
 
-.sidebar-status div {
+.sidebar-user-active {
+  background: #30302d;
+  border-color: #454540;
+}
+
+.sidebar-user-avatar {
   display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+
+  overflow: hidden;
+
+  border: 1px solid #454540;
+  border-radius: 50%;
+
+  background: #3a3a36;
+  color: #ffffff;
+
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.sidebar-user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sidebar-user-info {
+  display: flex;
+  flex: 1;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
+
+  min-width: 0;
 }
 
-.sidebar-status strong {
-  color: #e5e5e0;
-  font-size: 11px;
-  font-weight: 600;
+.sidebar-user-info strong {
+  overflow: hidden;
+
+  color: #f4f4f0;
+  font-size: 12px;
+  font-weight: 650;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.sidebar-status small {
+.sidebar-user-info small {
+  overflow: hidden;
+
   color: #96968f;
   font-size: 10px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+.sidebar-user-arrow {
+  width: auto;
+  flex-shrink: 0;
+
+  color: #85857e;
+  font-size: 18px;
+}
+
+/* PERFIL SOMENTE NO RODAPÉ DO DESKTOP */
+
+@media (min-width: 701px) {
+  .navigation-profile-link {
+    display: none;
+  }
+}
+
+/* MOBILE */
 
 @media (max-width: 700px) {
   .app-sidebar {
-    inset: auto 0 0;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+
     width: 100%;
     height: auto;
+
     padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+
     overflow: visible;
+
     border-top: 1px solid #353532;
   }
 
@@ -259,6 +482,7 @@ function isActive(item) {
     flex-direction: row;
     justify-content: space-around;
     gap: 3px;
+
     width: 100%;
   }
 
@@ -267,15 +491,22 @@ function isActive(item) {
     flex-direction: column;
     justify-content: center;
     gap: 3px;
+
     min-width: 0;
     min-height: 50px;
+
     padding: 5px 2px;
     border-radius: 9px;
   }
 
-  .navigation-symbol {
+  .navigation-link .mdi {
     width: auto;
     font-size: 20px;
+  }
+
+  .navigation-avatar {
+    width: 24px;
+    height: 24px;
   }
 
   .navigation-label {
@@ -285,8 +516,11 @@ function isActive(item) {
   }
 }
 
+/* ACESSIBILIDADE */
+
 @media (prefers-reduced-motion: reduce) {
-  .navigation-link {
+  .navigation-link,
+  .sidebar-user {
     transition: none;
   }
 }

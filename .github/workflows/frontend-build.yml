@@ -1,0 +1,28 @@
+name: Frontend Vue build
+
+on:
+  pull_request:
+    branches: [DEV, master, FEAT-60]
+  push:
+    branches: [DEV, master, FEAT-61]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.12.0"
+          cache: "npm"
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Validar build de produção
+        run: npm run build
+
+      - name: Testar lógica das APIs de tarefas e notas
+        run: node --test tests/tasks.test.mjs tests/notes.test.mjs tests/navigation-mural.test.mjs

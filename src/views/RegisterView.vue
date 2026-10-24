@@ -1,7 +1,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import CadastroForm from '@/components/cadastro/CadastroForm.vue'
+import CadastroForm from '@/components/auth/RegisterForm.vue'
 import { useRegisterStore } from '@/stores/registerStore.js'
 
 const registerStore = useRegisterStore()

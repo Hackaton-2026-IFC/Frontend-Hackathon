@@ -2,13 +2,29 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 
 import AuthLayout from '@/components/layout/AuthLayout.vue'
+
 import LoginView from '@/views/LoginView.vue'
-import CadastroView from '@/views/CadastroView.vue'
-import homeView from '@/views/homeView.vue'
-import profileView from '@/views/profileView.vue'
+import RegisterView from '@/views/RegisterView.vue'
+import HomeView from '@/views/HomeView.vue'
+import ProfileView from '@/views/ProfileView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
+import ProjectsView from '@/views/ProjectsView.vue'
+import DetalhesProjetoView from '@/views/DetalhesProjetoView.vue'
+import NotesView from '@/views/NotesView.vue'
 
 const routes = [
+  {
+    path: '/tasks',
+    name: 'tasks',
+    component: () => import('@/views/TasksView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/projects/:projectId/tasks',
+    name: 'project-tasks',
+    component: () => import('@/views/TasksView.vue'),
+    meta: { requiresAuth: true },
+  },
   {
     path: '/',
     component: AuthLayout,
@@ -27,14 +43,14 @@ const routes = [
         path: 'registro',
         alias: ['cadastro', 'register'],
         name: 'register',
-        component: CadastroView,
+        component: RegisterView,
       },
     ],
   },
   {
     path: '/home',
     name: 'home',
-    component: homeView,
+    component: HomeView,
     meta: {
       requiresAuth: true,
     },
@@ -42,15 +58,35 @@ const routes = [
   {
     path: '/projects',
     name: 'projects',
-    component: homeView,
+    component: ProjectsView,
     meta: {
       requiresAuth: true,
     },
   },
   {
+    path: '/projects/:id',
+    name: 'project-details',
+    component: DetalhesProjetoView,
+    meta: {
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/projects/:id/mural',
+    name: 'project-mural',
+    component: NotesView,
+    props: true,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/notes',
+    redirect: { name: 'projects' },
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/settings',
     name: 'settings',
-    component: homeView,
+    component: HomeView,
     meta: {
       requiresAuth: true,
     },
@@ -58,7 +94,7 @@ const routes = [
   {
     path: '/profile',
     name: 'profile',
-    component: profileView,
+    component: ProfileView,
     meta: {
       requiresAuth: true,
     },
@@ -82,17 +118,19 @@ const router = createRouter({
 router.beforeEach((to) => {
   const authStore = useAuthStore()
 
-  // Se a rota exige autenticação e o usuário NÃO está autenticado
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return {
       name: 'welcome',
-      query: { redirect: to.fullPath },
+      query: {
+        redirect: to.fullPath,
+      },
     }
   }
 
-  // Se a rota é exclusiva para convidados (welcome/register) e o usuário JÁ está autenticado
   if (to.meta.guestOnly && authStore.isAuthenticated) {
-    return { name: 'home' }
+    return {
+      name: 'home',
+    }
   }
 })
 
