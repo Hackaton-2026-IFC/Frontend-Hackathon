@@ -401,6 +401,7 @@ input::placeholder {
 
 .project-card > p {
   display: -webkit-box;
+  line-clamp: 3;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
