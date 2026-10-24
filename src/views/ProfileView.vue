@@ -3,15 +3,14 @@
 import { computed, onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import ProfileEditModal from '@/components/ui/ProfileEditModal.vue'
-import AppToast from '@/components/ui/AppToast.vue'
+import { useToastStore } from '@/stores/toastStore'
 
 const authStore = useAuthStore()
+const toast = useToastStore()
 
 const modalAberto = ref(false)
 const salvando = ref(false)
 
-const mensagemFoto = ref('')
-const tipoMensagem = ref('success')
 
 const userName = computed(() =>
   authStore.user?.name?.trim() || 'Usuário'
@@ -45,12 +44,7 @@ function fecharModal() {
 }
 
 function mostrarNotificacao(message, type = 'success') {
-  mensagemFoto.value = ''
-  tipoMensagem.value = type
-
-  setTimeout(() => {
-    mensagemFoto.value = message
-  }, 0)
+  toast.show(message, type)
 }
 
 async function confirmarMudancas({
@@ -253,12 +247,6 @@ async function handleLogout() {
       @confirm="confirmarMudancas"
     />
 
-    <AppToast
-      :message="mensagemFoto"
-      :type="tipoMensagem"
-      :duration="5000"
-      @close="mensagemFoto = ''"
-    />
   </main>
 </template>
 
