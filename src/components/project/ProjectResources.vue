@@ -1,3 +1,4 @@
+import { projectToast } from '@/utils/projectToast'
 <script setup>
 import { ref, watch } from 'vue'
 
@@ -212,13 +213,7 @@ function submit() {
               />
             </div>
 
-            <p
-              v-if="error"
-              class="resource-modal__error"
-              role="alert"
-            >
-              {{ error }}
-            </p>
+            
 
             <div class="resource-modal__actions">
               <button
