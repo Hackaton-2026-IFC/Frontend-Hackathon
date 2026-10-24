@@ -120,7 +120,7 @@ const projectDeadline = computed(() => {
         class="momentum-project-header__menu-toggle"
         :aria-expanded="mobileMenuOpen"
         aria-controls="project-mobile-actions"
-        aria-label="Abrir ações do projeto"
+        aria-label="Menu do projeto"
         @click="mobileMenuOpen = !mobileMenuOpen"
       >
         <span class="mdi" :class="mobileMenuOpen ? 'mdi-close' : 'mdi-menu'" aria-hidden="true"></span>
@@ -166,60 +166,6 @@ const projectDeadline = computed(() => {
 }
 .momentum-project-header__menu-toggle {
   display: none;
-}
-@media (max-width: 600px) {
-  .momentum-project-header__action-area {
-    width: 100%;
-    display: flex;
-    justify-content: flex-end;
-  }
-  .momentum-project-header__menu-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    min-width: 44px;
-    min-height: 44px;
-    padding: 8px 12px;
-    border: 1px solid #dedede;
-    border-radius: 10px;
-    background: #fff;
-    color: #171717;
-    font: inherit;
-    font-size: 12px;
-    font-weight: 650;
-    cursor: pointer;
-  }
-  .momentum-project-header__menu-toggle .mdi { font-size: 22px; }
-  .momentum-project-header__action-area:hover .momentum-project-header__actions,
-  .momentum-project-header__action-area:focus-within .momentum-project-header__actions {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 8px;
-  }
-  .momentum-project-header__menu-toggle:focus-visible {
-    outline: 3px solid #666;
-    outline-offset: 2px;
-  }
-  .momentum-project-header__actions {
-    display: none;
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    z-index: 20;
-    width: min(240px, calc(100vw - 64px));
-    padding: 10px;
-    border: 1px solid #dedede;
-    border-radius: 12px;
-    background: #fff;
-    box-shadow: 0 12px 30px rgb(0 0 0 / 12%);
-  }
-  .momentum-project-header__actions--open {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 8px;
-  }
-  .momentum-project-header__actions .board-link { grid-column: auto; }
 }
 
 .momentum-project-header {
@@ -478,6 +424,88 @@ const projectDeadline = computed(() => {
 
   .momentum-project-header__icon {
     flex-basis: auto;
+  }
+}
+
+/* Menu compacto: não ocupa uma linha inteira no cartão. */
+@media (max-width: 600px) {
+  .momentum-project-header {
+    position: relative;
+    display: block;
+    padding: 18px;
+    overflow: visible;
+  }
+  .momentum-project-header__main {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding-right: 44px;
+  }
+  .momentum-project-header__icon {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+  }
+  .momentum-project-header__action-area {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 30;
+    display: block;
+    width: auto;
+  }
+  .momentum-project-header__menu-toggle {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    min-height: 42px;
+    padding: 0;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    background: #fff;
+    color: #171717;
+    cursor: pointer;
+  }
+  .momentum-project-header__menu-toggle .mdi { font-size: 24px; }
+  .momentum-project-header__menu-toggle:focus-visible {
+    outline: 3px solid #737373;
+    outline-offset: 2px;
+  }
+  .momentum-project-header__actions {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 40;
+    width: min(224px, calc(100vw - 64px));
+    padding: 8px;
+    margin: 0;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 12px 28px rgb(0 0 0 / 13%);
+  }
+  .momentum-project-header__actions--open {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+  .momentum-project-header__actions .momentum-project-header__button {
+    width: 100%;
+    min-height: 42px;
+    padding: 9px 12px;
+    font-size: 12px;
+  }
+  .momentum-project-header__actions .board-link { grid-column: auto; }
+}
+@media (max-width: 600px) and (hover: hover) and (pointer: fine) {
+  .momentum-project-header__action-area:hover .momentum-project-header__actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
   }
 }
 </style>
