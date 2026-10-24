@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { readLegalAcceptance } from '@/services/legalAcceptance.js'
 
 // ==========================================
 // IMPORTAÇÃO DOS COMPONENTES
@@ -17,12 +18,18 @@ import ProjectView from '@/views/ProjectView.vue'
 const TasksView = () => import('@/views/TasksView.vue')
 import NotificationView from '@/views/NotificationView.vue'
 const NotesView = () => import('@/views/NotesView.vue')
+const PrivacyPolicyView = () => import('@/views/PrivacyPolicyView.vue')
+const TermsOfUseView = () => import('@/views/TermsOfUseView.vue')
+const LegalConsentView = () => import('@/views/LegalConsentView.vue')
 
 // ==========================================
 // DEFINIÇÃO DAS ROTAS
 // ==========================================
 
 const routes = [
+  { path: '/privacidade', name: 'privacy', component: PrivacyPolicyView, meta: { hideHeader: true, hideFooter: true, legalPublic: true } },
+  { path: '/termos', name: 'terms', component: TermsOfUseView, meta: { hideHeader: true, hideFooter: true, legalPublic: true } },
+  { path: '/aceite', name: 'legal-consent', component: LegalConsentView, meta: { hideHeader: true, hideFooter: true, legalPublic: true } },
   // ==========================================
   // AUTENTICAÇÃO
   // ==========================================
@@ -212,6 +219,14 @@ const router = createRouter({
 // ==========================================
 
 router.beforeEach((to) => {
+  // Política, termos e aceite precisam funcionar sem login e sem aceite prévio.
+  if (to.meta.legalPublic) {
+    if (to.name === 'legal-consent' && readLegalAcceptance()) return { name: 'welcome' }
+    return
+  }
+  if (!readLegalAcceptance()) {
+    return { name: 'legal-consent' }
+  }
   const authStore = useAuthStore()
 
   // Impede acesso a páginas protegidas sem login
