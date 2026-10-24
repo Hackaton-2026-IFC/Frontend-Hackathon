@@ -9,7 +9,7 @@ const pageTitle = computed(() => {
     '/': 'Início',
     '/home': 'Início',
     '/projects': 'Projetos',
-    '/tasks': 'Criar ou editar tarefa',
+    '/tasks': 'Tarefas',
     '/notes': 'Notas',
     '/profile': 'Perfil',
     '/settings': 'Configurações',

@@ -14,7 +14,7 @@ import ProfileView from '@/views/ProfileView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import ProjectsView from '@/views/ProjectsView.vue'
 import ProjectView from '@/views/ProjectView.vue'
-import TaskView from '@/views/TaskView.vue'
+const TasksView = () => import('@/views/TasksView.vue')
 import NotificationView from '@/views/NotificationView.vue'
 
 // ==========================================
@@ -63,6 +63,17 @@ const routes = [
   },
 
   // ==========================================
+  // PAINEL DE TAREFAS
+  // ==========================================
+
+  {
+    path: '/tasks',
+    name: 'tasks',
+    component: TasksView,
+    meta: { requiresAuth: true },
+  },
+
+  // ==========================================
   // PROJETOS
   // ==========================================
 
@@ -82,12 +93,8 @@ const routes = [
   {
     path: '/projects/:projectId/tasks',
     name: 'project-tasks',
-    redirect: (to) => ({
-      name: 'project-details',
-      params: {
-        id: to.params.projectId,
-      },
-    }),
+    component: TasksView,
+    meta: { requiresAuth: true },
   },
 
   // ==========================================
@@ -111,8 +118,7 @@ const routes = [
   {
     path: '/tasks/:id',
     name: 'task-view',
-    component: TaskView,
-    props: true,
+    component: TasksView,
     meta: {
       requiresAuth: true,
     },
