@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import projectsApi from '@/api/projectsApi'
@@ -15,6 +15,7 @@ import ProjectTaskModal from '@/components/project/ProjectTaskModal.vue'
 import ProjectTaskCard from '@/components/project/ProjectTaskCard.vue'
 import ProjectResources from '@/components/project/ProjectResources.vue'
 
+import AppToast from '@/components/ui/AppToast.vue'
 import '@/assets/css/project.css'
 import '@/assets/css/project-tasks.css'
 
@@ -35,6 +36,37 @@ const editError = ref('')
 const deleteError = ref('')
 const taskError = ref('')
 const resourceError = ref('')
+
+const toastMessage = ref('')
+const toastType = ref('success')
+let toastResetTimer = null
+
+function showProjectToast(message, type = 'success') {
+  if (!message) return
+  clearTimeout(toastResetTimer)
+  toastMessage.value = ''
+  toastType.value = type
+  toastResetTimer = setTimeout(() => { toastMessage.value = String(message) }, 0)
+}
+
+function onProjectToast(event) {
+  showProjectToast(event.detail?.message, event.detail?.type)
+}
+
+watch([error, editError, deleteError, taskError, resourceError], (values, previous) => {
+  values.forEach((message, index) => {
+    if (message && message !== previous?.[index]) showProjectToast(message, 'error')
+  })
+})
+watch(success, (message, previous) => {
+  if (message && message !== previous) showProjectToast(message, 'success')
+})
+
+onMounted(() => window.addEventListener('momentum:project-toast', onProjectToast))
+onUnmounted(() => {
+  window.removeEventListener('momentum:project-toast', onProjectToast)
+  clearTimeout(toastResetTimer)
+})
 
 const loading = ref(false)
 const saving = ref(false)
@@ -667,6 +699,7 @@ onMounted(load)
 </script>
 <template>
   <main class="workspace">
+    <AppToast :message="toastMessage" :type="toastType" :duration="5000" @close="toastMessage = ''" />
     <RouterLink
       to="/projects"
       class="back-link"
@@ -681,15 +714,7 @@ onMounted(load)
       Carregando projeto...
     </p>
 
-    <p
-      v-if="error"
-      class="message-error"
-      role="alert"
-    >
-      {{ error }}
-    </p>
-
-    <p
+<p
       v-if="success"
       class="message-success"
       role="status"
