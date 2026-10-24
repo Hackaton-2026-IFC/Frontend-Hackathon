@@ -1,8 +1,10 @@
 <script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
 import tasksApi from '@/api/tasksApi'
+import ProjectTaskModal from '@/components/project/ProjectTaskModal.vue'
 
 const route = useRoute()
 
@@ -12,6 +14,12 @@ const task = ref(null)
 const loading = ref(true)
 const error = ref('')
 const updatingSteps = ref([])
+const showEdit = ref(false)
+const savingTask = ref(false)
+const editError = ref('')
+const weatherLoading = ref(false)
+const weather = ref(null)
+const weatherError = ref('')
 
 const priorities = {
   muito_baixa: 'Muito baixa',
@@ -97,6 +105,36 @@ async function loadTask() {
   }
 }
 
+async function saveTask(data) {
+  if (savingTask.value) return
+  savingTask.value = true
+  editError.value = ''
+  try {
+    await tasksApi.update(taskId.value, {
+      titulo: data.titulo,
+      descricao: data.descricao,
+      prioridade: data.prioridade,
+      status: data.status,
+      data_limite: data.data_limite || null,
+      clima_influencia: data.clima_influencia,
+      localizacao: data.localizacao,
+    })
+    showEdit.value = false
+    weather.value = null
+    await loadTask()
+  } catch (err) { editError.value = explain(err) }
+  finally { savingTask.value = false }
+}
+
+async function loadWeather() {
+  if (!task.value?.clima_influencia || weatherLoading.value) return
+  weatherLoading.value = true
+  weatherError.value = ''
+  try { weather.value = (await tasksApi.weather(taskId.value)).data }
+  catch (err) { weatherError.value = explain(err) }
+  finally { weatherLoading.value = false }
+}
+
 async function toggleStep(step) {
   if (updatingSteps.value.includes(step.id)) return
 
@@ -118,7 +156,7 @@ async function toggleStep(step) {
   }
 }
 
-watch(taskId, loadTask)
+watch(taskId, () => { showEdit.value = false; weather.value = null; loadTask() })
 
 onMounted(loadTask)
 </script>
@@ -162,7 +200,7 @@ onMounted(loadTask)
       >
         <h2>Não foi possível carregar a tarefa</h2>
 
-        <p>{{ error }}</p>
+        <ToastNotice :message="error" type="error" />
 
         <button @click="loadTask">
           Tentar novamente
@@ -172,6 +210,15 @@ onMounted(loadTask)
       <!-- CONTEÚDO -->
 
       <template v-else-if="task">
+        <ProjectTaskModal
+          v-if="showEdit"
+          :key="task.id"
+          :task="task"
+          :saving="savingTask"
+          :error="editError"
+          @close="showEdit = false"
+          @save="saveTask"
+        />
 
         <!-- CABEÇALHO -->
 
@@ -189,6 +236,9 @@ onMounted(loadTask)
             </p>
           </div>
 
+          <button type="button" class="task-page__edit-button" @click="showEdit = true">
+            Editar tarefa
+          </button>
           <span
             class="task-page__status"
             :class="`task-page__status--${task.status}`"
@@ -197,13 +247,7 @@ onMounted(loadTask)
           </span>
         </header>
 
-        <p
-          v-if="error"
-          class="task-page__alert"
-          role="alert"
-        >
-          {{ error }}
-        </p>
+        <ToastNotice v-if="error" :message="error" type="error" />
 
         <!-- INFORMAÇÕES -->
 
@@ -237,6 +281,27 @@ onMounted(loadTask)
             </strong>
           </div>
 
+        </section>
+
+        <section v-if="task.clima_influencia" class="task-page__panel">
+          <div class="task-page__section-header">
+            <div>
+              <h2><span class="mdi mdi-weather-partly-cloudy" aria-hidden="true"></span> Clima e planejamento</h2>
+              <p>Localização: {{ task.localizacao || 'Não informada' }}</p>
+            </div>
+            <button class="task-page__edit-button" type="button" :disabled="weatherLoading" @click="loadWeather">
+              {{ weatherLoading ? 'Consultando...' : 'Consultar previsão' }}
+            </button>
+          </div>
+          <p v-if="weatherError" class="task-page__alert" role="alert">{{ weatherError }}</p>
+          <div v-if="weather" class="task-page__description" role="status">
+            <template v-if="weather.disponivel">
+              <strong>Probabilidade de chuva: {{ weather.probabilidade_chuva_pct ?? 'Indisponível' }}{{ weather.probabilidade_chuva_pct == null ? '' : '%' }}</strong>
+              <p>Data: {{ formatDate(weather.data) }} · Máxima: {{ weather.temperatura_maxima_c ?? '—' }} °C · Mínima: {{ weather.temperatura_minima_c ?? '—' }} °C</p>
+              <small>Fonte: Open-Meteo. Previsões podem mudar.</small>
+            </template>
+            <p v-else>{{ weather.motivo || 'Previsão ainda indisponível.' }}</p>
+          </div>
         </section>
 
         <!-- DESCRIÇÃO -->
@@ -728,4 +793,9 @@ onMounted(loadTask)
     transition: none;
   }
 }
+</style>
+<style scoped>
+.task-page__edit-button{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:9px 14px;border:1px solid #111;border-radius:9px;background:#fff;color:#111;font:inherit;font-size:12px;font-weight:650;cursor:pointer}
+.task-page__edit-button:hover{background:#f5f5f5}
+.task-page__edit-button:disabled{opacity:.5;cursor:wait}
 </style>

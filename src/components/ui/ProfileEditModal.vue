@@ -1,5 +1,6 @@
 
 <script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 
 const props = defineProps({
@@ -554,13 +555,7 @@ async function confirmChanges() {
               </div>
             </div>
 
-            <p
-              v-if="errorMessage"
-              class="error-message"
-              role="alert"
-            >
-              {{ errorMessage }}
-            </p>
+            <ToastNotice v-if="errorMessage" :message="errorMessage" type="error" />
 
             <input
               ref="fileInput"

@@ -1,7 +1,9 @@
 <script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { ref } from 'vue'
 
 const props = defineProps({
+  task: { type: Object, default: null },
   saving: {
     type: Boolean,
     default: false,
@@ -15,11 +17,13 @@ const props = defineProps({
 const emit = defineEmits(['close', 'save'])
 
 const form = ref({
-  titulo: '',
-  descricao: '',
-  prioridade: 'neutra',
-  status: 'planejado',
-  data_limite: '',
+  titulo: props.task?.titulo ?? '',
+  descricao: props.task?.descricao ?? '',
+  prioridade: props.task?.prioridade ?? 'neutra',
+  status: props.task?.status ?? 'planejado',
+  data_limite: props.task?.data_limite ?? '',
+  clima_influencia: props.task?.clima_influencia ?? false,
+  localizacao: props.task?.localizacao ?? '',
 })
 
 const priorities = [
@@ -36,7 +40,14 @@ const statuses = [
   { value: 'concluido', label: 'Concluído' },
 ]
 
+const weatherError = ref('')
+
 function submit() {
+  if (form.value.clima_influencia && (!form.value.localizacao.trim() || !form.value.data_limite)) {
+    weatherError.value = 'Defina a cidade e o prazo para tarefas que dependem do clima.'
+    return
+  }
+  weatherError.value = ''
   const titulo = form.value.titulo.trim()
 
   if (!titulo || props.saving) return
@@ -47,6 +58,8 @@ function submit() {
     prioridade: form.value.prioridade,
     status: form.value.status,
     data_limite: form.value.data_limite,
+    clima_influencia: Boolean(form.value.clima_influencia),
+    localizacao: form.value.clima_influencia ? form.value.localizacao.trim() : '',
   })
 }
 
@@ -71,11 +84,11 @@ function close() {
         <div class="task-modal__header">
           <div>
             <h2 id="task-modal-title">
-              Nova tarefa
+              {{ task ? 'Editar tarefa' : 'Nova tarefa' }}
             </h2>
 
             <p>
-              Adicione uma atividade ao projeto.
+              {{ task ? 'Atualize os dados desta tarefa.' : 'Adicione uma atividade ao projeto.' }}
             </p>
           </div>
 
@@ -175,13 +188,31 @@ function close() {
             />
           </div>
 
-          <p
-            v-if="error"
-            class="task-modal__error"
-            role="alert"
-          >
-            {{ error }}
-          </p>
+          <div class="task-modal__weather">
+            <div class="task-modal__weather-title">
+              <span class="mdi mdi-weather-partly-cloudy" aria-hidden="true"></span>
+              <strong>Clima e planejamento</strong>
+            </div>
+            <label class="task-modal__weather-check">
+              <input v-model="form.clima_influencia" type="checkbox" />
+              O clima influencia esta tarefa
+            </label>
+            <div v-if="form.clima_influencia" class="task-modal__field">
+              <label for="task-weather-location">Cidade da tarefa *</label>
+              <input
+                id="task-weather-location"
+                v-model.trim="form.localizacao"
+                maxlength="255"
+                type="text"
+                placeholder="Ex.: Joinville"
+                required
+              />
+              <small>A previsão de chuva usa a data do prazo e pode ser consultada em até 15 dias.</small>
+            </div>
+            <p v-if="weatherError" class="task-modal__error" role="alert">{{ weatherError }}</p>
+          </div>
+
+          <ToastNotice v-if="error" :message="error" type="error" />
 
           <div class="task-modal__actions">
             <button
@@ -198,7 +229,7 @@ function close() {
               class="task-modal__submit"
               :disabled="saving || !form.titulo.trim()"
             >
-              {{ saving ? 'Criando...' : 'Criar tarefa' }}
+              {{ saving ? 'Salvando...' : task ? 'Salvar alterações' : 'Criar tarefa' }}
             </button>
           </div>
         </form>
@@ -408,4 +439,12 @@ function close() {
     width: 100%;
   }
 }
+</style>
+<style scoped>
+.task-modal__weather{display:grid;gap:13px;padding:16px;border:1px solid #e5e5e5;border-radius:12px;background:#fafafa}
+.task-modal__weather-title{display:flex;align-items:center;gap:10px;font-size:14px}
+.task-modal__weather-title .mdi{font-size:22px}
+.task-modal__weather-check{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;cursor:pointer}
+.task-modal__weather-check input{width:17px;height:17px;accent-color:#111}
+.task-modal__weather small{font-size:11px;color:#666;line-height:1.5}
 </style>

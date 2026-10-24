@@ -1,4 +1,5 @@
 <script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import ProjectIconModal from '@/components/project/ProjectIconModal.vue'
 import { getProjectIcon } from '@/utils/projectIcons'
@@ -243,13 +244,7 @@ function salvar() {
         </div>
       </fieldset>
 
-      <p
-        v-if="erroLocal || error"
-        class="error-message"
-        role="alert"
-      >
-        {{ erroLocal || error }}
-      </p>
+      <ToastNotice v-if="erroLocal || error" :message="erroLocal || error" type="error" />
 
       <footer class="modal-actions">
         <button

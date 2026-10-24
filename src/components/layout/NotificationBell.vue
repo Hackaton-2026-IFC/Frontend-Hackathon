@@ -1,4 +1,5 @@
 <script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import notificationsApi from '@/api/notificationsApi'
@@ -118,7 +119,7 @@ onBeforeUnmount(() => {
         </button>
       </div>
 
-      <p v-if="error" class="notification-error" role="alert">{{ error }}</p>
+      <ToastNotice v-if="error" :message="error" type="error" />
       <p v-if="loading" class="notification-state" role="status">Carregando...</p>
 
       <div v-else-if="items.length" class="notification-list">

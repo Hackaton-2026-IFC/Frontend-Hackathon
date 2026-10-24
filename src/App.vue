@@ -1,5 +1,7 @@
 
 <script setup>
+import ToastHost from '@/components/ui/ToastHost.vue'
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { RouterView, useRoute } from 'vue-router'
 
 import appHeaderComponent from '@/components/layout/appHeaderComponent.vue'
@@ -18,6 +20,7 @@ const toastStore = useToastStore()
 
 <template>
   <div class="app-shell">
+    <ToastHost />
     <AppToast :message="toastStore.message" :type="toastStore.type" :duration="toastStore.duration" :toast-id="toastStore.toastId" @close="toastStore.close()" />
     <RouterView v-if="route.meta.hideHeader" />
 
@@ -33,16 +36,11 @@ const toastStore = useToastStore()
       </div>
     </template>
 
-    <p
-      v-if="
-        authStore.errorMessage &&
-        !['login', 'cadastro', 'welcome', 'register'].includes(route.name)
-      "
-      class="app-error"
-      role="alert"
-    >
-      {{ authStore.errorMessage }}
-    </p>
+    <ToastNotice
+      v-if="authStore.errorMessage && !['login', 'cadastro', 'welcome', 'register'].includes(route.name)"
+      :message="authStore.errorMessage"
+      type="error"
+    />
 
     <div
       v-if="templateStore.isLoading"

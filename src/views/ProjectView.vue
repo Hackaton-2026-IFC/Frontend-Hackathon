@@ -13,8 +13,10 @@ import ProjectProgress from '@/components/project/ProjectProgress.vue'
 import ProjectMembers from '@/components/project/ProjectMembers.vue'
 import ProjectDeleteDialog from '@/components/project/ProjectDeleteDialog.vue'
 import ProjectTaskModal from '@/components/project/ProjectTaskModal.vue'
-import ProjectTaskCard from '@/components/project/ProjectTaskCard.vue'
+import ProjectKanban from '@/components/project/ProjectKanban.vue'
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import ProjectResources from '@/components/project/ProjectResources.vue'
+import ProjectAgentModal from '@/components/project/ProjectAgentModal.vue'
 
 import '@/assets/css/project.css'
 import '@/assets/css/project-tasks.css'
@@ -46,6 +48,7 @@ const savingResource = ref(false)
 const showEditModal = ref(false)
 const showDeleteDialog = ref(false)
 const showTaskForm = ref(false)
+const showAgentModal = ref(false)
 
 const resourceSuccessCount = ref(0)
 
@@ -89,6 +92,38 @@ const allTasks = computed(() => {
     return Array.isArray(tasks) ? tasks : []
   })
 })
+
+// Movimentação otimista; mantém os cards e contadores sincronizados.
+const movingTask = ref(false)
+const moveError = ref('')
+const moveNotice = ref('')
+
+async function moveTask({ taskId, status }) {
+  if (movingTask.value || loading.value || !columns.some(column => column.key === status)) return
+  const task = allTasks.value.find(item => String(item.id) === String(taskId))
+  if (!task || task.status === status) return
+  const currentId = id.value
+  const previousStatus = task.status
+  // Normaliza também respostas agrupadas em colunas.
+  board.value = [...allTasks.value]
+  movingTask.value = true
+  moveError.value = ''
+  moveNotice.value = ''
+  task.status = status
+  try {
+    const { data } = await tasksApi.update(task.id, { status })
+    if (String(currentId) !== String(id.value)) return
+    Object.assign(task, data || { status })
+    moveNotice.value = 'Tarefa movida com sucesso.'
+  } catch (e) {
+    if (String(currentId) !== String(id.value)) return
+    task.status = previousStatus
+    moveError.value = explain(e)
+    moveNotice.value = ''
+  } finally {
+    movingTask.value = false
+  }
+}
 
 // Estatísticas
 
@@ -579,6 +614,8 @@ async function addTask(dados) {
       descricao: dados.descricao,
       prioridade: dados.prioridade,
       status: dados.status,
+      clima_influencia: Boolean(dados.clima_influencia),
+      localizacao: dados.clima_influencia ? (dados.localizacao || '').trim() : '',
       ...(dados.data_limite
         ? { data_limite: dados.data_limite }
         : {}),
@@ -646,6 +683,7 @@ watch(id, (newId, oldId) => {
     showEditModal.value = false
     showDeleteDialog.value = false
     showTaskForm.value = false
+    showAgentModal.value = false
 
     editError.value = ''
     deleteError.value = ''
@@ -679,13 +717,7 @@ onMounted(load)
       Carregando projeto...
     </p>
 
-    <p
-      v-if="error"
-      class="message-error"
-      role="alert"
-    >
-      {{ error }}
-    </p>
+    <ToastNotice v-if="error" :message="error" type="error" />
 
 
     <template v-if="project">
@@ -720,6 +752,26 @@ onMounted(load)
         :project="project"
         @edit="openEditModal"
         @delete="openDeleteDialog"
+        @open-agent="showAgentModal = true"
+      />
+
+      <RouterLink
+        :to="{ name: 'project-mural', params: { id: project.id } }"
+        class="momentum-mural-link"
+      >
+        <span class="mdi mdi-lightbulb-on-outline" aria-hidden="true"></span>
+        <span class="momentum-mural-link__text">
+          <strong>Mural de ideias</strong>
+          <small>Fotos, links e ideias compartilhadas com a equipe</small>
+        </span>
+        <span aria-hidden="true">Acessar →</span>
+      </RouterLink>
+
+      <ProjectAgentModal
+        v-if="showAgentModal"
+        :key="project.id"
+        :project="project"
+        @close="showAgentModal = false"
       />
 
       <ProjectProgress
@@ -952,20 +1004,15 @@ onMounted(load)
 
         <!-- Lista de tarefas -->
 
-<div class="project-tasks__list momentum-tasks-grid">
-  <ProjectTaskCard
-    v-for="task in filteredTasks"
-    :key="task.id"
-    :task="task"
-  />
-
-  <p
-    v-if="!filteredTasks.length"
-    class="project-tasks__empty"
-  >
-    Nenhuma tarefa corresponde aos filtros selecionados.
-  </p>
-</div>
+<ProjectKanban
+          :key="String(id)"
+          :tasks="filteredTasks"
+          :columns="columns"
+          :saving="movingTask"
+          @move="moveTask"
+        />
+        <ToastNotice v-if="moveError" :message="moveError" type="error" />
+        <ToastNotice :message="moveNotice" type="info" />
       </section>
 
       <!-- Materiais de apoio -->
@@ -980,3 +1027,14 @@ onMounted(load)
     </template>
   </main>
 </template>
+<style scoped>
+.momentum-mural-link{display:flex;align-items:center;gap:15px;margin:18px 0 22px;padding:17px 20px;border:1px solid #dedede;border-radius:16px;background:#fff;color:#111;text-decoration:none;transition:border-color .2s,background .2s}
+.momentum-mural-link:hover{background:#fafafa;border-color:#999}
+.momentum-mural-link>.mdi{font-size:26px}
+.momentum-mural-link__text{display:grid;gap:4px;flex:1;min-width:0}
+.momentum-mural-link strong{font-size:14px}
+.momentum-mural-link small{font-size:12px;color:#666}
+.momentum-mural-link>span:last-child{font-size:12px;font-weight:700}
+.momentum-mural-link:focus-visible{outline:2px solid #111;outline-offset:3px}
+@media(max-width:600px){.momentum-mural-link{padding:14px;gap:10px}.momentum-mural-link small{font-size:11px}}
+</style>

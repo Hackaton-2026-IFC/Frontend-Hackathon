@@ -1,5 +1,6 @@
 
 <script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { reactive } from 'vue'
 import AuthInput from '@/components/shared/AuthInput.vue'
 
@@ -47,13 +48,9 @@ function onSubmit() {
         required
       />
 
-      <p v-if="error" class="form-error" role="alert">
-        {{ error }}
-      </p>
+      <ToastNotice v-if="error" :message="error" type="error" />
 
-      <p v-else-if="message" class="form-message" role="status">
-        {{ message }}
-      </p>
+      <ToastNotice v-else-if="message" :message="message" type="success" />
 
       <button type="submit" :disabled="loading" class="submit-button">
         {{ loading ? 'Entrando...' : 'Entrar' }}

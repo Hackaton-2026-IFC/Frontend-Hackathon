@@ -1,4 +1,5 @@
 <script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useProjectStore } from '@/stores/project'
@@ -138,7 +139,7 @@ onMounted(loadProjects)
 
       <div v-else-if="error" class="empty-state" role="alert">
         <h2>Não foi possível carregar</h2>
-        <p>{{ error }}</p>
+        <ToastNotice :message="error" type="error" />
         <button type="button" class="button" @click="loadProjects">
           Tentar novamente
         </button>

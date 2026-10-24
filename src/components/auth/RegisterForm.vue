@@ -1,5 +1,6 @@
 
 <script setup>
+import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { computed, reactive, ref } from 'vue'
 import AuthInput from '@/components/shared/AuthInput.vue'
 
@@ -83,9 +84,7 @@ function onSubmit() {
         required
       />
 
-      <p v-if="shownError" class="form-error" role="alert">
-        {{ shownError }}
-      </p>
+      <ToastNotice v-if="shownError" :message="shownError" type="error" />
 
       <button type="submit" :disabled="loading" class="submit-button">
         {{ loading ? 'Cadastrando...' : 'Cadastrar' }}

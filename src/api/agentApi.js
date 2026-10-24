@@ -5,6 +5,7 @@ const agentApi = {
     return api.post(
       `projetos/${encodeURIComponent(projectId)}/agente/`,
       payload,
+      { timeout: 45000 },
     )
   },
 }
