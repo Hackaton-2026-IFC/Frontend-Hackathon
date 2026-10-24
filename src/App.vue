@@ -161,6 +161,12 @@ const toastStore = useToastStore()
     padding-bottom: 76px;
   }
 
+  /* A tela de projeto não precisa preencher artificialmente a altura
+     disponível: o espaço para a navegação já está no padding inferior. */
+  .page-content:has(> .workspace) {
+    min-height: 0;
+  }
+
   .app-error {
     right: 12px;
     bottom: 76px;
