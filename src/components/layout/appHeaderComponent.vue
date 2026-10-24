@@ -11,7 +11,6 @@ const pageTitle = computed(() => {
     '/home': 'Início',
     '/projects': 'Projetos',
     '/tasks': 'Criar ou editar tarefa',
-    '/notes': 'Notas',
     '/profile': 'Perfil',
     '/settings': 'Configurações',
   }
@@ -24,6 +23,10 @@ const pageTitle = computed(() => {
 
   if (route.name === 'project-tasks') {
     return 'Tarefas do projeto'
+  }
+
+  if (route.name === 'project-mural') {
+    return 'Mural de ideias'
   }
 
   if (path.startsWith('/projects/')) {
