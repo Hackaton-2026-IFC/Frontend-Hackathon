@@ -659,7 +659,7 @@ onBeforeUnmount(() => {
           >
             <span class="mdi mdi-drag-vertical" aria-hidden="true"></span>
           </button>
-          <span v-if="note.projeto" class="project-chip">{{ projectName(note.projeto) || 'Projeto' }}</span>
+          <span v-if="!isProjectMural && note.projeto" class="project-chip">{{ projectName(note.projeto) || 'Projeto' }}</span>
           <button type="button" class="icon-button pin-button" :aria-pressed="Boolean(note.fixada)" :title="note.fixada ? 'Desafixar só para mim' : 'Fixar só para mim'" :aria-label="note.fixada ? 'Desafixar só para mim' : 'Fixar só para mim'" @click="togglePin(note)">
             <span :class="note.fixada ? 'mdi mdi-pin' : 'mdi mdi-pin-outline'" aria-hidden="true"></span>
           </button>
@@ -932,4 +932,18 @@ onBeforeUnmount(() => {
 .composer-dialog-footer .composer-actions{display:flex;justify-content:flex-end;gap:10px}
 .composer-dialog-footer .button{border-radius:9px;min-height:40px;padding:0 16px;font-size:12px;font-weight:700}
 @media(max-width:700px){.composer-backdrop{padding:10px}.composer-modal{max-height:calc(100dvh - 20px);border-radius:15px}.composer-dialog-header{padding:19px 18px 16px}.composer-dialog-body{padding:18px;gap:15px}.composer-dialog-footer{padding:14px 18px calc(14px + env(safe-area-inset-bottom))}.composer-dialog-body .composer-top{align-items:stretch;flex-direction:column;gap:8px}.composer-dialog-body .pin-check{min-height:26px}}
+</style>
+
+<style>
+/* Cards mais leves e sem a etiqueta redundante no mural do projeto */
+.notes-page .note-card{padding:16px;border:1px solid rgba(0,0,0,.075);border-radius:13px;box-shadow:0 3px 12px rgba(0,0,0,.025)}
+.notes-page .note-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.notes-page .note-card-top .pin-button{margin-left:auto;width:31px;height:31px;border-radius:9px;background:rgba(255,255,255,.5)}
+.notes-page .note-card-top .drag-handle{width:30px;height:31px;flex-basis:30px;border-radius:9px;background:rgba(255,255,255,.38)}
+.notes-page .note-card h2{margin:0 0 10px;font-size:16px;font-weight:750;letter-spacing:-.025em}
+.notes-page .note-author-row{margin-bottom:12px}
+.notes-page .note-more-actions{margin-top:13px;padding-top:9px;border-color:rgba(0,0,0,.09)}
+.notes-page .note-more-trigger{border-color:transparent;background:transparent}
+.notes-page .note-more-trigger:hover{background:rgba(255,255,255,.55)}
+@media(max-width:700px){.notes-page .note-card{padding:14px}}
 </style>
