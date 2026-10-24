@@ -15,7 +15,8 @@
     "test:calendar": "node --test tests/google-calendar.test.js",
     "test:legal": "node --test tests/legal-acceptance.test.js",
     "start": "node server.cjs",
-    "test:server": "node --test tests/production-server.test.cjs"
+    "test:server": "node --test tests/production-server.test.cjs",
+    "test:task-modal": "node --test tests/unified-task-modal.test.js"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",

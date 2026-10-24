@@ -30,6 +30,9 @@ jobs:
       - name: Testar aceite e privacidade
         run: npm run test:legal
 
+      - name: Testar modais de tarefa unificados
+        run: npm run test:task-modal
+
       - name: Validar build de produção
         run: npm run build
 
