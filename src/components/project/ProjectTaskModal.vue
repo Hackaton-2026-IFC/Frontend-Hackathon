@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 
 const props = defineProps({
+  task: { type: Object, default: null },
   saving: {
     type: Boolean,
     default: false,
@@ -15,13 +16,13 @@ const props = defineProps({
 const emit = defineEmits(['close', 'save'])
 
 const form = ref({
-  titulo: '',
-  descricao: '',
-  prioridade: 'neutra',
-  status: 'planejado',
-  data_limite: '',
-  clima_influencia: false,
-  localizacao: '',
+  titulo: props.task?.titulo ?? '',
+  descricao: props.task?.descricao ?? '',
+  prioridade: props.task?.prioridade ?? 'neutra',
+  status: props.task?.status ?? 'planejado',
+  data_limite: props.task?.data_limite ?? '',
+  clima_influencia: props.task?.clima_influencia ?? false,
+  localizacao: props.task?.localizacao ?? '',
 })
 
 const priorities = [
@@ -82,11 +83,11 @@ function close() {
         <div class="task-modal__header">
           <div>
             <h2 id="task-modal-title">
-              Nova tarefa
+              {{ task ? 'Editar tarefa' : 'Nova tarefa' }}
             </h2>
 
             <p>
-              Adicione uma atividade ao projeto.
+              {{ task ? 'Atualize os dados desta tarefa.' : 'Adicione uma atividade ao projeto.' }}
             </p>
           </div>
 
@@ -233,7 +234,7 @@ function close() {
               class="task-modal__submit"
               :disabled="saving || !form.titulo.trim()"
             >
-              {{ saving ? 'Criando...' : 'Criar tarefa' }}
+              {{ saving ? 'Salvando...' : task ? 'Salvar alterações' : 'Criar tarefa' }}
             </button>
           </div>
         </form>
