@@ -192,7 +192,7 @@ onMounted(loadProjects)
                 <span class="project-status__dot" aria-hidden="true"></span>
                 {{ statuses[project.status] || project.status }}
               </span>
-              <span class="project-card__arrow" aria-hidden="true">↗</span>
+
             </div>
 
             <div class="project-card__body">
@@ -223,10 +223,7 @@ onMounted(loadProjects)
               </p>
             </div>
 
-            <span class="project-card__footer">
-              Ver detalhes do projeto
-              <span aria-hidden="true">→</span>
-            </span>
+
           </RouterLink>
         </div>
 
