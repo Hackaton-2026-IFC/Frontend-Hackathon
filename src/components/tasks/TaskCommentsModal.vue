@@ -3,9 +3,11 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useTaskStore } from '@/stores/taskStore'
 import { taskError } from '@/api/taskApi'
+import { assigneePhotoUrl } from '@/utils/taskPresentation'
 
 const props = defineProps({
   task: { type: Object, required: true },
+  members: { type: Array, default: () => [] },
 })
 const emit = defineEmits(['close'])
 
@@ -17,6 +19,7 @@ const editingId = ref(null)
 const editingText = ref('')
 const deletingId = ref(null)
 const localError = ref('')
+const failedPhotos = ref({})
 
 const taskId = computed(() => String(props.task.id))
 const comments = computed(() => store.commentsByTask[taskId.value] || [])
@@ -25,6 +28,31 @@ const error = computed(() => localError.value || store.commentsErrors[taskId.val
 const nextPage = computed(() => store.commentsNextPageByTask[taskId.value])
 const total = computed(() => store.commentsCountByTask[taskId.value] ?? comments.value.length)
 const me = computed(() => auth.user?.id ?? auth.user?.user_id)
+const membersById = computed(() =>
+  Object.fromEntries(
+    props.members
+      .filter((member) => member?.usuario != null)
+      .map((member) => [String(member.usuario), member]),
+  ),
+)
+
+function authorPhoto(comment) {
+  if (comment.autor == null) return null
+
+  // Prioriza a foto atual do próprio usuário, que pode ter sido alterada
+  // depois de carregar os participantes do projeto.
+  if (me.value != null && String(comment.autor) === String(me.value)) {
+    const ownPhoto = auth.user?.profile_image?.url
+    if (typeof ownPhoto === 'string' && /^https?:\/\//i.test(ownPhoto)) return ownPhoto
+  }
+
+  return assigneePhotoUrl(membersById.value[String(comment.autor)])
+}
+
+function photoFailed(comment) {
+  const url = authorPhoto(comment)
+  if (url) failedPhotos.value[url] = true
+}
 
 onMounted(() => {
   dialog.value?.showModal()
@@ -135,7 +163,17 @@ async function deleteComment(comment) {
         <li v-for="comment in comments" :key="comment.id" class="task-comment">
           <div class="task-comment-top">
             <div class="task-comment-author">
-              <span class="task-comment-avatar" aria-hidden="true">{{ (comment.autor_nome || 'U').charAt(0).toUpperCase() }}</span>
+              <span class="task-comment-avatar" role="img" :aria-label="`Avatar de ${comment.autor_nome || 'Usuário'}`">
+                <img
+                  v-if="authorPhoto(comment) && !failedPhotos[authorPhoto(comment)]"
+                  :src="authorPhoto(comment)"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  @error="photoFailed(comment)"
+                />
+                <span v-else aria-hidden="true">{{ (comment.autor_nome || 'U').charAt(0).toLocaleUpperCase('pt-BR') }}</span>
+              </span>
               <div>
                 <strong>{{ comment.autor_nome || 'Usuário' }}</strong>
                 <time v-if="comment.criado_em" :datetime="comment.criado_em">{{ when(comment.criado_em) }}</time>

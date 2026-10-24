@@ -1317,10 +1317,18 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
+  overflow: hidden;
   background: #e5e5e5;
   color: #111;
   font-size: 13px;
   font-weight: 700;
+}
+.task-comment-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 100%;
+  object-fit: cover;
 }
 .task-comment-author > div { display: grid; gap: 3px; min-width: 0; }
 .task-comment-author strong { font-size: 12px; overflow-wrap: anywhere; }

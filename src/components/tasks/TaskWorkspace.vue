@@ -282,7 +282,12 @@ async function deleteTask() {
       </aside>
     </div>
 
-    <TaskCommentsModal v-if="commentsOpen" :task="task" @close="commentsOpen = false" />
+    <TaskCommentsModal
+      v-if="commentsOpen"
+      :task="task"
+      :members="project?.participantes || []"
+      @close="commentsOpen = false"
+    />
 
     <dialog ref="confirmDialog" class="task-confirm-dialog" @cancel="deletingError = ''">
       <h3>Excluir tarefa?</h3>
