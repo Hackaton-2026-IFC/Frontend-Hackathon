@@ -33,3 +33,13 @@ e `npm run build` no repositório local.
 - `/tasks` e `/projects/:projectId/tasks` continuam disponíveis, mas o item `Tarefas` foi removido da sidebar. O acesso permanece pelos projetos e seus cards.
 - A antiga `src/views/TaskView.vue` foi removida. O módulo `src/api/tasksApi.js` foi mantido porque a página de projetos ainda o utiliza.
 - Nada foi alterado no backend, e a DEV não é modificada por esta mudança.
+
+
+## FEAT-17 — experiência mobile first
+
+- Em celulares e tablets estreitos (abaixo de 980px), a página abre com **lista em cards** inspirados na seção de tarefas dos projetos: título, prioridade, status, prazo e progresso das etapas.
+- Ao tocar num card, a URL recebe `?task=ID` (ou preserva `/tasks/:id`) e a mesma página passa a mostrar apenas os detalhes completos e o roadmap, com botão **Voltar às tarefas**.
+- O link direto `/tasks/:id`, usado pelos cards dos projetos, abre o detalhe da tarefa certa mesmo no celular.
+- Em telas maiores, lista e detalhes aparecem lado a lado, mantendo a experiência anterior.
+- Os filtros, cards e formulários são responsivos desde telas pequenas; o conteúdo reserva espaço para a navegação inferior do app no celular.
+- Modal de criar/editar, prioridade dinâmica, checklist sequencial e fotos de responsáveis permanecem iguais. O backend não é alterado.

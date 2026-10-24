@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useTaskStore } from '@/stores/taskStore'
-import { TASK_STATUSES } from '@/api/taskApi'
+import { TASK_PRIORITIES, TASK_STATUSES } from '@/api/taskApi'
 import { automaticPriority, taskIsOverdue, taskDueDate } from '@/utils/taskPresentation'
 import TaskForm from '@/components/tasks/TaskForm.vue'
 import TaskWorkspace from '@/components/tasks/TaskWorkspace.vue'
@@ -61,6 +61,7 @@ const filteredTasks = computed(() => {
 })
 
 const requestedTaskId = computed(() => String(route.params.id || route.query.task || ''))
+const mobileDetailActive = computed(() => Boolean(requestedTaskId.value))
 
 const selectedTask = computed(() => {
   if (requestedTaskId.value) {
@@ -95,6 +96,18 @@ function selectTask(id) {
     return router.replace({ name: 'task-view', params: { id: String(id) }, query: route.query })
   }
   return router.replace({ query: { ...route.query, task: String(id) } })
+}
+
+function backToTaskList() {
+  if (route.name === 'task-view') {
+    const projectId = selectedTask.value?.projeto
+    return router.push(projectId
+      ? { name: 'project-tasks', params: { projectId } }
+      : { name: 'tasks' })
+  }
+  const query = { ...route.query }
+  delete query.task
+  return router.push({ query })
 }
 
 function closeForm() {
@@ -184,13 +197,19 @@ function removedTask() {
         </div>
 
         <template v-else>
-          <div class="task-summary" aria-label="Resumo das tarefas">
+          <div class="task-summary" :class="{ 'task-summary--mobile-hidden': mobileDetailActive }" aria-label="Resumo das tarefas">
             <div><strong>{{ availableTasks.length }}</strong><span>Total de tarefas</span></div>
             <div><strong>{{ overdueCount }}</strong><span>Em atraso</span></div>
             <div><strong>{{ completedCount }}</strong><span>Concluídas</span></div>
           </div>
 
-          <div class="task-dashboard">
+          <div v-if="mobileDetailActive" class="task-mobile-back">
+            <button type="button" class="task-mobile-back__button" @click="backToTaskList">
+              ← Voltar às tarefas
+            </button>
+          </div>
+
+          <div class="task-dashboard" :class="{ 'task-dashboard--mobile-detail': mobileDetailActive }">
             <aside class="task-browser" aria-label="Lista de tarefas">
               <div class="task-browser__heading">
                 <h2>Tarefas</h2>
@@ -229,23 +248,32 @@ function removedTask() {
                     type="button"
                     class="task-browser__item"
                     :class="{
-                      'task-browser__item--selected': selectedTask?.id === task.id,
+                      'task-browser__item--selected': requestedTaskId && selectedTask?.id === task.id,
                       'task-browser__item--late': taskIsOverdue(task),
                     }"
                     :aria-current="selectedTask?.id === task.id ? 'true' : undefined"
                     @click="selectTask(task.id)"
                   >
-                    <span class="task-browser__item-name">{{ task.titulo }}</span>
-                    <span class="task-browser__item-meta">
-                      <span v-if="taskIsOverdue(task)" class="task-browser__late">Atrasada</span>
-                      <span v-else>{{ TASK_STATUSES[task.status] || 'A fazer' }}</span>
+                    <span class="task-browser__item-heading">
+                      <span class="task-browser__item-name">{{ task.titulo }}</span>
                       <span
-                        v-if="automaticPriority(task)"
-                        class="task-priority__dot"
-                        :class="`task-priority__dot--${automaticPriority(task)}`"
-                        :title="`Prazo: ${taskDueDate(task)}`"
-                        aria-hidden="true"
-                      ></span>
+                        class="task-browser__priority"
+                        :class="{ 'task-browser__priority--high': ['alta', 'muito_alta'].includes(automaticPriority(task)) }"
+                      >
+                        {{ TASK_PRIORITIES[automaticPriority(task)] || 'Concluída' }}
+                      </span>
+                    </span>
+                    <span class="task-browser__item-meta">
+                      <span class="task-browser__status" :class="{ 'task-browser__status--late': taskIsOverdue(task),
+                          'task-browser__status--active': task.status === 'em_andamento' && !taskIsOverdue(task),
+                          'task-browser__status--done': task.status === 'concluido' }">
+                        <span class="task-browser__status-dot" aria-hidden="true"></span>
+                        {{ taskIsOverdue(task) ? 'Atrasada' : TASK_STATUSES[task.status] || 'A fazer' }}
+                      </span>
+                      <span class="task-browser__deadline">◷ {{ taskDueDate(task) }}</span>
+                      <span v-if="task.microtarefas?.length" class="task-browser__steps">
+                        ✓ {{ task.microtarefas.filter((step) => step.concluida).length }}/{{ task.microtarefas.length }} etapas
+                      </span>
                     </span>
                   </button>
                 </li>
