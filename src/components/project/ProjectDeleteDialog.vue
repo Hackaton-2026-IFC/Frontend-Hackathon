@@ -1,3 +1,4 @@
+import { projectToast } from '@/utils/projectToast'
 <script setup>
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 
@@ -79,13 +80,7 @@ function confirmar() {
       Esta ação é permanente e não poderá ser desfeita.
     </p>
 
-    <p
-      v-if="error"
-      class="delete-dialog__error"
-      role="alert"
-    >
-      {{ error }}
-    </p>
+    
 
     <footer class="delete-dialog__actions">
       <button
