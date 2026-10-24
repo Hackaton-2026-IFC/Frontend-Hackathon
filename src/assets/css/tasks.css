@@ -1619,3 +1619,28 @@
  .tasks-page--detail .workspace-section, .tasks-page--detail .roadmap { padding: 20px 16px; }
  .tasks-page--detail .task-workspace__aside { grid-template-columns: 1fr; gap: 10px; }
 }
+
+/* Comentários: ação no cabeçalho no desktop; atalho flutuante só no mobile. */
+.task-comments-desktop-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 14px;
+  border: 1px solid #dedede;
+  border-radius: 9px;
+  background: #fff;
+  color: #171717;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.task-comments-desktop-button:hover:not(:disabled) { background: #f5f5f5; }
+.task-comments-desktop-button .mdi { font-size: 17px; }
+@media (min-width: 701px) {
+  .task-workspace > .task-comments-floating { display: none !important; }
+}
+@media (max-width: 700px) {
+  .task-comments-desktop-button { display: none !important; }
+}
