@@ -496,13 +496,19 @@ onBeforeUnmount(() => {
 
 <template>
   <main class="notes-page">
-    <section class="notes-hero">
-      <div>
-        <span class="eyebrow">{{ isProjectMural ? 'PROJETOS / MURAL COMPARTILHADO' : 'IDEIAS / NOTAS' }}</span>
-        <h1>{{ isProjectMural ? (projectInfo?.nome ? 'Mural — ' + projectInfo.nome : 'Mural do projeto') : 'Seu mural.' }}</h1>
-        <p>{{ isProjectMural ? 'Compartilhe ideias, fotos e links. Suas fixações e posições dos cards são só suas.' : 'Suas notas pessoais e ideias publicadas por você em projetos.' }}</p>
-        <RouterLink v-if="isProjectMural" :to="{ name: 'project-details', params: { id: projectId } }" class="back-to-project">← Voltar ao projeto</RouterLink>
+    <RouterLink v-if="isProjectMural" :to="{ name: 'project-details', params: { id: projectId } }" class="mural-back-link">
+      <span class="mdi mdi-arrow-left" aria-hidden="true"></span> Voltar ao projeto
+    </RouterLink>
+
+    <section class="notes-hero" :class="{ 'notes-hero-project': isProjectMural }">
+      <div class="notes-hero-copy">
+        <span class="eyebrow">{{ isProjectMural ? 'MOMENTUM / IDEIAS COMPARTILHADAS' : 'IDEIAS / NOTAS' }}</span>
+        <h1>{{ isProjectMural ? 'Mural de ideias' : 'Seu mural.' }}</h1>
+        <p>{{ isProjectMural ? (projectInfo?.nome ? 'Projeto: ' + projectInfo.nome + '. Compartilhe referências e ideias com a equipe.' : 'Compartilhe referências e ideias com a equipe.') : 'Suas notas pessoais e ideias publicadas por você em projetos.' }}</p>
       </div>
+      <button v-if="isProjectMural && projectInfo && !loading" type="button" class="mural-hero-action" @click="openComposer">
+        <span class="mdi mdi-plus" aria-hidden="true"></span> Nova ideia
+      </button>
     </section>
 
     <button
@@ -868,5 +874,39 @@ onBeforeUnmount(() => {
 }
 @media(prefers-reduced-motion:reduce) {
   .note-card { transition: none; }
+}
+
+/* Mural alinhado ao visual limpo das páginas de projetos e perfil. */
+.mural-back-link{display:inline-flex;align-items:center;gap:7px;margin:0 0 18px;color:#292929;text-decoration:none;font-size:12px;font-weight:700}
+.mural-back-link:hover{text-decoration:underline}
+.notes-hero-project{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:28px 32px;margin:0 0 24px;border:1px solid #e7e7e7;border-radius:16px;background:#171717;color:#fff;position:relative;overflow:hidden}
+.notes-hero-project::after{content:"";position:absolute;right:8%;top:-110px;width:310px;height:310px;border:1px solid #ffffff12;border-radius:50%;pointer-events:none}
+.notes-hero-project .notes-hero-copy{position:relative;z-index:1;min-width:0}
+.notes-hero-project .eyebrow{color:#aaa;letter-spacing:1.6px}
+.notes-hero-project h1{margin:12px 0 8px;font-size:clamp(27px,3.2vw,40px);font-weight:750;letter-spacing:-1.3px;line-height:1.12}
+.notes-hero-project p{color:#bdbdbd;font-size:13px;line-height:1.6}
+.mural-hero-action{position:relative;z-index:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;flex:none;min-height:42px;padding:0 18px;border:0;border-radius:11px;background:#fff;color:#171717;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+.mural-hero-action:hover{background:#ededed}
+.notes-hero-project~.notes-tools{margin:0 0 18px}
+.notes-tools label span{font-size:12px;font-weight:700}
+.notes-tools input{min-height:44px;border-color:#e2e2e2;background:#fff}
+.notes-tools input:focus{outline:2px solid #171717;outline-offset:1px}
+.notes-grid{column-gap:16px}
+.note-card{border:1px solid rgb(0 0 0 / 10%);border-radius:14px;padding:16px;box-shadow:0 3px 12px rgb(0 0 0 / 5%)}
+.note-card-top .project-chip{border:0;background:rgb(255 255 255 / 40%);font-weight:700}
+.note-card .note-image{display:block;max-width:100%;height:auto;border-radius:10px}
+.note-card .note-actions{display:flex;flex-wrap:wrap;gap:8px;padding-top:12px;margin-top:12px;border-top:1px solid rgb(0 0 0 / 12%)}
+.note-card .note-actions button{border:1px solid rgb(0 0 0 / 14%);border-radius:8px;background:rgb(255 255 255 / 45%);padding:7px 11px;color:#171717;font:inherit;font-size:11px;font-weight:700;text-decoration:none;cursor:pointer}
+.note-card .note-actions button:hover{background:#fff}
+.note-card .note-actions button:last-child:hover{background:#fee2e2;color:#b91c1c}
+@media(min-width:701px){.notes-hero-project~.mural-fab{display:none}}
+@media(max-width:700px){
+ .notes-page{padding:20px 16px 100px}
+ .notes-hero-project{padding:23px 20px;align-items:flex-start;flex-direction:column;gap:17px;border-radius:14px}
+ .notes-hero-project h1{font-size:29px}
+ .mural-hero-action{width:100%}
+ .notes-grid{column-gap:0}
+ .note-card{padding:15px}
+ .mural-fab{display:none}
 }
 </style>
