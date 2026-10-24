@@ -124,30 +124,31 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function saveJwtSession({ access, refresh }) {
+    if (!access || !refresh) {
+      throw new Error('O backend não retornou os tokens de autenticação.')
+    }
+    accessToken.value = access
+    refreshToken.value = refresh
+    localStorage.setItem('access_token', access)
+    localStorage.setItem('refresh_token', refresh)
+    setUserFromToken(access)
+    await loadCurrentUser()
+    await router.push('/home')
+  }
+
   async function login(credentials) {
     errorMessage.value = ''
     templateStore.startLoading()
 
     try {
       const response = await authApi.login(credentials)
-      const { access, refresh } = response.data
-
-      accessToken.value = access
-      refreshToken.value = refresh
-
-      localStorage.setItem('access_token', access)
-      localStorage.setItem('refresh_token', refresh)
-
-      setUserFromToken(access)
-      await loadCurrentUser()
-      await router.push('/home')
-
+      await saveJwtSession(response.data)
       return true
     } catch (error) {
       console.error('Login failed:', error)
       const message = getErrorMessage(
-        error,
-        'Não foi possível realizar o login. Verifique seus dados e tente novamente.',
+        error, 'Não foi possível realizar o login. Verifique seus dados e tente novamente.',
       )
       if (accessToken.value) logout()
       errorMessage.value = message
@@ -155,6 +156,48 @@ export const useAuthStore = defineStore('auth', () => {
     } finally {
       templateStore.stopLoading()
     }
+  }
+
+  async function loginWithGoogle(credential) {
+    errorMessage.value = ''
+    templateStore.startLoading()
+
+    try {
+      if (typeof credential !== 'string' || !credential.trim()) {
+        throw new Error('O Google não retornou uma credencial válida.')
+      }
+      const response = await authApi.googleLogin(credential)
+      await saveJwtSession(response.data)
+      return true
+    } catch (error) {
+      console.error('Google login failed:', error?.response?.status || error.message)
+      const message = getErrorMessage(
+        error, 'Não foi possível acessar sua conta com Google.',
+      )
+      if (accessToken.value) logout()
+      errorMessage.value = message
+      return false
+    } finally {
+      templateStore.stopLoading()
+    }
+  }
+
+  async function linkGoogle(credential) {
+    errorMessage.value = ''
+    try {
+      if (!credential || !isAuthenticated.value) {
+        throw new Error('Entre com sua senha antes de vincular a conta Google.')
+      }
+      const { data } = await authApi.googleLink(credential)
+      return data
+    } catch (error) {
+      errorMessage.value = getErrorMessage(error, 'Não foi possível vincular sua conta Google.')
+      throw error
+    }
+  }
+
+  async function googleLinkStatus() {
+    return (await authApi.googleLinkStatus()).data.google_vinculado === true
   }
 
   async function refreshAccessToken() {
@@ -271,6 +314,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function logout() {
+    window.google?.accounts?.id?.disableAutoSelect?.()
     errorMessage.value = ''
     accessToken.value = null
     refreshToken.value = null
@@ -290,6 +334,9 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     errorMessage,
     login,
+    loginWithGoogle,
+    linkGoogle,
+    googleLinkStatus,
     logout,
     loadCurrentUser,
     refreshAccessToken,

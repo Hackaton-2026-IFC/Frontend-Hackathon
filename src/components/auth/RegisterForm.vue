@@ -3,13 +3,14 @@
 import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { computed, reactive, ref } from 'vue'
 import AuthInput from '@/components/shared/AuthInput.vue'
+import GoogleIdentityButton from '@/components/auth/GoogleIdentityButton.vue'
 
 const props = defineProps({
   loading: { type: Boolean, default: false },
   error: { type: String, default: '' },
 })
 
-const emit = defineEmits(['submit'])
+const emit = defineEmits(['submit', 'google'])
 
 const form = reactive({
   name: '',
@@ -90,6 +91,8 @@ function onSubmit() {
         {{ loading ? 'Cadastrando...' : 'Cadastrar' }}
       </button>
     </form>
+    <div class="google-auth-divider"><span>ou continue com</span></div>
+    <GoogleIdentityButton :busy="loading" :text="'continue_with'" @credential="emit('google', $event)" />
   </section>
 </template>
 
@@ -171,4 +174,5 @@ function onSubmit() {
     gap: 12px;
   }
 }
+.google-auth-divider{display:flex;align-items:center;gap:12px;margin:20px 0 12px;color:#777;font-size:12px;white-space:nowrap}.google-auth-divider:before,.google-auth-divider:after{content:'';flex:1;height:1px;background:#dedede}
 </style>

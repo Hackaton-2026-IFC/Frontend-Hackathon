@@ -17,6 +17,18 @@ const message = computed(() =>
     : '',
 )
 
+async function handleGoogle(credential) {
+  if (loading.value) return
+  loading.value = true
+  error.value = ''
+  try {
+    const ok = await auth.loginWithGoogle(credential)
+    if (!ok) error.value = auth.errorMessage
+  } catch (e) {
+    error.value = e.message || 'Falha no login com Google.'
+  } finally { loading.value = false }
+}
+
 async function handleLogin(credentials) {
   loading.value = true
   error.value = ''
@@ -39,6 +51,7 @@ async function handleLogin(credentials) {
       :error="error"
       :message="message"
       @submit="handleLogin"
+      @google="handleGoogle"
     />
   </div>
 </template>

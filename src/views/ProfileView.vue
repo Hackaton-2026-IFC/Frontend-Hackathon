@@ -3,6 +3,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import ProfileEditModal from '@/components/ui/ProfileEditModal.vue'
+import GoogleIdentityButton from '@/components/auth/GoogleIdentityButton.vue'
 import { useToastStore } from '@/stores/toastStore'
 
 const authStore = useAuthStore()
@@ -10,6 +11,25 @@ const toast = useToastStore()
 
 const modalAberto = ref(false)
 const salvando = ref(false)
+const googleLinked = ref(null)
+const googleLinkBusy = ref(false)
+const googleLinkMessage = ref('')
+const googleLinkError = ref('')
+
+async function handleGoogleLink(credential) {
+  if (googleLinkBusy.value || googleLinked.value) return
+  googleLinkBusy.value = true
+  googleLinkMessage.value = ''
+  googleLinkError.value = ''
+  try {
+    await authStore.linkGoogle(credential)
+    googleLinked.value = true
+    googleLinkMessage.value = 'Conta Google vinculada! Para usar o Google Agenda, saia e faça login novamente com Google.'
+  } catch (err) {
+    googleLinkError.value = authStore.errorMessage || err?.message || 'Não foi possível vincular a conta Google.'
+  } finally { googleLinkBusy.value = false }
+}
+
 
 
 const userName = computed(() =>
@@ -125,8 +145,9 @@ async function confirmarMudancas({
 onMounted(async () => {
   try {
     await authStore.loadCurrentUser()
+    googleLinked.value = await authStore.googleLinkStatus()
   } catch (error) {
-    console.error('Erro ao carregar perfil:', error)
+    console.error('Erro ao carregar perfil ou vínculo Google:', error)
   }
 })
 
@@ -217,6 +238,25 @@ async function handleLogout() {
 
     <div class="profile-divider"></div>
 
+    <section class="profile-google-link" aria-label="Conta Google">
+      <div>
+        <span class="profile-section-label">INTEGRAÇÕES</span>
+        <h2>Conta Google</h2>
+        <p v-if="googleLinked === true">Sua conta já está vinculada ao Google.</p>
+        <p v-else-if="googleLinked === false">Vincule seu Google a esta conta sem perder seus projetos e tarefas. A conta Google precisa ter o mesmo e-mail do seu cadastro.</p>
+        <p v-else>Não foi possível confirmar a situação do vínculo Google. Recarregue a página para tentar novamente.</p>
+      </div>
+      <GoogleIdentityButton
+        v-if="googleLinked === false"
+        :busy="googleLinkBusy"
+        text="continue_with"
+        @credential="handleGoogleLink"
+      />
+      <p v-if="googleLinkMessage" role="status">{{ googleLinkMessage }}</p>
+      <p v-if="googleLinkError" class="profile-google-link__error" role="alert">{{ googleLinkError }}</p>
+    </section>
+    <div class="profile-divider"></div>
+
     <section class="profile-account">
       <div class="profile-account-info">
         <span class="profile-section-label">ACESSO</span>
@@ -251,3 +291,6 @@ async function handleLogout() {
 </template>
 
 <style src="@/assets/css/profile.css"></style>
+<style scoped>
+.profile-google-link{display:grid;gap:16px;max-width:600px;padding:10px 0 26px}.profile-google-link h2{font-size:22px;margin:10px 0}.profile-google-link p{font-size:13px;color:#666;line-height:1.6}.profile-google-link__error{color:#b42318!important}
+</style>
