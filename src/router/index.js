@@ -11,9 +11,23 @@ import NotFoundView from '@/views/NotFoundView.vue'
 import ProjectsView from '@/views/ProjectsView.vue'
 import ProjectView from '@/views/ProjectView.vue'
 import TaskView from '@/views/TaskView.vue'
+import DetalhesProjetoView from '@/views/DetalhesProjetoView.vue'
+import NotesView from '@/views/NotesView.vue'
 
 const routes = [
   // AUTENTICAÇÃO
+  {
+    path: '/tasks',
+    name: 'tasks',
+    component: () => import('@/views/TasksView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/projects/:projectId/tasks',
+    name: 'project-tasks',
+    component: () => import('@/views/TasksView.vue'),
+    meta: { requiresAuth: true },
+  },
   {
     path: '/',
     component: AuthLayout,
@@ -80,6 +94,12 @@ const routes = [
   },
 
   // CONFIGURAÇÕES
+  {
+    path: '/notes',
+    name: 'notes',
+    component: NotesView,
+    meta: { requiresAuth: true },
+  },
   {
     path: '/settings',
     name: 'settings',

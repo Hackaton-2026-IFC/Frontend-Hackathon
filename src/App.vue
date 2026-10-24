@@ -1,3 +1,4 @@
+
 <script setup>
 import { RouterView, useRoute } from 'vue-router'
 
@@ -15,6 +16,7 @@ const templateStore = useTemplateStore()
 <template>
   <div class="app-shell">
     <RouterView v-if="route.meta.hideHeader" />
+
     <template v-else>
       <appHeaderComponent />
 
@@ -55,11 +57,13 @@ const templateStore = useTemplateStore()
 </style>
 
 <style scoped>
-/* =========================
+/* ========================================
    ESTRUTURA PRINCIPAL
-========================= */
+======================================== */
 
 .app-shell {
+  --header-height: 76px;
+
   min-height: 100vh;
   min-height: 100dvh;
 }
@@ -67,57 +71,71 @@ const templateStore = useTemplateStore()
 .app-layout {
   display: flex;
   align-items: stretch;
-  min-height: calc(100vh - 76px);
-  min-height: calc(100dvh - 76px);
+
+  min-height: calc(100vh - var(--header-height));
+  min-height: calc(100dvh - var(--header-height));
+
+  padding-top: var(--header-height);
 }
 
 .page-content {
   flex: 1;
   min-width: 0;
-  min-height: calc(100vh - 76px);
-  min-height: calc(100dvh - 76px);
+
+  min-height: calc(100vh - var(--header-height));
+  min-height: calc(100dvh - var(--header-height));
+
   margin-left: 250px;
 }
 
-/* =========================
+/* ========================================
    MENSAGENS DE ERRO
-========================= */
+======================================== */
 
 .app-error {
   position: fixed;
   right: 16px;
   bottom: 16px;
   z-index: 1100;
+
   width: max-content;
   max-width: calc(100vw - 32px);
+
   padding: 12px 16px;
+
   border: 1px solid #e4a4a4;
   border-radius: 8px;
+
   background: #fff0f0;
   color: #8b1e1e;
+
   box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
   overflow-wrap: anywhere;
 }
 
-/* =========================
+/* ========================================
    CARREGAMENTO
-========================= */
+======================================== */
 
 .loading-overlay {
   position: fixed;
   inset: 0;
   z-index: 2000;
+
   display: grid;
   place-items: center;
+
   background: rgb(80 80 80 / 45%);
 }
 
 .loading-spinner {
   width: 3rem;
   height: 3rem;
+
   border: 0.35rem solid rgb(255 255 255 / 60%);
   border-top-color: #555;
   border-radius: 50%;
+
   animation: loading-spin 0.8s linear infinite;
 }
 
@@ -127,19 +145,16 @@ const templateStore = useTemplateStore()
   }
 }
 
-/* =========================
+/* ========================================
    RESPONSIVIDADE
-========================= */
+======================================== */
 
 @media (max-width: 700px) {
-  .app-layout {
-    min-height: calc(100vh - 66px);
-    min-height: calc(100dvh - 66px);
+  .app-shell {
+    --header-height: 66px;
   }
 
   .page-content {
-    min-height: calc(100vh - 66px);
-    min-height: calc(100dvh - 66px);
     margin-left: 0;
     padding-bottom: 76px;
   }
@@ -148,8 +163,15 @@ const templateStore = useTemplateStore()
     right: 12px;
     bottom: 76px;
     left: 12px;
+
     width: auto;
     max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner {
+    animation: none;
   }
 }
 </style>

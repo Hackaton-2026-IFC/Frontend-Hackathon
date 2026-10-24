@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { RouterLink } from 'vue-router'
 import { getProjectIcon } from '@/utils/projectIcons'
 
 const props = defineProps({
@@ -70,59 +71,53 @@ const projectDeadline = computed(() => {
 
 <template>
   <header class="momentum-project-header">
-
-    <!-- INFORMAÇÕES DO PROJETO -->
     <div class="momentum-project-header__main">
-
-      <!-- ÍCONE -->
       <div
         class="momentum-project-header__icon"
         :style="{ backgroundColor: projectColor }"
         aria-hidden="true"
       >
         <svg viewBox="0 0 24 24">
-          <path
-            :d="projectIcon"
-            fill="currentColor"
-          />
+          <path :d="projectIcon" fill="currentColor" />
         </svg>
       </div>
 
-      <!-- CONTEÚDO -->
       <div class="momentum-project-header__content">
+        <h1 class="momentum-project-header__title">
+          {{ projectName }}
+        </h1>
 
-        <!-- NOME -->
-        <div class="momentum-project-header__title-row">
-          <h1 class="momentum-project-header__title">
-            {{ projectName }}
-          </h1>
-        </div>
-
-        <!-- DESCRIÇÃO -->
         <p class="momentum-project-header__description">
           {{ projectDescription }}
         </p>
 
-        <!-- PRAZO + STATUS -->
         <div class="momentum-project-header__metadata">
-
           <span class="momentum-project-header__deadline">
             <strong>Prazo:</strong>
             {{ projectDeadline }}
           </span>
 
           <span class="momentum-project-header__status">
-            <span class="momentum-project-header__status-dot"></span>
+            <span
+              class="momentum-project-header__status-dot"
+              aria-hidden="true"
+            ></span>
             {{ projectStatus }}
           </span>
-
         </div>
-
       </div>
     </div>
 
-    <!-- AÇÕES -->
     <div class="momentum-project-header__actions">
+      <RouterLink
+        class="momentum-project-header__button board-link"
+        :to="{
+          name: 'project-tasks',
+          params: { projectId: project.id },
+        }"
+      >
+        Criar ou editar tarefas ↗
+      </RouterLink>
 
       <button
         type="button"
@@ -139,152 +134,88 @@ const projectDeadline = computed(() => {
       >
         Excluir projeto
       </button>
-
     </div>
   </header>
 </template>
 
 <style scoped>
-/* ==========================================
-   CABEÇALHO
-========================================== */
-
 .momentum-project-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-
   gap: 24px;
-
   width: 100%;
   min-width: 0;
   padding: 28px;
-
   box-sizing: border-box;
-
   border: 1px solid #dedede;
   border-radius: 18px;
-
-  background: #ffffff;
-  color: #111111;
+  background: #fff;
+  color: #111;
 }
-
-/* ==========================================
-   INFORMAÇÕES
-========================================== */
 
 .momentum-project-header__main {
   display: flex;
   align-items: center;
-
   flex: 1 1 420px;
   min-width: 0;
-
   gap: 20px;
 }
-
-/* ==========================================
-   ÍCONE
-========================================== */
 
 .momentum-project-header__icon {
   display: flex;
   align-items: center;
   justify-content: center;
-
   flex: 0 0 64px;
-
   width: 64px;
   height: 64px;
-
   border-radius: 16px;
-
-  color: #ffffff;
+  color: #fff;
 }
 
 .momentum-project-header__icon svg {
   display: block;
-
   width: 34px;
   height: 34px;
-
   flex-shrink: 0;
 }
-
-/* ==========================================
-   CONTEÚDO
-========================================== */
 
 .momentum-project-header__content {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-
   flex: 1;
   min-width: 0;
 }
 
-/* ==========================================
-   NOME
-========================================== */
-
-.momentum-project-header__title-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-
-  gap: 12px;
-
-  width: 100%;
-  min-width: 0;
-}
-
 .momentum-project-header__title {
-  width: auto;
   max-width: 100%;
-
   margin: 0;
-
-  color: #111111;
-
+  color: #111;
   font-size: clamp(24px, 3vw, 36px);
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: -1px;
-
   overflow-wrap: anywhere;
 }
-
-/* ==========================================
-   DESCRIÇÃO
-========================================== */
 
 .momentum-project-header__description {
   width: 100%;
   margin: 10px 0 0;
-
-  color: #666666;
-
+  color: #666;
   font-size: 14px;
   font-weight: 400;
   line-height: 1.7;
-
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-
-/* ==========================================
-   PRAZO + STATUS
-========================================== */
 
 .momentum-project-header__metadata {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-
   gap: 12px;
-
   width: 100%;
   margin-top: 16px;
 }
@@ -293,70 +224,48 @@ const projectDeadline = computed(() => {
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-
   gap: 6px;
-
-  color: #666666;
-
+  color: #666;
   font-size: 12px;
   line-height: 1.5;
 }
 
 .momentum-project-header__deadline strong {
-  color: #111111;
+  color: #111;
   font-weight: 600;
 }
-
-/* ==========================================
-   STATUS
-========================================== */
 
 .momentum-project-header__status {
   display: inline-flex;
   align-items: center;
-
   gap: 8px;
-
   flex-shrink: 0;
   width: fit-content;
-
   padding: 6px 12px;
-
   border: 1px solid #e5e5e5;
   border-radius: 999px;
-
   background: #f8f8f8;
-  color: #444444;
-
+  color: #444;
   font-size: 11px;
   font-weight: 600;
   line-height: 1.4;
-
   white-space: nowrap;
 }
 
 .momentum-project-header__status-dot {
   width: 7px;
   height: 7px;
-
   flex-shrink: 0;
-
   border-radius: 50%;
-  background: #111111;
+  background: #111;
 }
-
-/* ==========================================
-   BOTÕES
-========================================== */
 
 .momentum-project-header__actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
-
   flex: 0 1 auto;
-
   gap: 10px;
 }
 
@@ -364,56 +273,47 @@ const projectDeadline = computed(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   min-height: 44px;
   padding: 11px 18px;
-
   box-sizing: border-box;
-
-  border: 1px solid #111111;
+  border: 1px solid #111;
   border-radius: 999px;
-
   font-family: inherit;
   font-size: 12px;
   font-weight: 600;
   line-height: 1.4;
-
-  white-space: nowrap;
-
+  text-align: center;
+  text-decoration: none;
   cursor: pointer;
-
   transition:
     background 0.2s ease,
-    color 0.2s ease,
-    opacity 0.2s ease;
+    color 0.2s ease;
 }
 
 .momentum-project-header__button--edit {
-  background: #111111;
-  color: #ffffff;
+  background: #111;
+  color: #fff;
 }
 
 .momentum-project-header__button--edit:hover {
-  background: #333333;
+  background: #333;
 }
 
-.momentum-project-header__button--delete {
-  background: #ffffff;
-  color: #111111;
+.momentum-project-header__button--delete,
+.board-link {
+  background: #fff;
+  color: #111;
 }
 
-.momentum-project-header__button--delete:hover {
+.momentum-project-header__button--delete:hover,
+.board-link:hover {
   background: #f5f5f5;
 }
 
 .momentum-project-header__button:focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: 3px;
+  outline: 2px solid #000;
+  outline-offset: 4px;
 }
-
-/* ==========================================
-   TABLET
-========================================== */
 
 @media (max-width: 900px) {
   .momentum-project-header {
@@ -430,15 +330,10 @@ const projectDeadline = computed(() => {
   }
 }
 
-/* ==========================================
-   MOBILE
-========================================== */
-
 @media (max-width: 600px) {
   .momentum-project-header {
     gap: 20px;
     padding: 20px;
-
     border-radius: 14px;
   }
 
@@ -448,10 +343,8 @@ const projectDeadline = computed(() => {
 
   .momentum-project-header__icon {
     flex-basis: 48px;
-
     width: 48px;
     height: 48px;
-
     border-radius: 12px;
   }
 
@@ -475,26 +368,24 @@ const projectDeadline = computed(() => {
 
   .momentum-project-header__actions {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
   }
 
   .momentum-project-header__button {
     width: 100%;
     padding: 10px 12px;
-
     font-size: 11px;
+  }
+
+  .board-link {
+    grid-column: 1 / -1;
   }
 }
 
-/* ==========================================
-   CELULARES PEQUENOS
-========================================== */
-
 @media (max-width: 380px) {
   .momentum-project-header__actions {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .momentum-project-header__main {
@@ -503,7 +394,7 @@ const projectDeadline = computed(() => {
   }
 
   .momentum-project-header__icon {
-    flex-basis: 48px;
+    flex-basis: auto;
   }
 }
 </style>
