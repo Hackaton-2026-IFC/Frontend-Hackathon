@@ -1,0 +1,163 @@
+/*
+ * Momentum | Identidade visual das páginas internas
+ * Referência: src/assets/css/profile.css
+ * Escopo intencional: páginas autenticadas; login e cadastro ficam intactos.
+ */
+.app-shell {
+  --momentum-ink: #171717;
+  --momentum-muted: #737373;
+  --momentum-line: #e5e5e5;
+  --momentum-surface: #fff;
+  --momentum-subtle: #fafafa;
+  --momentum-radius: 12px;
+  --momentum-content: 1440px;
+}
+
+.app-shell :is(.home-page, .projects-page, .workspace, .tasks-page, .task-page, .notifications-page, .notes-page) {
+  width: 100%;
+  max-width: var(--momentum-content);
+  min-width: 0;
+  margin-inline: auto;
+  padding: 36px clamp(20px, 4vw, 56px) 48px;
+  color: var(--momentum-ink);
+}
+
+.app-shell :is(.projects-container, .tasks-container, .task-page__container, .notifications-container) {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  margin-inline: auto;
+}
+
+.app-shell :is(.home-page, .projects-page, .workspace, .tasks-page, .task-page, .notifications-page, .notes-page)
+  :is(h1, h2, h3) {
+  color: var(--momentum-ink);
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+
+.app-shell :is(.page-heading, .tasks-page-heading, .notifications-header, .task-page__header, .section-heading, .home-section-heading) {
+  min-width: 0;
+  gap: 16px;
+}
+
+.app-shell :is(.eyebrow, .task-eyebrow, .notifications-eyebrow, .task-page__eyebrow, .home-eyebrow) {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.app-shell :is(.home-panel, .project-card, .panel, .task-page__panel, .notifications-section, .invite-card, .note-card, .task-browser, .task-dashboard__empty) {
+  min-width: 0;
+  border: 1px solid var(--momentum-line);
+  border-radius: var(--momentum-radius);
+  box-shadow: none;
+}
+
+.app-shell :is(.home-panel, .project-card, .panel, .task-page__panel, .notifications-section, .task-browser) {
+  background: var(--momentum-surface);
+}
+
+.app-shell :is(.project-grid, .home-focus-grid, .home-resources-grid, .notes-grid, .task-dashboard, .task-page__summary) > * {
+  min-width: 0;
+}
+
+.app-shell :is(.button, .task-button, .task-page__edit-button, .refresh-button, .accept-button, .reject-button, .home-primary-button, .home-secondary-link, .projects-link) {
+  min-height: 42px;
+  max-width: 100%;
+  border-radius: 9px;
+  font-weight: 600;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.app-shell :is(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid #717171;
+  outline-offset: 3px;
+}
+
+.app-shell :is(.search-field, .status-field, .project-tasks__search, .task-browser__filters, .notes-tools) {
+  min-width: 0;
+}
+
+.app-shell :is(.projects-page, .workspace, .tasks-page, .task-page, .notifications-page, .notes-page)
+  :is(input, select, textarea) {
+  max-width: 100%;
+  font: inherit;
+}
+
+.app-shell :is(.home-page, .projects-page, .workspace, .tasks-page, .task-page, .notifications-page, .notes-page)
+  :is(p, span, a, button, label) {
+  overflow-wrap: break-word;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app-shell :is(.project-card, .invite-card, .note-card):hover {
+    border-color: #c9c9c9;
+  }
+}
+
+@media (max-width: 900px) {
+  .app-shell :is(.home-page, .projects-page, .workspace, .tasks-page, .task-page, .notifications-page, .notes-page) {
+    padding: 28px 24px 40px;
+  }
+
+  .app-shell :is(.project-grid, .home-focus-grid, .home-resources-grid, .notes-grid) {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .app-shell :is(.home-page, .projects-page, .workspace, .tasks-page, .task-page, .notifications-page, .notes-page) {
+    padding: 20px 16px calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .app-shell :is(.page-heading, .tasks-page-heading, .notifications-header, .task-page__header) {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .app-shell :is(.page-heading, .tasks-page-heading, .notifications-header, .task-page__header) > * {
+    min-width: 0;
+  }
+
+  .app-shell :is(.project-grid, .home-focus-grid, .home-resources-grid, .notes-grid) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-shell :is(.home-panel, .project-card, .panel, .task-page__panel, .notifications-section, .invite-card, .note-card) {
+    max-width: 100%;
+  }
+
+  .app-shell :is(.project-filters, .project-tasks__filters, .notes-tools, .invite-actions) {
+    flex-wrap: wrap;
+  }
+
+  .app-shell :is(.search-field, .status-field) {
+    flex: 1 1 100%;
+  }
+
+  .app-shell :is(.button, .task-button, .task-page__edit-button, .refresh-button, .accept-button, .reject-button) {
+    min-height: 44px;
+  }
+
+  .app-shell :is(.tasks-page, .task-page, .workspace, .notes-page) {
+    overflow-x: clip;
+  }
+}
+
+@media (max-width: 380px) {
+  .app-shell :is(.home-page, .projects-page, .workspace, .tasks-page, .task-page, .notifications-page, .notes-page) {
+    padding-inline: 12px;
+  }
+
+  .app-shell :is(.invite-actions, .project-tasks__filters) > button {
+    flex: 1 1 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell :is(.button, .task-button, .task-page__edit-button, .refresh-button, .accept-button, .reject-button, .project-card, .invite-card, .note-card) {
+    transition: none;
+  }
+}
