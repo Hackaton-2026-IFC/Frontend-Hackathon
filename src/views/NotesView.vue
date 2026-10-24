@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onBeforeUnmount, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import notesApi from '@/api/notesApi'
 import projectsApi from '@/api/projectsApi'
 import { useAuthStore } from '@/stores/authStore'
@@ -24,6 +24,11 @@ const error = ref('')
 const search = ref('')
 const filterProject = ref('')
 const editingId = ref(null)
+const composerOpen = ref(false)
+const titleField = ref(null)
+const modalDialog = ref(null)
+let previousFocus = null
+let previousBodyOverflow = ''
 const photoFile = ref(null)
 const localPhotoUrl = ref('')
 const savedPhotoUrl = ref('')
@@ -102,6 +107,62 @@ function resetForm() {
   form.etiquetas = ''
   form.fixada = false
 }
+
+
+function showComposer() {
+  if (loading.value || (isProjectMural.value && !projectInfo.value)) return
+  previousFocus = document.activeElement
+  error.value = ''
+  composerOpen.value = true
+  nextTick(() => titleField.value?.focus())
+}
+
+function openComposer() {
+  resetForm()
+  showComposer()
+}
+
+function closeComposer(force = false) {
+  if (saving.value && !force) return
+  composerOpen.value = false
+  resetForm()
+  error.value = ''
+  nextTick(() => {
+    previousFocus?.focus?.()
+    previousFocus = null
+  })
+}
+
+function handleDialogKeydown(event) {
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    closeComposer()
+    return
+  }
+  if (event.key !== 'Tab') return
+  const focusable = [...(modalDialog.value?.querySelectorAll(
+    'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), a[href]',
+  ) || [])]
+  if (!focusable.length) return
+  const first = focusable[0]
+  const last = focusable[focusable.length - 1]
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault()
+    last.focus()
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault()
+    first.focus()
+  }
+}
+
+watch(composerOpen, (open) => {
+  if (open) {
+    previousBodyOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = previousBodyOverflow
+  }
+})
 
 function apiError(err, fallback) {
   if (err?.response?.status === 404) {
@@ -203,7 +264,7 @@ async function save() {
     if (index >= 0) notes.value[index] = saved
     else notes.value.unshift(saved)
     notes.value = [...notes.value].sort((a, b) => Number(b.fixada) - Number(a.fixada))
-    resetForm()
+    closeComposer(true)
   } catch (err) {
     error.value = apiError(err, 'Não foi possível salvar a nota.')
   } finally {
@@ -224,7 +285,7 @@ function edit(note) {
   form.projeto = note.projeto ? String(note.projeto) : ''
   form.etiquetas = (note.etiquetas || []).join(', ')
   form.fixada = Boolean(note.fixada)
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+  showComposer()
 }
 
 async function togglePin(note) {
@@ -267,13 +328,17 @@ function projectName(id) {
 
 onMounted(load)
 watch(projectId, () => {
+  if (composerOpen.value) closeComposer(true)
   resetForm()
   filterProject.value = ''
   notes.value = []
   projectInfo.value = null
   load()
 })
-onBeforeUnmount(clearTemporaryPhoto)
+onBeforeUnmount(() => {
+  clearTemporaryPhoto()
+  if (composerOpen.value) document.body.style.overflow = previousBodyOverflow
+})
 </script>
 
 <template>
@@ -287,9 +352,46 @@ onBeforeUnmount(clearTemporaryPhoto)
       </div>
     </section>
 
-    <section v-if="!isProjectMural || projectInfo" class="composer" aria-label="Criar ou editar nota">
+    <button
+      v-if="isProjectMural && projectInfo && !loading"
+      type="button"
+      class="mural-fab"
+      aria-label="Adicionar ideia ao mural"
+      title="Adicionar ideia"
+      @click="openComposer"
+    >
+      <span class="mdi mdi-plus" aria-hidden="true"></span>
+    </button>
+
+    <Teleport to="body">
+      <div v-if="composerOpen" class="composer-backdrop" @click.self="closeComposer()" @keydown="handleDialogKeydown">
+        <section
+          ref="modalDialog"
+          class="composer composer-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="composer-dialog-title"
+        >
+          <div class="composer-dialog-header">
+            <div>
+              <span class="composer-dialog-eyebrow">MURAL DE IDEIAS</span>
+              <h2 id="composer-dialog-title">{{ editingId ? 'Editar ideia' : 'Nova ideia' }}</h2>
+              <p>Compartilhe uma inspiração com a equipe.</p>
+            </div>
+            <button
+              type="button"
+              class="composer-close"
+              aria-label="Fechar formulário"
+              :disabled="saving"
+              @click="closeComposer()"
+            >
+              <span class="mdi mdi-close" aria-hidden="true"></span>
+            </button>
+          </div>
+          <div class="composer-dialog-body">
+
       <div class="composer-top">
-        <input v-model="form.titulo" maxlength="200" placeholder="Título" aria-label="Título da nota" />
+        <input ref="titleField" v-model="form.titulo" maxlength="200" placeholder="Título" aria-label="Título da nota" />
         <label class="pin-check">
           <input v-model="form.fixada" type="checkbox" />
           Fixar
@@ -345,15 +447,22 @@ onBeforeUnmount(clearTemporaryPhoto)
         ></button>
       </div>
 
+
+            <p v-if="error" class="error composer-error" role="alert">{{ error }}</p>
+          </div>
+          <div class="composer-dialog-footer">
       <div class="composer-actions">
-        <button v-if="editingId" type="button" class="button secondary" @click="resetForm">Cancelar</button>
+        <button type="button" class="button secondary" :disabled="saving" @click="closeComposer()">Cancelar</button>
         <button type="button" class="button primary" :disabled="saving || !canSave" @click="save">
-          {{ saving ? 'Salvando...' : editingId ? 'Salvar alterações' : 'Criar nota' }}
+          {{ saving ? 'Salvando...' : editingId ? 'Salvar alterações' : 'Criar ideia' }}
         </button>
       </div>
-    </section>
+          </div>
+        </section>
+      </div>
+    </Teleport>
 
-    <p v-if="error" class="error" role="alert">{{ error }}</p>
+    <p v-if="error && !composerOpen" class="error" role="alert">{{ error }}</p>
 
     <section v-if="!isProjectMural || projectInfo" class="notes-tools" :class="{ 'project-only-grid': isProjectMural }">
       <label>
@@ -431,4 +540,94 @@ onBeforeUnmount(clearTemporaryPhoto)
 .back-to-project:hover{opacity:.7}
 .note-author{display:block;margin:8px 0 12px;font-size:11px;font-weight:650;color:#52524e}
 .composer-grid.project-only-grid,.notes-tools.project-only-grid{grid-template-columns:1fr}
+
+/* FEAT-64: botão de criação e formulário em modal */
+.mural-fab {
+  position: fixed;
+  right: clamp(20px, 3vw, 44px);
+  bottom: 30px;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  width: 66px;
+  height: 66px;
+  border: 1px solid #111;
+  border-radius: 50%;
+  background: #171716;
+  color: #fff;
+  box-shadow: 0 10px 28px rgb(0 0 0 / 24%);
+  cursor: pointer;
+  transition: transform .16s ease, background .16s ease, box-shadow .16s ease;
+}
+.mural-fab .mdi { font-size: 31px; }
+.mural-fab:hover { transform: translateY(-3px); background: #30302c; box-shadow: 0 14px 32px rgb(0 0 0 / 26%); }
+.mural-fab:focus-visible, .composer-close:focus-visible { outline: 3px solid #c0d877; outline-offset: 3px; }
+.composer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgb(17 17 16 / 65%);
+  backdrop-filter: blur(5px);
+}
+.composer-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(720px, 100%);
+  max-height: min(88dvh, 820px);
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #fafaf8;
+  border: 1px solid #e4e4df;
+  border-radius: 22px;
+  box-shadow: 0 24px 75px rgb(0 0 0 / 24%);
+}
+.composer-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+  padding: 23px 26px 18px;
+  border-bottom: 1px solid #e6e6de;
+}
+.composer-dialog-eyebrow { color: #777770; font-size: 10px; font-weight: 800; letter-spacing: 1.4px; }
+.composer-dialog-header h2 { margin: 5px 0; color: #171716; font-size: 27px; letter-spacing: -.8px; }
+.composer-dialog-header p { margin: 0; color: #666660; font-size: 13px; line-height: 1.5; }
+.composer-close {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  background: #eeeee9;
+  color: #33332d;
+  cursor: pointer;
+}
+.composer-close .mdi { font-size: 22px; }
+.composer-close:hover { background: #e0e0d9; }
+.composer-dialog-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 20px 26px; }
+.composer-dialog-body .composer-top > input { padding-left: 0; }
+.composer-error { margin: 15px 0 0; }
+.composer-dialog-footer { padding: 16px 26px; border-top: 1px solid #e6e6de; background: #fafaf8; }
+.composer-dialog-footer .composer-actions { margin-top: 0; }
+@media(max-width:700px) {
+  .mural-fab { width: 58px; height: 58px; right: 17px; bottom: calc(78px + env(safe-area-inset-bottom)); }
+  .mural-fab .mdi { font-size: 28px; }
+  .composer-backdrop { padding: 10px; }
+  .composer-modal { max-height: calc(100dvh - 20px); border-radius: 17px; }
+  .composer-dialog-header { padding: 17px 17px 14px; }
+  .composer-dialog-header h2 { font-size: 22px; }
+  .composer-dialog-body { padding: 15px 17px; }
+  .composer-dialog-footer { padding: 13px 17px calc(13px + env(safe-area-inset-bottom)); }
+}
+@media(prefers-reduced-motion:reduce) {
+  .mural-fab { transition: none; }
+}
 </style>
