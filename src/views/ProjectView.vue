@@ -5,6 +5,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import projectsApi from '@/api/projectsApi'
 import projectApi from '@/api/projectApi'
 import tasksApi from '@/api/tasksApi'
+import { useToastStore } from '@/stores/toastStore'
 
 import ProjectEditModal from '@/components/project/ProjectEditModal.vue'
 import ProjectHeader from '@/components/project/ProjectHeader.vue'
@@ -20,6 +21,7 @@ import '@/assets/css/project-tasks.css'
 
 const route = useRoute()
 const router = useRouter()
+const toast = useToastStore()
 
 const id = computed(() => route.params.id)
 
@@ -30,7 +32,6 @@ const board = ref(null)
 const resources = ref([])
 
 const error = ref('')
-const success = ref('')
 const editError = ref('')
 const deleteError = ref('')
 const taskError = ref('')
@@ -481,7 +482,6 @@ async function saveProject(dados) {
   savingProject.value = true
   editError.value = ''
   error.value = ''
-  success.value = ''
 
   try {
     const response = await projectsApi.update(
@@ -501,7 +501,7 @@ async function saveProject(dados) {
     await load()
 
     if (!error.value) {
-      success.value = 'Projeto atualizado com sucesso.'
+      toast.success('Projeto atualizado com sucesso.')
     }
   } catch (e) {
     editError.value = explain(e)
@@ -540,6 +540,7 @@ async function deleteProject(projectId) {
 
     showDeleteDialog.value = false
 
+    toast.success('Projeto excluído com sucesso.')
     await router.push('/projects')
   } catch (e) {
     deleteError.value = explain(e)
@@ -570,7 +571,6 @@ async function addTask(dados) {
   saving.value = true
   taskError.value = ''
   error.value = ''
-  success.value = ''
 
   try {
     await tasksApi.create({
@@ -592,7 +592,7 @@ async function addTask(dados) {
     }
 
     showTaskForm.value = false
-    success.value = 'Tarefa criada com sucesso.'
+    toast.success('Tarefa criada com sucesso.')
   } catch (e) {
     taskError.value = explain(e)
   } finally {
@@ -609,7 +609,6 @@ async function addResource(dados) {
   savingResource.value = true
   resourceError.value = ''
   error.value = ''
-  success.value = ''
 
   try {
     await projectsApi.addResource(id.value, {
@@ -626,7 +625,7 @@ async function addResource(dados) {
 
     resourceSuccessCount.value += 1
 
-    success.value = 'Material adicionado com sucesso.'
+    toast.success('Material adicionado com sucesso.')
   } catch (e) {
     resourceError.value = explain(e)
   } finally {
@@ -652,7 +651,6 @@ watch(id, (newId, oldId) => {
     deleteError.value = ''
     taskError.value = ''
     resourceError.value = ''
-    success.value = ''
 
     project.value = null
     board.value = null
@@ -689,13 +687,6 @@ onMounted(load)
       {{ error }}
     </p>
 
-    <p
-      v-if="success"
-      class="message-success"
-      role="status"
-    >
-      {{ success }}
-    </p>
 
     <template v-if="project">
       <ProjectEditModal
