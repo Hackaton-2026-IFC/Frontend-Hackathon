@@ -80,8 +80,7 @@ const routes = [
   },
   {
     path: '/notes',
-    name: 'notes',
-    component: NotesView,
+    redirect: { name: 'projects' },
     meta: { requiresAuth: true },
   },
   {
