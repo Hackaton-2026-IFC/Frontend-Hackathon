@@ -189,10 +189,9 @@ async function copyResult() {
     <div class="agent-heading">
       <div>
         <span class="agent-eyebrow">AGENTE DE IA</span>
-        <h2 id="agent-title">Organizar e transformar ideias.</h2>
+        <h2 id="agent-title">Transforme ideias em um plano.</h2>
         <p>
-          O agente usa o contexto do projeto para montar relatório, ordem de execução,
-          dependências, riscos e próximos passos.
+          Descreva seu objetivo e reúna suas ideias. A IA ajuda a organizar os próximos passos.
         </p>
       </div>
 
@@ -201,21 +200,21 @@ async function copyResult() {
 
     <div class="agent-form">
       <label>
-        <span>Objetivo</span>
+        <span>Qual é o objetivo?</span>
         <textarea
           v-model="objective"
           rows="3"
           maxlength="1000"
-          placeholder="Ex.: entregar o MVP até amanhã e priorizar o que destrava o restante."
+          placeholder="Ex.: finalizar a primeira versão do projeto até sexta-feira."
         ></textarea>
       </label>
 
       <label>
-        <span>Ideias — uma por linha</span>
+        <span>Ideias e tarefas <small>Uma por linha</small></span>
         <textarea
           v-model="ideas"
           rows="5"
-          placeholder="Adicionar onboarding&#10;Criar relatório automático&#10;Reorganizar tarefas por dependência"
+          placeholder="Criar página inicial&#10;Organizar as tarefas da equipe&#10;Preparar a apresentação"
         ></textarea>
       </label>
 
@@ -229,7 +228,7 @@ async function copyResult() {
           @click="analyze"
         >
           <span class="mdi mdi-auto-fix" aria-hidden="true"></span>
-          {{ loading ? 'Analisando...' : 'Gerar relatório' }}
+          {{ loading ? 'Organizando...' : 'Gerar plano' }}
         </button>
       </div>
     </div>
@@ -260,5 +259,57 @@ async function copyResult() {
 </template>
 
 <style scoped>
-.agent-card{margin-top:24px;padding:26px;border:1px solid #171716;border-radius:18px;background:#f8f8f5;color:#171716}.agent-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;padding-bottom:20px;border-bottom:1px solid #d6d6d0}.agent-eyebrow{font-size:10px;font-weight:800;letter-spacing:1.5px}.agent-heading h2{margin:8px 0 8px;font-size:25px;letter-spacing:-.8px}.agent-heading p{max-width:680px;margin:0;color:#555;line-height:1.65;font-size:13px}.agent-icon{flex:0 0 auto;font-size:38px}.agent-form{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}.agent-form label{display:grid;gap:7px;font-size:11px;font-weight:800}.agent-form textarea{width:100%;box-sizing:border-box;padding:12px;border:1px solid #c9c9c3;border-radius:10px;background:#fff;color:#171716;font:inherit;font-size:14px;line-height:1.5;resize:vertical}.agent-actions{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:16px}.agent-actions small{color:#666}.agent-button,.copy-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid #171716;border-radius:999px;background:#171716;color:#fff;font:inherit;font-size:12px;font-weight:750;cursor:pointer}.agent-button{min-height:44px;padding:10px 18px}.agent-button:disabled{opacity:.55;cursor:not-allowed}.agent-error,.agent-warning{margin:18px 0 0;padding:11px 13px;border-radius:9px;font-size:12px}.agent-error{border:1px solid #c77;background:#fff0f0;color:#7d1f1f}.agent-warning{border:1px solid #c5a85f;background:#fff8df;color:#654d0a}.agent-result{margin-top:22px;padding:20px;border:1px solid #bbb;border-radius:14px;background:#fff}.agent-result-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}.agent-result-heading h3{margin:5px 0 0;font-size:19px}.agent-mode{font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase}.copy-button{padding:8px 12px;background:#fff;color:#171716}.agent-model{display:block;margin-top:6px;font-size:11px;color:#666}.agent-result :deep(.agent-markdown){margin-top:22px;color:#292925;font-size:14px;line-height:1.8;overflow-wrap:anywhere}.agent-result :deep(.agent-markdown > *:first-child){margin-top:0}.agent-result :deep(.agent-markdown > *:last-child){margin-bottom:0}.agent-result :deep(.agent-markdown h1){font-size:23px;line-height:1.3}.agent-result :deep(.agent-markdown h2){font-size:19px;line-height:1.4;padding-bottom:9px;border-bottom:1px solid #e5e5df}.agent-result :deep(.agent-markdown h3){font-size:16px;line-height:1.4}.agent-result :deep(.agent-markdown h4){font-size:14px;line-height:1.4}.agent-result :deep(.agent-markdown h1,.agent-markdown h2,.agent-markdown h3,.agent-markdown h4){margin:26px 0 11px;font-weight:800;letter-spacing:-.35px;color:#171716}.agent-result :deep(.agent-markdown p){margin:0 0 13px}.agent-result :deep(.agent-markdown ul,.agent-markdown ol){margin:8px 0 19px;padding-left:25px}.agent-result :deep(.agent-markdown ul){list-style:disc}.agent-result :deep(.agent-markdown ol){list-style:decimal}.agent-result :deep(.agent-markdown li){padding-left:5px;margin:7px 0}.agent-result :deep(.agent-markdown li::marker){font-weight:800;color:#555}.agent-result :deep(.agent-markdown strong){font-weight:800;color:#171716}.agent-result :deep(.agent-markdown hr){height:1px;border:0;background:#e5e5df;margin:22px 0}.agent-result :deep(.agent-markdown blockquote){border-left:3px solid #171716;padding:8px 15px;margin:16px 0;background:#f8f8f5;border-radius:0 8px 8px 0}.agent-result :deep(.agent-markdown code){padding:2px 5px;border-radius:4px;background:#f2f2ef;font-size:.9em}.agent-result :deep(.agent-markdown pre){overflow-x:auto;padding:15px;border:1px solid #e1e1dc;border-radius:9px;background:#f7f7f4;white-space:pre;font-size:12px;line-height:1.6}.agent-result :deep(.agent-markdown pre code){padding:0;background:transparent}.agent-button:focus-visible,.copy-button:focus-visible,.agent-form textarea:focus-visible{outline:2px solid #171716;outline-offset:3px}@media(max-width:760px){.agent-card{padding:20px}.agent-form{grid-template-columns:1fr}.agent-actions{align-items:stretch;flex-direction:column}.agent-button{width:100%}.agent-icon{font-size:30px}.agent-result-heading{align-items:flex-start;flex-direction:column}}
+/* Formulário leve, sem cartões aninhados ou divisórias desnecessárias. */
+.agent-card{margin:0;padding:0;border:0;border-radius:0;background:transparent;color:#171717}
+.agent-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:26px}
+.agent-eyebrow{display:block;margin-bottom:9px;color:#777;font-size:10px;font-weight:700;letter-spacing:.13em}
+.agent-heading h2{margin:0;font-size:clamp(22px,3vw,28px);font-weight:700;letter-spacing:-.045em;line-height:1.2}
+.agent-heading p{max-width:520px;margin:10px 0 0;color:#777;font-size:13px;line-height:1.65}
+.agent-icon{flex:0 0 auto;display:grid;place-items:center;width:42px;height:42px;border:1px solid #e8e8e8;border-radius:12px;background:#f7f7f7;color:#333;font-size:23px}
+.agent-form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px 16px}
+.agent-form label{display:grid;align-content:start;gap:9px;min-width:0;color:#242424;font-size:12px;font-weight:650}
+.agent-form label small{margin-left:5px;color:#999;font-size:11px;font-weight:400}
+.agent-form textarea{width:100%;min-height:145px;box-sizing:border-box;padding:14px 15px;border:1px solid #dedede;border-radius:11px;background:#fff;color:#171717;font:inherit;font-size:13px;font-weight:400;line-height:1.6;resize:vertical;transition:border-color .15s,box-shadow .15s}
+.agent-form textarea::placeholder{color:#a1a1a1}
+.agent-form textarea:hover{border-color:#b9b9b9}
+.agent-form textarea:focus{outline:none;border-color:#171717;box-shadow:0 0 0 3px rgb(23 23 23 / 8%)}
+.agent-actions{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:4px}
+.agent-actions small{color:#8b8b8b;font-size:11px}
+.agent-button,.copy-button{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:44px;padding:11px 19px;border:1px solid #171717;border-radius:10px;background:#171717;color:#fff;font:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:background-color .15s}
+.agent-button:hover:not(:disabled){background:#333}
+.agent-button:disabled{opacity:.55;cursor:not-allowed}
+.agent-result{margin-top:28px;padding:24px;border:1px solid #e5e5e5;border-radius:12px;background:#fafafa}
+.agent-result-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:17px;border-bottom:1px solid #e5e5e5}
+.agent-result-heading h3{margin:7px 0 0;font-size:19px;letter-spacing:-.03em}
+.agent-mode{color:#777;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.agent-model{display:block;margin-top:5px;color:#888;font-size:11px}
+.copy-button{min-height:38px;padding:8px 13px;border-color:#dedede;background:#fff;color:#171717}
+.copy-button:hover{background:#f0f0f0}
+.agent-result :deep(.agent-markdown){margin-top:20px;color:#303030;font-size:13px;line-height:1.8;overflow-wrap:anywhere}
+.agent-result :deep(.agent-markdown > *:first-child){margin-top:0}
+.agent-result :deep(.agent-markdown h1){font-size:22px}
+.agent-result :deep(.agent-markdown h2){font-size:18px}
+.agent-result :deep(.agent-markdown h3){font-size:15px}
+.agent-result :deep(.agent-markdown h1,.agent-markdown h2,.agent-markdown h3,.agent-markdown h4){margin:22px 0 10px;color:#171717;line-height:1.4}
+.agent-result :deep(.agent-markdown p){margin:0 0 12px}
+.agent-result :deep(.agent-markdown ul,.agent-markdown ol){margin:10px 0 16px;padding-left:23px}
+.agent-result :deep(.agent-markdown li){margin:5px 0}
+.agent-result :deep(.agent-markdown hr){height:1px;margin:20px 0;border:0;background:#e5e5e5}
+.agent-result :deep(.agent-markdown blockquote){margin:14px 0;padding:8px 14px;border-left:3px solid #171717;background:#fff}
+.agent-result :deep(.agent-markdown code){padding:2px 5px;border-radius:4px;background:#eee}
+.agent-result :deep(.agent-markdown pre){overflow-x:auto;padding:14px;border-radius:8px;background:#eee}
+.agent-result :deep(.agent-markdown pre code){padding:0}
+.agent-button:focus-visible,.copy-button:focus-visible{outline:3px solid #888;outline-offset:3px}
+@media(max-width:650px){
+ .agent-heading{gap:12px;margin-bottom:22px}
+ .agent-icon{width:36px;height:36px;font-size:19px}
+ .agent-form{grid-template-columns:minmax(0,1fr);gap:16px}
+ .agent-form textarea{min-height:108px}
+ .agent-actions{align-items:stretch;flex-direction:column;gap:12px}
+ .agent-actions small{text-align:left}
+ .agent-button{width:100%}
+ .agent-result{padding:16px}
+ .agent-result-heading{align-items:flex-start;flex-wrap:wrap}
+}
+@media(prefers-reduced-motion:reduce){.agent-form textarea,.agent-button{transition:none}}
 </style>
