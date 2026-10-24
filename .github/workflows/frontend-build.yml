@@ -21,5 +21,8 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      - name: Testar integração Google
+        run: npm run test:google
+
       - name: Validar build de produção
         run: npm run build
