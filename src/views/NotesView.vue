@@ -450,17 +450,6 @@ async function togglePin(note) {
   }
 }
 
-async function archive(note) {
-  if (!isAuthor(note)) return
-  try {
-    await notesApi.update(note.id, { arquivada: true })
-    notes.value = notes.value.filter((item) => item.id !== note.id)
-    if (editingId.value === note.id) resetForm()
-  } catch (err) {
-    error.value = apiError(err, 'Não foi possível arquivar a nota.')
-  }
-}
-
 async function remove(note) {
   if (!isAuthor(note)) return
   if (!window.confirm('Excluir esta nota definitivamente?')) return
@@ -498,10 +487,10 @@ onBeforeUnmount(() => {
   <main class="notes-page">
     <section class="notes-hero">
       <div>
-        <span class="eyebrow">{{ isProjectMural ? 'PROJETOS / MURAL COMPARTILHADO' : 'IDEIAS / NOTAS' }}</span>
-        <h1>{{ isProjectMural ? (projectInfo?.nome ? 'Mural — ' + projectInfo.nome : 'Mural do projeto') : 'Seu mural.' }}</h1>
-        <p>{{ isProjectMural ? 'Compartilhe ideias, fotos e links. Suas fixações e posições dos cards são só suas.' : 'Suas notas pessoais e ideias publicadas por você em projetos.' }}</p>
-        <RouterLink v-if="isProjectMural" :to="{ name: 'project-details', params: { id: projectId } }" class="back-to-project">← Voltar ao projeto</RouterLink>
+        <span class="eyebrow">{{ isProjectMural ? 'MOMENTUM / IDEIAS DO PROJETO' : 'MOMENTUM / SUAS IDEIAS' }}</span>
+        <h1>{{ isProjectMural ? ((projectInfo?.nome || projectInfo?.name) ? 'Mural de ' + (projectInfo.nome || projectInfo.name) : 'Mural do projeto') : 'Seu mural.' }}</h1>
+        <p>{{ isProjectMural ? 'Um espaço para reunir referências, inspirações e ideias da equipe.' : 'Suas notas pessoais e ideias publicadas por você em projetos.' }}</p>
+        <RouterLink v-if="isProjectMural" :to="{ name: 'project-details', params: { id: projectId } }" class="back-to-project"><span class="mdi mdi-arrow-left" aria-hidden="true"></span> Voltar ao projeto</RouterLink>
       </div>
     </section>
 
@@ -689,7 +678,6 @@ onBeforeUnmount(() => {
 
         <div v-if="isAuthor(note)" class="note-actions">
           <button type="button" @click="edit(note)">Editar</button>
-          <button type="button" @click="archive(note)">Arquivar</button>
           <button type="button" @click="remove(note)">Excluir</button>
         </div>
       </article>
@@ -869,4 +857,27 @@ onBeforeUnmount(() => {
 @media(prefers-reduced-motion:reduce) {
   .note-card { transition: none; }
 }
+</style>
+
+<style>
+/* Ajustes visuais finais: mural alinhado aos painéis do Momentum */
+.notes-page { box-sizing:border-box; width:100%; max-width:1220px; margin:0 auto; padding:32px clamp(20px,4vw,44px) 72px; }
+.notes-page .notes-hero { padding:12px 0 28px; margin-bottom:22px; border-bottom:1px solid #e6e6e6; }
+.notes-page .notes-hero .eyebrow { display:block; color:#858585; font-size:10px; font-weight:750; letter-spacing:1.35px; }
+.notes-page .notes-hero h1 { margin:13px 0 12px; font-size:clamp(28px,3.6vw,42px); font-weight:720; line-height:1.18; letter-spacing:-.055em; overflow-wrap:anywhere; }
+.notes-page .notes-hero p { max-width:610px; color:#777; font-size:13px; line-height:1.7; }
+.notes-page .back-to-project { display:inline-flex; align-items:center; gap:7px; margin-top:19px; color:#171717; font-size:12px; font-weight:700; text-decoration:none; }
+.notes-page .back-to-project:hover { text-decoration:underline; }
+.notes-page .notes-tools { margin:0 0 22px; padding:17px 20px; border:1px solid #e7e7e7; border-radius:14px; background:#fff; }
+.notes-page .notes-tools label { color:#555; font-size:11px; }
+.notes-page .notes-tools input,.notes-page .notes-tools select { min-height:43px; border:1px solid #e5e5e5; border-radius:9px; background:#fafafa; font-size:13px; }
+.notes-page .notes-tools input:focus { outline:2px solid #aaa; outline-offset:1px; }
+.notes-page .drag-hint { margin:12px 0 15px; color:#999; font-size:11px; }
+.notes-page .notes-grid { column-gap:16px; }
+.notes-page .note-card { margin-bottom:16px; padding:17px; border:1px solid rgba(0,0,0,.09); border-radius:14px; box-shadow:0 3px 14px rgba(0,0,0,.035); }
+.notes-page .note-card h2 { font-size:17px; line-height:1.35; letter-spacing:-.025em; }
+.notes-page .note-actions { gap:13px; }
+.notes-page .note-actions button { font-size:11px; font-weight:700; }
+.notes-page .mural-fab { box-shadow:0 10px 25px rgba(0,0,0,.14); }
+@media(max-width:700px){ .notes-page { padding:22px 16px 100px; } .notes-page .notes-hero { padding-top:8px; } .notes-page .notes-tools { padding:14px; } .notes-page .notes-hero h1 { font-size:30px; } }
 </style>
