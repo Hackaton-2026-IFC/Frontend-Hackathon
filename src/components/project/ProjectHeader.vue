@@ -481,12 +481,12 @@ const projectDeadline = computed(() => {
     right: 0;
     z-index: 40;
     width: min(224px, calc(100vw - 64px));
-    padding: 8px;
+    padding: 0;
     margin: 0;
-    border: 1px solid #e5e5e5;
-    border-radius: 12px;
-    background: #fff;
-    box-shadow: 0 12px 28px rgb(0 0 0 / 13%);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
   .momentum-project-header__actions--open {
     display: grid;
