@@ -12,7 +12,7 @@ import ProjectHeader from '@/components/project/ProjectHeader.vue'
 import ProjectProgress from '@/components/project/ProjectProgress.vue'
 import ProjectMembers from '@/components/project/ProjectMembers.vue'
 import ProjectDeleteDialog from '@/components/project/ProjectDeleteDialog.vue'
-import ProjectTaskModal from '@/components/project/ProjectTaskModal.vue'
+import TaskForm from '@/components/tasks/TaskForm.vue'
 import ProjectKanban from '@/components/project/ProjectKanban.vue'
 import ToastNotice from '@/components/ui/ToastNotice.vue'
 import ProjectResources from '@/components/project/ProjectResources.vue'
@@ -21,6 +21,7 @@ import ProjectCalendar from '@/components/project/ProjectCalendar.vue'
 
 import '@/assets/css/project.css'
 import '@/assets/css/project-tasks.css'
+import '@/assets/css/tasks.css'
 
 const route = useRoute()
 const router = useRouter()
@@ -49,6 +50,7 @@ const savingResource = ref(false)
 const showEditModal = ref(false)
 const showDeleteDialog = ref(false)
 const showTaskForm = ref(false)
+const taskFormProjects = computed(() => project.value ? [project.value] : [])
 const showAgentModal = ref(false)
 
 const resourceSuccessCount = ref(0)
@@ -599,45 +601,18 @@ function closeTaskModal() {
   taskError.value = ''
 }
 
-// Criar tarefa
-
-async function addTask(dados) {
-  if (saving.value) return
-
-  saving.value = true
+// O mesmo TaskForm utilizado no painel de tarefas cria tarefas neste projeto.
+// O componente faz a persistência pelo taskStore e avisa após salvar.
+async function addTask({ task }) {
+  showTaskForm.value = false
   taskError.value = ''
-  error.value = ''
-
+  toast.success('Tarefa criada com sucesso.')
   try {
-    await tasksApi.create({
-      projeto: Number(id.value),
-      titulo: dados.titulo.trim(),
-      descricao: dados.descricao,
-      prioridade: dados.prioridade,
-      status: dados.status,
-      clima_influencia: Boolean(dados.clima_influencia),
-      localizacao: dados.clima_influencia ? (dados.localizacao || '').trim() : '',
-      ...(dados.data_limite
-        ? { data_limite: dados.data_limite }
-        : {}),
-    })
-
     await load()
-
-    if (error.value) {
-      taskError.value = error.value
-      return
-    }
-
-    showTaskForm.value = false
-    toast.success('Tarefa criada com sucesso.')
-  } catch (e) {
-    taskError.value = explain(e)
-  } finally {
-    saving.value = false
+  } catch (err) {
+    taskError.value = explain(err)
   }
 }
-
 
 // Materiais de apoio
 
@@ -741,12 +716,12 @@ onMounted(load)
         @confirm="deleteProject"
       />
 
-      <ProjectTaskModal
-        v-if="showTaskForm"
-        :saving="saving"
-        :error="taskError"
+      <TaskForm
+        v-if="showTaskForm && taskFormProjects.length"
+        :projects="taskFormProjects"
+        :project-id="Number(id)"
         @close="closeTaskModal"
-        @save="addTask"
+        @saved="addTask"
       />
 
       <ProjectHeader

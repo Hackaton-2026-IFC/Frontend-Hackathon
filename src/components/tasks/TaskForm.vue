@@ -33,6 +33,9 @@ const form = reactive({
   descricao: props.task?.descricao ?? '',
   status: props.task?.status ?? 'planejado',
   data_limite: props.task?.data_limite ?? '',
+  prioridade: props.task?.prioridade ?? 'neutra',
+  clima_influencia: props.task?.clima_influencia ?? false,
+  localizacao: props.task?.localizacao ?? '',
 })
 
 const selectedAssigneeIds = ref([
@@ -107,6 +110,7 @@ const priorityCode = computed(() => automaticPriority({
 }))
 
 const priorityLabel = computed(() => TASK_PRIORITIES[priorityCode.value] || 'Sem urgência')
+const selectedPriorityLabel = computed(() => TASK_PRIORITIES[form.prioridade] || 'Neutra')
 
 onMounted(() => dialog.value?.showModal())
 onBeforeUnmount(() => {
@@ -127,6 +131,10 @@ function changeProject() {
 
 async function save() {
   if (store.busy || store.inviting || !form.titulo.trim() || !form.projeto) return
+  if (form.clima_influencia && (!form.localizacao.trim() || !form.data_limite)) {
+    error.value = 'Defina o prazo e a cidade da tarefa para utilizar a previsão do tempo.'
+    return
+  }
 
   error.value = ''
 
@@ -145,10 +153,12 @@ async function save() {
       status: form.status,
       responsavel: primaryId == null ? null : Number(primaryId),
       data_limite: form.data_limite || null,
+      prioridade: form.prioridade,
+      clima_influencia: Boolean(form.clima_influencia),
+      localizacao: form.clima_influencia ? form.localizacao.trim() : '',
     }
 
-    // The backend calculates urgency from the deadline. Do not overwrite the
-    // separately stored, manually defined "prioridade" field.
+    // Prioridade é manual; a urgência calculada pelo prazo é um campo separado.
     const savedTask = props.task
       ? await store.update(props.task.id, payload)
       : await store.create(payload)
@@ -287,6 +297,14 @@ async function save() {
               <input v-model="form.data_limite" type="date" />
             </label>
 
+            <label>
+              Prioridade manual
+              <select v-model="form.prioridade" aria-label="Prioridade manual da tarefa">
+                <option v-for="(label, value) in TASK_PRIORITIES" :key="value" :value="value">{{ label }}</option>
+              </select>
+              <small>Prioridade escolhida: {{ selectedPriorityLabel }}. É independente da urgência pelo prazo.</small>
+            </label>
+
             <div class="task-form-auto-priority" aria-live="polite">
               <span>Prioridade automática</span>
               <strong>
@@ -301,8 +319,22 @@ async function save() {
             </div>
           </div>
           <p class="task-form-priority-help">
-            Calculada pelo prazo: quanto mais perto do vencimento, maior a prioridade.
+            A urgência é calculada pelo prazo; a prioridade acima é definida manualmente.
           </p>
+        </section>
+
+        <section class="task-form-edit-options" aria-labelledby="task-climate-title">
+          <h3 id="task-climate-title">Clima e planejamento</h3>
+          <label class="task-weather-checkbox">
+            <input v-model="form.clima_influencia" type="checkbox" />
+            O clima influencia esta tarefa
+          </label>
+          <label v-if="form.clima_influencia">
+            Cidade da tarefa *
+            <input v-model.trim="form.localizacao" type="text" maxlength="255"
+              placeholder="Ex.: Joinville" required />
+            <small>A previsão usa a data do prazo e está disponível até 15 dias à frente.</small>
+          </label>
         </section>
 
         <label>
