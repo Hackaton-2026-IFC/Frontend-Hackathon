@@ -1,39 +1,28 @@
-# Tarefas — cards, atrasos e formulário em modal
+# Página de tarefas e roadmap — FEAT-9
 
-## Tela
+A implementação atual mantém a interface de **criar/editar** em
+`src/components/tasks/TaskForm.vue` como modal nativo. A regra de
+prioridade automática em `src/utils/taskPresentation.js` foi preservada.
 
-- `/tasks`: exibe as tarefas acessíveis, com separação entre **Tarefas atrasadas** e **Demais tarefas**.
-- `/projects/:projectId/tasks`: exibe somente as tarefas do projeto informado.
-- Cada card mostra título, responsável, prioridade automática, prazo ou data de conclusão e botão **Editar**.
-- **+ Nova tarefa** abre o mesmo formulário em modo criação. **Editar** no card abre em modo edição.
-- O formulário é um diálogo acessível com `<dialog>`, com fechamento pelo X, por **Cancelar** ou **Esc**, sem fechar enquanto uma operação está em andamento.
-- O formulário de tarefas mantém os campos projeto, título, responsável, prazo, descrição e situação; a prioridade é informativa e calculada automaticamente.
+## Organização do frontend
 
-## Regra automática
+- `src/views/TasksView.vue`: página principal, lista pesquisável e filtros por projeto, atraso, pendências e concluídas. Mantém seleção da tarefa em `?task=ID`, com layout mobile first.
+- `src/components/tasks/TaskWorkspace.vue`: painel detalhado da tarefa selecionada. Mostra descrição, responsável principal e adicionais, status, prioridade, prazos, data de criação, conclusão (se disponível), criador, dependências, planejamento climático e materiais de apoio. Oferece editar e exclusão com confirmação.
+- `src/components/tasks/TaskRoadmap.vue`: roadmap vertical das microtarefas, barra de progresso e inclusão/conclusão sequencial.
+- `src/utils/taskRoadmap.js`: ordenação, progresso e regras de habilitação das etapas. O backend continua sendo a fonte de verdade e valida os pré-requisitos.
+- `src/stores/taskStore.js` e `src/api/taskApi.js`: chamadas à API continuam fora de views e componentes de apresentação.
+- `src/assets/css/tasks.css`: estilos da tela e dos modais.
 
-A prioridade *mostrada na interface* segue a mesma escala de urgência temporal do backend:
+## Sobre os dados
 
-| Prazo restante | Prioridade |
-| --- | --- |
-| Vencido ou vence hoje | Muito alta |
-| 1–2 dias | Alta |
-| 3–7 dias | Neutra |
-| 8–14 dias | Baixa |
-| 15+ dias | Muito baixa |
-| Sem prazo | Neutra |
-| Concluída | Sem urgência |
+- Os passos do roadmap usam os campos `microtarefas` e `ordem` fornecidos pela API. Não são apenas um desenho: adicionar e marcar etapa altera o servidor pela store.
+- A API aceita somente um `responsavel` por tarefa. Fotos dos participantes são obtidas do projeto. Seleções adicionais salvas no navegador são exibidas na página, identificadas como locais, sem sincronização com o resto da equipe.
+- A prioridade visual segue o prazo e não altera o campo manual legado.
+- A data de conclusão não é inferida. Se a API não fornece `data_conclusao`, a interface mostra **Data não registrada**.
+- Links de apoio são listados e adicionados pelos endpoints já existentes. Apenas links HTTP ou HTTPS podem ser abertos.
+- Nenhuma alteração é necessária ou realizada no repositório do backend.
 
-O cálculo considera o prazo antecipado quando presente. A prioridade visual é dinâmica; o campo legado `prioridade` do backend não é sobrescrito. A interface não mostra um seletor de prioridade manual. O backend também fornece `urgencia` com a mesma escala. Novas solicitações passam somente pela `taskStore.js` / `taskApi.js`.
+## Validação
 
-## Conclusão
-
-A data `data_conclusao` precisa vir da API do backend com a migração aplicada; não é estimada pelo frontend. Tarefas antigas sem essa data exibem **Data não registrada**.
-
-
-## Fotos e múltiplos responsáveis (somente frontend)
-
-- Os cards mostram as **fotos dos responsáveis** obtidas de `projetos[].participantes[].usuario_detalhes.profile_image.url`. Sem foto ou em caso de erro na imagem, aparece uma inicial.
-- O formulário usa checkboxes com foto e nome para permitir várias escolhas.
-- **Limitação da API existente:** `tarefas[].responsavel` aceita apenas um usuário. O primeiro selecionado (ou o responsável oficial atual, se continuar selecionado) é enviado à API normalmente.
-- Os responsáveis adicionais são apenas uma preferência visual **local**, armazenada no `localStorage` deste navegador e isolada por ID de usuário. Eles **não** são compartilhados entre dispositivos ou membros da equipe nem recebem atribuições/notificações oficiais do backend.
-- Caso o armazenamento local esteja bloqueado, a interface informa que as pessoas adicionais não puderam ser persistidas. Não há alterações no repositório backend.
+Executar `node --test tests/task-roadmap.test.mjs tests/task-presentation.test.mjs tests/tasks.test.mjs`
+e `npm run build` no repositório local.
