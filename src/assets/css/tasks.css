@@ -1577,3 +1577,70 @@
 .roadmap__step-delete .task-button { min-height: 40px; }
 .roadmap__step-delete { background: #fff9f8; border-color: #ead6d2; }
 .roadmap__step-delete p { margin: 0; font-size: 12px; line-height: 1.6; }
+
+/* Layout limpo da rota /tasks/:id: mantém funcionalidades e evita cabeçalhos duplicados. */
+.tasks-page--detail { background: #f8f8f8; padding: 28px 24px 70px; }
+.tasks-page--detail .tasks-container { max-width: 1050px; }
+.tasks-page--detail .task-mobile-back { margin-bottom: 16px; }
+.tasks-page--detail .task-mobile-back__button { background: transparent; border: 0; padding: 6px 0; color: #555; font-weight: 650; font-size: 12px; cursor: pointer; }
+.tasks-page--detail .task-dashboard { display: block; }
+.tasks-page--detail .task-workspace { border: 1px solid #e6e6e6; border-radius: 16px; overflow: visible; background: transparent; }
+.tasks-page--detail .task-workspace--late { border-top: 1px solid #e6e6e6; }
+.tasks-page--detail .task-workspace__header { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 20px; padding: 26px 28px; background: #fff; border: 0; border-radius: 16px 16px 0 0; }
+.tasks-page--detail .task-workspace__heading h2 { font-size: clamp(23px,3vw,30px); margin-bottom: 12px; }
+.tasks-page--detail .workspace-kicker { color: #888; font-size: 10px; letter-spacing: 1px; }
+.tasks-page--detail .workspace-tag { border: 0; background: #f4f4f4; min-height: 27px; font-size: 11px; }
+.tasks-page--detail .workspace-tag--late { background: #fff0f0; color: #b53a35; }
+.tasks-page--detail .task-workspace__actions { flex: 0 0 auto; }
+.tasks-page--detail .task-workspace__actions .task-button { min-height: 38px; border-radius: 9px; padding: 8px 14px; font-size: 12px; }
+.tasks-page--detail .task-workspace__body { display: grid; grid-template-columns: minmax(0,1fr) 265px; gap: 14px; padding: 14px; border-top: 1px solid #eaeaea; }
+.tasks-page--detail .task-workspace__primary { display: grid; align-content: start; gap: 14px; }
+.tasks-page--detail .workspace-section, .tasks-page--detail .roadmap { border: 1px solid #e8e8e8; border-radius: 13px; padding: 22px 24px; background: #fff; }
+.tasks-page--detail .workspace-section__heading h3, .tasks-page--detail .roadmap__heading h3, .tasks-page--detail .workspace-aside-section h3 { font-size: 15px; }
+.tasks-page--detail .task-description { font-size: 13px; line-height: 1.65; }
+.tasks-page--detail .task-workspace__aside { display: flex; flex-direction: column; gap: 14px; background: transparent; border: 0; }
+.tasks-page--detail .workspace-aside-section { padding: 20px; border: 1px solid #e8e8e8; border-radius: 13px; background: #fff; }
+.tasks-page--detail .workspace-facts { font-size: 12px; }
+.tasks-page--detail .workspace-facts > div { gap: 12px; }
+.tasks-page--detail .workspace-facts dd { overflow-wrap: anywhere; text-align: right; }
+.tasks-page--detail .roadmap__total { border-color: #ddd; background: #fafafa; }
+.tasks-page--detail .workspace-empty { border-color: #e5e5e5; color: #888; }
+@media (max-width: 820px) {
+ .tasks-page--detail { padding: 18px 14px 75px; }
+ .tasks-page--detail .task-workspace__body { grid-template-columns: 1fr; }
+ .tasks-page--detail .task-workspace__aside { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 560px) {
+ .tasks-page--detail .task-workspace__header { flex-direction: column; align-items: stretch; padding: 22px 18px; }
+ .tasks-page--detail .task-workspace__actions { width: 100%; }
+ .tasks-page--detail .task-workspace__actions .task-button { flex: 1; }
+ .tasks-page--detail .task-workspace__body { padding: 10px; gap: 10px; }
+ .tasks-page--detail .task-workspace__primary { gap: 10px; }
+ .tasks-page--detail .workspace-section, .tasks-page--detail .roadmap { padding: 20px 16px; }
+ .tasks-page--detail .task-workspace__aside { grid-template-columns: 1fr; gap: 10px; }
+}
+
+/* Comentários: ação no cabeçalho no desktop; atalho flutuante só no mobile. */
+.task-comments-desktop-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 14px;
+  border: 1px solid #dedede;
+  border-radius: 9px;
+  background: #fff;
+  color: #171717;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.task-comments-desktop-button:hover:not(:disabled) { background: #f5f5f5; }
+.task-comments-desktop-button .mdi { font-size: 17px; }
+@media (min-width: 701px) {
+  .task-workspace > .task-comments-floating { display: none !important; }
+}
+@media (max-width: 700px) {
+  .task-comments-desktop-button { display: none !important; }
+}
