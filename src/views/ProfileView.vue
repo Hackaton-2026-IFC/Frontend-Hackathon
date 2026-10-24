@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import ProfileEditModal from '@/components/ui/ProfileEditModal.vue'
 import { useToastStore } from '@/stores/toastStore'
+import { profilePhotoUrl } from '@/utils/profilePhoto'
 
 const authStore = useAuthStore()
 const toast = useToastStore()
@@ -24,9 +25,8 @@ const userEmail = computed(() =>
   authStore.user?.email || 'E-mail não informado'
 )
 
-const fotoExibida = computed(() =>
-  authStore.user?.profile_image?.url || null
-)
+const fotoExibida = computed(() => profilePhotoUrl(authStore.user))
+const failedPhoto = ref('')
 
 const initials = computed(() =>
   userName.value
@@ -156,9 +156,10 @@ async function handleLogout() {
       <div class="profile-photo-wrapper">
         <div class="profile-avatar">
           <img
-            v-if="fotoExibida"
+            v-if="fotoExibida && failedPhoto !== fotoExibida"
             class="profile-image"
             :src="fotoExibida"
+            @error="failedPhoto = fotoExibida"
             :alt="userName"
           />
 

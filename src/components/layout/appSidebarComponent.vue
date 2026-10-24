@@ -1,7 +1,8 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { profilePhotoUrl } from '@/utils/profilePhoto'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -16,9 +17,8 @@ const userUsername = computed(() => {
   return user.value?.username || ''
 })
 
-const userPhoto = computed(() => {
-  return user.value?.profile_image?.url || null
-})
+const userPhoto = computed(() => profilePhotoUrl(user.value))
+const failedPhoto = ref('')
 
 const userInitial = computed(() => {
   return userName.value.charAt(0).toUpperCase()
@@ -95,8 +95,9 @@ function isActive(item) {
           <!-- FOTO DE PERFIL -->
           <template v-if="item.to === '/profile'">
             <img
-              v-if="userPhoto"
+              v-if="userPhoto && failedPhoto !== userPhoto"
               :src="userPhoto"
+              @error="failedPhoto = userPhoto"
               alt=""
               class="navigation-avatar"
             />
@@ -132,8 +133,9 @@ function isActive(item) {
       >
         <div class="sidebar-user-avatar">
           <img
-            v-if="userPhoto"
+            v-if="userPhoto && failedPhoto !== userPhoto"
             :src="userPhoto"
+              @error="failedPhoto = userPhoto"
             :alt="`Foto de ${userName}`"
           />
 

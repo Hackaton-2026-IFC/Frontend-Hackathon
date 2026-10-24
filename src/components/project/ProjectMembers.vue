@@ -8,6 +8,7 @@ import projectsApi from '@/api/projectsApi'
 import usersApi from '@/api/usersApi'
 import invitesApi from '@/api/invitesApi'
 import api from '@/api/config'
+import { profilePhotoUrl } from '@/utils/profilePhoto'
 
 const props = defineProps({
   project: { type: Object, required: true },
@@ -66,16 +67,7 @@ function listFrom(data) {
 }
 
 function getProfileImage(user) {
-  const image = user?.profile_image
-
-  if (typeof image === 'string') return image
-
-  return (
-    image?.url ||
-    user?.profile_image_url ||
-    user?.google_photo_url ||
-    null
-  )
+  return profilePhotoUrl(user)
 }
 
 function normalizeMember(item) {
@@ -113,7 +105,7 @@ function normalizeMember(item) {
       `Usuário #${userId ?? item.id}`,
     username: user.username || item.username || '',
     role: item.cargo || item.role || 'member',
-    profileImage: getProfileImage(user),
+    profileImage: getProfileImage(user) || (userId != null && String(userId) === String(currentUserId.value) ? profilePhotoUrl(authStore.user) : null),
   }
 }
 

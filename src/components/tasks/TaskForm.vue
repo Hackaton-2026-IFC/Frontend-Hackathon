@@ -5,6 +5,7 @@ import { TASK_PRIORITIES, TASK_STATUSES, taskError } from '@/api/taskApi'
 import { automaticPriority } from '@/utils/taskPresentation'
 import { useTaskStore } from '@/stores/taskStore'
 import TaskAssigneeAvatar from '@/components/tasks/TaskAssigneeAvatar.vue'
+import UserAvatar from '@/components/ui/UserAvatar.vue'
 import { assigneeDisplayName } from '@/utils/taskPresentation'
 
 const props = defineProps({
@@ -253,9 +254,7 @@ async function save() {
                     Outros usuários encontrados (ainda não fazem parte do projeto):
                   </p>
                   <div v-for="user in outsideUsers" :key="user.id" class="task-assignee-search-result">
-                    <span class="task-assignee-search-result__avatar" aria-hidden="true">
-                      {{ (user.name || user.username || 'U').charAt(0).toUpperCase() }}
-                    </span>
+                    <UserAvatar :user="user" :name="user.name || user.username || 'Usuário'" :size="32" />
                     <span class="task-assignee-search-result__identity">
                       <strong>{{ user.name || user.username || 'Usuário' }}</strong>
                       <small v-if="user.username">@{{ user.username }}</small>
