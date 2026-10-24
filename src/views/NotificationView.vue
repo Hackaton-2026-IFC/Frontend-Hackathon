@@ -25,12 +25,12 @@ const pendingInvites = computed(() =>
 )
 
 function getProjectId(invite) {
-  const value = invite.projeto_detalhes ?? invite.projeto_detail ?? invite.projeto
+  const value = invite.projeto_detalhes ?? invite.projeto_detail ?? invite.projeto ?? invite.projeto_id ?? invite.project_id
   return typeof value === 'object' ? value?.id : value
 }
 
 function getProject(invite) {
-  const embedded = invite.projeto_detalhes ?? invite.projeto_detail ?? invite.projeto
+  const embedded = invite.projeto_detalhes ?? invite.projeto_detail ?? invite.projeto ?? invite.project
   const details = typeof embedded === 'object' && embedded ? embedded : {}
   return { ...details, ...(projectDetails.value[String(getProjectId(invite))] || {}) }
 }
@@ -55,31 +55,23 @@ async function loadProjectDetails(items) {
 
 function getProjectName(invite) {
   const project = getProject(invite)
-
-  if (project && typeof project === 'object') {
-    return project.nome || project.name || `Projeto #${project.id}`
-  }
-
-  return invite.nome_projeto ||
-    invite.projeto_nome ||
-    `Projeto #${project ?? '?'}`
+  const name = project.nome || project.name || project.titulo ||
+    invite.nome_projeto || invite.projeto_nome || invite.project_name ||
+    invite.projeto?.nome || invite.projeto?.name
+  if (name) return name
+  const id = getProjectId(invite)
+  return id != null ? 'Projeto #' + id : 'Projeto convidado'
 }
 
 function getSenderName(invite) {
-  const sender =
-    invite.remetente_detalhes ??
-    invite.convidado_por_detalhes ??
-    invite.criado_por_detalhes ??
-    invite.remetente
-
-  if (sender && typeof sender === 'object') {
-    return sender.nome || sender.name || sender.nome_completo || sender.username || 'Um usuário'
-  }
-
-  return invite.remetente_nome ||
-    invite.convidado_por_nome ||
-    invite.criado_por_nome ||
-    'Um usuário'
+  const sender = invite.remetente_detalhes ?? invite.convidado_por_detalhes ??
+    invite.criado_por_detalhes ?? invite.remetente ?? invite.convidado_por ??
+    invite.criado_por ?? invite.sender
+  const name = typeof sender === 'object' && sender
+    ? sender.nome || sender.name || sender.nome_completo || sender.username
+    : null
+  return name || invite.remetente_nome || invite.convidado_por_nome ||
+    invite.criado_por_nome || invite.sender_name || 'Um usuário'
 }
 
 function getErrorMessage(err) {
