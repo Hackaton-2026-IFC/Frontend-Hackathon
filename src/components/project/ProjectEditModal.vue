@@ -1,5 +1,7 @@
 <script setup>
-import { onMounted, ref, reactive } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import ProjectIconModal from '@/components/project/ProjectIconModal.vue'
+import { getProjectIcon } from '@/utils/projectIcons'
 
 const props = defineProps({
   project: {
@@ -25,10 +27,37 @@ const emit = defineEmits(['close', 'save'])
 const dialogo = ref(null)
 const erroLocal = ref('')
 
+const statusParaFrontend = {
+  planejado: 'planned',
+  em_andamento: 'in_progress',
+  concluido: 'completed',
+}
+
+const statusParaBackend = {
+  planned: 'planejado',
+  in_progress: 'em_andamento',
+  completed: 'concluido',
+}
+
 const form = reactive({
-  name: props.project.name || '',
-  description: props.project.description || '',
-  status: props.project.status || 'planned',
+  name: props.project.name ?? props.project.nome ?? '',
+  description:
+    props.project.description ?? props.project.descricao ?? '',
+  status:
+    statusParaFrontend[props.project.status] ??
+    props.project.status ??
+    'planned',
+  icone: props.project.icone ?? '',
+  cor: props.project.cor || '#111111',
+  data_limite: props.project.data_limite
+    ? String(props.project.data_limite).slice(0, 10)
+    : '',
+})
+
+const previewColor = computed(() => {
+  return /^#[0-9a-fA-F]{6}$/.test(form.cor)
+    ? form.cor
+    : '#111111'
 })
 
 onMounted(() => {
@@ -37,6 +66,7 @@ onMounted(() => {
 
 function fechar() {
   if (!props.saving) {
+    dialogo.value?.close()
     emit('close')
   }
 }
@@ -58,11 +88,31 @@ function salvar() {
     return
   }
 
-  emit('save', {
+  const dados = {
     name: nome,
     description: form.description.trim(),
     status: form.status,
-  })
+    icone: form.icone,
+    cor: form.cor,
+    data_limite: form.data_limite || null,
+  }
+
+  // A página de detalhes utiliza a API Django diretamente.
+  if (props.mode === 'edit') {
+    emit('save', {
+      nome: dados.name,
+      descricao: dados.description,
+      status: statusParaBackend[dados.status],
+      icone: dados.icone,
+      cor: dados.cor,
+      data_limite: dados.data_limite,
+    })
+
+    return
+  }
+
+  // A criação utiliza a store, com nomes em inglês.
+  emit('save', dados)
 }
 </script>
 
@@ -73,10 +123,13 @@ function salvar() {
     :aria-label="mode === 'create' ? 'Criar projeto' : 'Editar projeto'"
     :aria-busy="saving"
     @cancel.prevent="fechar"
+    @click.self="fechar"
   >
     <header class="modal-header">
       <div>
-        <span class="modal-label">MOMENTUM / PROJETOS</span>
+        <span class="modal-label">
+          MOMENTUM / PROJETOS
+        </span>
 
         <h2>
           {{ mode === 'create' ? 'Novo projeto' : 'Editar projeto' }}
@@ -96,13 +149,35 @@ function salvar() {
 
     <form @submit.prevent="salvar">
       <fieldset :disabled="saving">
+
+        <div class="identity-preview">
+          <div
+            class="preview-icon"
+            :style="{ backgroundColor: previewColor }"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                :d="getProjectIcon(form.icone)"
+                fill="currentColor"
+              />
+            </svg>
+          </div>
+
+          <div>
+            <strong>
+              {{ form.name || 'Meu projeto' }}
+            </strong>
+
+            <small>Pré-visualização do projeto</small>
+          </div>
+        </div>
+
         <label>
           Nome do projeto
 
           <input
             v-model="form.name"
             type="text"
-            name="name"
             maxlength="100"
             placeholder="Digite o nome do projeto"
             required
@@ -115,24 +190,64 @@ function salvar() {
 
           <textarea
             v-model="form.description"
-            name="description"
-            rows="5"
+            rows="4"
             placeholder="Descreva o objetivo do projeto"
-          ></textarea>
+          />
         </label>
 
         <label>
           Status
 
-          <select v-model="form.status" name="status">
+          <select v-model="form.status">
             <option value="planned">Planejado</option>
             <option value="in_progress">Em andamento</option>
             <option value="completed">Concluído</option>
           </select>
         </label>
+
+        <label>
+          Data de prazo
+
+          <input
+            v-model="form.data_limite"
+            type="date"
+          />
+        </label>
+
+        <div class="color-section">
+          <span class="field-title">
+            Cor do projeto
+          </span>
+
+          <div class="color-input">
+            <input
+              v-model="form.cor"
+              type="color"
+              aria-label="Selecionar cor do projeto"
+            />
+
+            <span>{{ form.cor }}</span>
+          </div>
+        </div>
+
+        <div class="icon-section">
+          <span class="field-title">
+            Ícone do projeto
+          </span>
+
+          <p>
+            Escolha um ícone para identificar seu projeto.
+          </p>
+
+          <ProjectIconModal v-model="form.icone" />
+        </div>
       </fieldset>
 
-      <p v-if="erroLocal || error" class="error-message" role="alert">
+      <p
+        v-if="erroLocal || error"
+        class="error-message"
+        role="alert"
+      >
         {{ erroLocal || error }}
       </p>
 
@@ -168,17 +283,17 @@ function salvar() {
 .project-modal {
   position: fixed;
   inset: 0;
-  width: min(560px, calc(100% - 24px));
-  max-height: calc(100dvh - 24px);
+  width: min(650px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
   margin: auto;
   padding: 0;
   overflow-y: auto;
   box-sizing: border-box;
-  border: 1px solid #000;
+  border: 1px solid #ddd;
   border-radius: 20px;
   background: #fff;
-  color: #000;
-  box-shadow: 0 24px 80px rgb(0 0 0 / 24%);
+  color: #111;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 25%);
 }
 
 .project-modal::backdrop {
@@ -187,11 +302,11 @@ function salvar() {
 
 .modal-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   gap: 16px;
-  padding: 18px;
-  border-bottom: 1px solid #000;
+  padding: 24px;
+  border-bottom: 1px solid #e5e5e5;
 }
 
 .modal-label {
@@ -203,22 +318,22 @@ function salvar() {
 h2 {
   margin: 8px 0 0;
   font-size: 24px;
-  font-weight: 700;
 }
 
 .close-button {
-  flex: 0 0 44px;
-  height: 44px;
-  border: 1px solid #000;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border: 1px solid #ddd;
   border-radius: 50%;
   background: #fff;
-  color: #000;
+  color: #111;
   font-size: 26px;
   cursor: pointer;
 }
 
 form {
-  padding: 18px;
+  padding: 24px;
 }
 
 fieldset {
@@ -237,41 +352,117 @@ label {
   font-weight: 600;
 }
 
-input,
+input:not([type='color']),
 textarea,
 select {
   width: 100%;
   min-width: 0;
   padding: 12px 14px;
   box-sizing: border-box;
-  border: 1px solid #000;
+  border: 1px solid #ddd;
   border-radius: 10px;
   background: #fff;
-  color: #000;
+  color: #111;
   font: inherit;
   font-size: 16px;
   font-weight: 400;
 }
 
 textarea {
-  min-height: 110px;
+  min-height: 100px;
   resize: vertical;
 }
 
-.modal-actions {
+.identity-preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 14px;
+}
+
+.preview-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  color: #fff;
+}
+
+.preview-icon svg {
+  width: 30px;
+  height: 30px;
+}
+
+.identity-preview strong {
+  display: block;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.identity-preview small {
+  display: block;
+  margin-top: 5px;
+  color: #666;
+  font-size: 12px;
+}
+
+.color-section,
+.icon-section {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
-  margin-top: 24px;
+}
+
+.field-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.color-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.color-input input {
+  width: 60px;
+  height: 42px;
+  padding: 3px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.color-input span {
+  font-size: 13px;
+  font-family: monospace;
+}
+
+.icon-section p {
+  margin: 0;
+  color: #666;
+  font-size: 12px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
 }
 
 .button {
   min-height: 44px;
-  padding: 10px 18px;
-  border: 1px solid #000;
+  padding: 12px 20px;
+  border: 1px solid #ddd;
   border-radius: 999px;
   background: #fff;
-  color: #000;
+  color: #111;
   font: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -279,7 +470,7 @@ textarea {
 }
 
 .button-primary {
-  background: #000;
+  background: #111;
   color: #fff;
 }
 
@@ -289,34 +480,31 @@ button:disabled {
 }
 
 :is(button, input, textarea, select):focus-visible {
-  outline: 2px solid #000;
+  outline: 2px solid #2563eb;
   outline-offset: 3px;
 }
 
 .error-message {
   margin: 20px 0 0;
   padding: 12px;
-  border: 1px solid #000;
+  border: 1px solid #dc2626;
   border-radius: 8px;
+  color: #dc2626;
   font-size: 13px;
-  line-height: 1.6;
-  overflow-wrap: anywhere;
 }
 
-@media (min-width: 640px) {
-  .project-modal {
-    width: min(560px, calc(100% - 32px));
-    max-height: calc(100dvh - 32px);
+@media (max-width: 480px) {
+  .modal-header,
+  form {
+    padding: 20px;
   }
 
-  .modal-header,
-  form { padding: 24px; }
-
   .modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    margin-top: 28px;
+    flex-direction: column;
+  }
+
+  .modal-actions .button {
+    width: 100%;
   }
 }
 </style>

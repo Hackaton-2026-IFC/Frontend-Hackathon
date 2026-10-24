@@ -1,260 +1,287 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useTaskStore } from '@/stores/taskStore'
-import { TASK_PRIORITIES, TASK_STATUSES, isOverdue } from '@/api/taskApi'
-import TaskBoard from '@/components/tasks/TaskBoard.vue'
+import { TASK_STATUSES } from '@/api/taskApi'
+import { automaticPriority, taskIsOverdue, taskDueDate } from '@/utils/taskPresentation'
 import TaskForm from '@/components/tasks/TaskForm.vue'
-import TaskDetails from '@/components/tasks/TaskDetails.vue'
+import TaskWorkspace from '@/components/tasks/TaskWorkspace.vue'
 import '@/assets/css/tasks.css'
+
 const store = useTaskStore()
 const route = useRoute()
-const search = ref('')
-const projectFilter = ref('')
-const priority = ref('')
-const status = ref('')
-const responsible = ref('')
-const deadline = ref('')
-const modal = ref(null)
-const selectedId = ref(null)
-const initialStatus = ref('planejado')
+const router = useRouter()
+const formOpen = ref(false)
+const editingId = ref('')
 const notice = ref('')
+const searchText = ref('')
+const statusFilter = ref('todas')
+const projectFilter = ref('todos')
+
 const routeProject = computed(() =>
   route.params.projectId ? Number(route.params.projectId) : null,
 )
-const effectiveProject = computed(() => routeProject.value || Number(projectFilter.value) || null)
-const scopedTasks = computed(() =>
-  store.tasks.filter((task) => !effectiveProject.value || task.projeto === effectiveProject.value),
+
+const availableProjects = computed(() =>
+  routeProject.value
+    ? store.projects.filter((project) => Number(project.id) === routeProject.value)
+    : store.projects,
 )
-const members = computed(() => {
-  const unique = new Map()
-  for (const project of store.projects.filter(
-    (item) => !effectiveProject.value || item.id === effectiveProject.value,
-  )) {
-    for (const member of project.participantes || []) unique.set(member.usuario, member)
-  }
-  return [...unique.values()]
-})
-const filteredTasks = computed(() =>
-  scopedTasks.value.filter(
-    (task) =>
-      task.titulo
-        .toLocaleLowerCase('pt-BR')
-        .includes(search.value.trim().toLocaleLowerCase('pt-BR')) &&
-      (!priority.value || task.prioridade === priority.value) &&
-      (!status.value || task.status === status.value) &&
-      (!responsible.value || String(task.responsavel ?? 'none') === responsible.value) &&
-      (!deadline.value ||
-        (deadline.value === 'overdue' ? isOverdue(task) : task.data_limite === deadline.value)),
+
+const availableTasks = computed(() =>
+  store.tasks.filter((task) =>
+    (!routeProject.value || Number(task.projeto) === routeProject.value) &&
+    (routeProject.value || projectFilter.value === 'todos' ||
+      String(task.projeto) === projectFilter.value),
   ),
 )
-const completed = computed(
-  () => scopedTasks.value.filter((task) => task.status === 'concluido').length,
+
+const overdueCount = computed(() => availableTasks.value.filter(taskIsOverdue).length)
+const completedCount = computed(() =>
+  availableTasks.value.filter((task) => task.status === 'concluido').length,
 )
-const progress = computed(() =>
-  scopedTasks.value.length ? Math.round((completed.value / scopedTasks.value.length) * 100) : 0,
-)
-const selectedTask = computed(() => store.tasks.find((task) => task.id === selectedId.value))
-const selectedProject = computed(() =>
-  store.projects.find((project) => project.id === selectedTask.value?.projeto),
-)
-onMounted(() => store.load())
-watch(routeProject, () => {
-  close()
-  clearFilters()
+
+const filteredTasks = computed(() => {
+  const query = searchText.value.trim().toLocaleLowerCase('pt-BR')
+  return availableTasks.value
+    .filter((task) => !query || String(task.titulo).toLocaleLowerCase('pt-BR').includes(query))
+    .filter((task) => {
+      if (statusFilter.value === 'atrasadas') return taskIsOverdue(task)
+      if (statusFilter.value === 'pendentes') return task.status !== 'concluido'
+      if (statusFilter.value === 'concluidas') return task.status === 'concluido'
+      return true
+    })
+    .slice()
+    .sort((a, b) =>
+      Number(taskIsOverdue(b)) - Number(taskIsOverdue(a)) ||
+      String(a.prazo_efetivo || a.data_limite || '9999').localeCompare(
+        String(b.prazo_efetivo || b.data_limite || '9999'),
+      ) || Number(b.id) - Number(a.id),
+    )
 })
-watch(effectiveProject, () => {
-  responsible.value = ''
-})
-function clearFilters() {
-  search.value = ''
-  projectFilter.value = ''
-  priority.value = ''
-  status.value = ''
-  responsible.value = ''
-  deadline.value = ''
-}
-function close() {
-  modal.value = null
-  selectedId.value = null
-}
-function create(value = 'planejado') {
-  selectedId.value = null
-  initialStatus.value = value
-  modal.value = 'form'
-  notice.value = ''
-}
-function open(id) {
-  selectedId.value = id
-  modal.value = 'details'
-  notice.value = ''
-}
-function edit(id) {
-  selectedId.value = id
-  modal.value = 'form'
-}
-function deleted() {
-  close()
-  notice.value = 'Tarefa excluída.'
-}
-function saved() {
-  close()
-  notice.value = 'Tarefa salva com sucesso.'
-}
-async function move(id, value) {
-  if (store.busy) return
-  notice.value = ''
-  try {
-    await store.update(id, { status: value })
-    notice.value = 'Situação atualizada.'
-  } catch {
-    /* The store exposes the API validation message. */
+
+const requestedTaskId = computed(() => String(route.params.id || route.query.task || ''))
+
+const selectedTask = computed(() => {
+  if (requestedTaskId.value) {
+    // Um link direto nunca deve abrir outra tarefa por engano.
+    return filteredTasks.value.find((task) => String(task.id) === requestedTaskId.value) || null
   }
+  return filteredTasks.value[0] || null
+})
+
+const backProjectId = computed(() =>
+  routeProject.value || (route.name === 'task-view' ? selectedTask.value?.projeto : null),
+)
+
+const editingTask = computed(() =>
+  store.tasks.find((task) => String(task.id) === editingId.value) || null,
+)
+
+onMounted(() => store.load())
+
+watch(routeProject, () => {
+  closeForm()
+  notice.value = ''
+  projectFilter.value = 'todos'
+  statusFilter.value = 'todas'
+  searchText.value = ''
+})
+
+function selectTask(id) {
+  notice.value = ''
+  if (route.name === 'task-view') {
+    // Links /tasks/:id dos cards de projeto preservam sua URL.
+    return router.replace({ name: 'task-view', params: { id: String(id) }, query: route.query })
+  }
+  return router.replace({ query: { ...route.query, task: String(id) } })
+}
+
+function closeForm() {
+  formOpen.value = false
+  editingId.value = ''
+}
+
+function createTask() {
+  editingId.value = ''
+  notice.value = ''
+  formOpen.value = true
+}
+
+function editTask(id) {
+  if (!store.tasks.some((task) => String(task.id) === String(id))) return
+  editingId.value = String(id)
+  notice.value = ''
+  formOpen.value = true
+}
+
+function savedTask({ task, additionalStored, additionalCount }) {
+  const message = editingId.value ? 'Tarefa atualizada com sucesso.' : 'Tarefa criada com sucesso.'
+  notice.value = additionalCount && !additionalStored
+    ? `${message} Os responsáveis adicionais não puderam ser salvos neste navegador.`
+    : message
+
+  searchText.value = ''
+  statusFilter.value = 'todas'
+  if (!routeProject.value) projectFilter.value = 'todos'
+  closeForm()
+  if (task?.id) selectTask(task.id)
+  // selectTask clears notices; keep the success message after updating the selection.
+  notice.value = additionalCount && !additionalStored
+    ? `${message} Os responsáveis adicionais não puderam ser salvos neste navegador.`
+    : message
+}
+
+function removedTask() {
+  notice.value = 'Tarefa excluída com sucesso.'
+  if (route.name === 'task-view') {
+    router.replace({ name: 'tasks' })
+    return
+  }
+  const nextQuery = { ...route.query }
+  delete nextQuery.task
+  router.replace({ query: nextQuery })
 }
 </script>
 
 <template>
   <section class="tasks-page">
-    <header class="tasks-heading">
-      <div>
-        <RouterLink
-          v-if="routeProject"
-          class="task-back-link"
-          :to="{ name: 'project-details', params: { id: routeProject } }"
-        >← Voltar ao projeto</RouterLink>
-        <p class="task-eyebrow">MOMENTUM / ORGANIZAÇÃO</p>
-        <h1>
-          {{
-            routeProject
-              ? store.projects.find((project) => project.id === routeProject)?.nome ||
-                'Tarefas do projeto'
-              : 'Todas as tarefas'
-          }}
-        </h1>
-        <p>Acompanhe cada etapa dos seus projetos.</p>
-      </div>
-      <button
-        class="task-button task-primary"
-        :disabled="
-          store.loading ||
-          store.busy ||
-          !store.projects.length ||
-          (!!routeProject && !store.projects.some((project) => project.id === routeProject))
-        "
-        @click="create()"
-      >
-        + Nova tarefa
-      </button>
-    </header>
-    <div class="task-progress">
-      <strong>{{ effectiveProject ? 'Progresso do projeto' : 'Progresso geral' }}</strong
-      ><progress :value="progress" max="100" :aria-label="`Progresso: ${progress}%`"></progress
-      ><span>{{ completed }} de {{ scopedTasks.length }} concluídas · {{ progress }}%</span>
-    </div>
-    <div class="task-toolbar">
-      <label class="task-search"
-        >Pesquisar<input v-model="search" type="search" placeholder="Buscar pelo título..."
-      /></label>
-      <label v-if="!routeProject"
-        >Projeto<select v-model="projectFilter">
-          <option value="">Todos</option>
-          <option v-for="project in store.projects" :key="project.id" :value="project.id">
-            {{ project.nome }}
-          </option>
-        </select></label
-      >
-      <label
-        >Responsável<select v-model="responsible">
-          <option value="">Todos</option>
-          <option value="none">Sem responsável</option>
-          <option v-for="member in members" :key="member.usuario" :value="String(member.usuario)">
-            {{ member.usuario_detalhes?.name || member.usuario_detalhes?.username }}
-          </option>
-        </select></label
-      >
-      <label
-        >Prioridade<select v-model="priority">
-          <option value="">Todas</option>
-          <option v-for="(label, value) in TASK_PRIORITIES" :key="value" :value="value">
-            {{ label }}
-          </option>
-        </select></label
-      >
-      <label
-        >Situação<select v-model="status">
-          <option value="">Todas</option>
-          <option v-for="(label, value) in TASK_STATUSES" :key="value" :value="value">
-            {{ label }}
-          </option>
-        </select></label
-      >
-      <label
-        >Prazo<input
-          :value="deadline === 'overdue' ? '' : deadline"
-          type="date"
-          @input="deadline = $event.target.value"
-      /></label>
-      <button
-        class="task-button"
-        :aria-pressed="deadline === 'overdue'"
-        @click="deadline = deadline === 'overdue' ? '' : 'overdue'"
-      >
-        Atrasadas</button
-      ><button class="task-button" @click="clearFilters">Limpar</button>
-    </div>
-    <p v-if="notice" class="task-notice" role="status">{{ notice }}</p>
-    <div v-if="store.error" class="task-error" role="alert">
-      {{ store.error }}
-      <button class="task-button" :disabled="store.busy || store.loading" @click="store.load">
-        Recarregar
-      </button>
-    </div>
-    <p v-if="store.loading" class="task-empty" role="status">
-      Carregando seus projetos e tarefas...
-    </p>
-    <p
-      v-else-if="routeProject && !store.projects.some((project) => project.id === routeProject)"
-      class="task-empty"
-    >
-      Projeto não encontrado ou sem acesso.
-    </p>
-    <p v-else-if="!store.projects.length && !store.error" class="task-empty">
-      Você ainda não participa de um projeto. Entre em um projeto para criar tarefas.
-    </p>
-    <template v-else-if="store.projects.length">
-      <p class="task-muted" aria-live="polite">{{ filteredTasks.length }} tarefas encontradas</p>
-      <p v-if="!filteredTasks.length" class="task-empty">
-        {{
-          store.tasks.length
-            ? 'Nenhuma tarefa corresponde aos filtros.'
-            : 'Crie sua primeira tarefa para começar.'
-        }}
-      </p>
-      <TaskBoard
-        :tasks="filteredTasks"
-        :projects="store.projects"
-        :busy="store.busy"
-        @open="open"
-        @move="move"
-        @create="create"
+    <div class="tasks-container">
+      <RouterLink
+        v-if="backProjectId"
+        class="task-back-link"
+        :to="{ name: 'project-details', params: { id: backProjectId } }"
+      >← Voltar ao projeto</RouterLink>
+
+      <header class="tasks-page-heading">
+        <div>
+          <p class="task-eyebrow">MOMENTUM / ORGANIZAÇÃO</p>
+          <h1>{{ routeProject ? 'Tarefas do projeto' : 'Painel de tarefas' }}</h1>
+          <p>Detalhes, responsáveis e evolução de cada atividade em um só lugar.</p>
+        </div>
+        <button
+          type="button"
+          class="task-button task-primary task-create-button"
+          :disabled="store.loading || store.busy || !availableProjects.length"
+          @click="createTask"
+        >+ Nova tarefa</button>
+      </header>
+
+      <p v-if="notice" class="task-notice" role="status">{{ notice }}</p>
+      <p v-if="store.loading" class="task-state" role="status">Carregando tarefas...</p>
+
+      <template v-else>
+        <div v-if="store.error" class="task-error" role="alert">
+          {{ store.error }}
+          <button type="button" class="task-button" :disabled="store.busy" @click="store.load()">Recarregar</button>
+        </div>
+
+        <div v-if="routeProject && !availableProjects.length" class="task-state">
+          Projeto não encontrado ou sem acesso.
+        </div>
+        <div v-else-if="!store.projects.length" class="task-state">
+          Você precisa participar de um projeto para acompanhar e criar tarefas.
+        </div>
+
+        <template v-else>
+          <div class="task-summary" aria-label="Resumo das tarefas">
+            <div><strong>{{ availableTasks.length }}</strong><span>Total de tarefas</span></div>
+            <div><strong>{{ overdueCount }}</strong><span>Em atraso</span></div>
+            <div><strong>{{ completedCount }}</strong><span>Concluídas</span></div>
+          </div>
+
+          <div class="task-dashboard">
+            <aside class="task-browser" aria-label="Lista de tarefas">
+              <div class="task-browser__heading">
+                <h2>Tarefas</h2>
+                <span>{{ filteredTasks.length }}</span>
+              </div>
+
+              <div class="task-browser__filters">
+                <label for="tasks-search">Pesquisar tarefa</label>
+                <input
+                  id="tasks-search"
+                  v-model="searchText"
+                  type="search"
+                  placeholder="Buscar pelo título..."
+                />
+
+                <label v-if="!routeProject" for="tasks-project">Projeto</label>
+                <select v-if="!routeProject" id="tasks-project" v-model="projectFilter">
+                  <option value="todos">Todos os projetos</option>
+                  <option v-for="project in store.projects" :key="project.id" :value="String(project.id)">
+                    {{ project.nome }}
+                  </option>
+                </select>
+
+                <label for="tasks-status">Exibir</label>
+                <select id="tasks-status" v-model="statusFilter">
+                  <option value="todas">Todas as tarefas</option>
+                  <option value="atrasadas">Atrasadas</option>
+                  <option value="pendentes">Em aberto</option>
+                  <option value="concluidas">Concluídas</option>
+                </select>
+              </div>
+
+              <ul v-if="filteredTasks.length" class="task-browser__list">
+                <li v-for="task in filteredTasks" :key="task.id">
+                  <button
+                    type="button"
+                    class="task-browser__item"
+                    :class="{
+                      'task-browser__item--selected': selectedTask?.id === task.id,
+                      'task-browser__item--late': taskIsOverdue(task),
+                    }"
+                    :aria-current="selectedTask?.id === task.id ? 'true' : undefined"
+                    @click="selectTask(task.id)"
+                  >
+                    <span class="task-browser__item-name">{{ task.titulo }}</span>
+                    <span class="task-browser__item-meta">
+                      <span v-if="taskIsOverdue(task)" class="task-browser__late">Atrasada</span>
+                      <span v-else>{{ TASK_STATUSES[task.status] || 'A fazer' }}</span>
+                      <span
+                        v-if="automaticPriority(task)"
+                        class="task-priority__dot"
+                        :class="`task-priority__dot--${automaticPriority(task)}`"
+                        :title="`Prazo: ${taskDueDate(task)}`"
+                        aria-hidden="true"
+                      ></span>
+                    </span>
+                  </button>
+                </li>
+              </ul>
+              <p v-else class="workspace-empty">Nenhuma tarefa corresponde aos filtros.</p>
+            </aside>
+
+            <TaskWorkspace
+              v-if="selectedTask"
+              :key="selectedTask.id"
+              :task="selectedTask"
+              :tasks="store.tasks"
+              :projects="store.projects"
+              :additional-assignees-by-task="store.additionalAssigneesByTask"
+              @edit="editTask"
+              @removed="removedTask"
+            />
+            <div v-else class="task-dashboard__empty">
+              <h2>{{ requestedTaskId ? 'Tarefa não encontrada' : 'Nenhuma tarefa selecionada' }}</h2>
+              <p>{{ requestedTaskId
+                ? 'Esta tarefa não está disponível ou não corresponde aos filtros.'
+                : 'Altere os filtros ou crie uma tarefa para começar a acompanhar o roadmap.' }}</p>
+              <button class="task-button task-primary" type="button" @click="createTask">+ Nova tarefa</button>
+            </div>
+          </div>
+        </template>
+      </template>
+
+      <TaskForm
+        v-if="formOpen && availableProjects.length"
+        :task="editingTask"
+        :projects="availableProjects"
+        :project-id="routeProject"
+        @close="closeForm"
+        @saved="savedTask"
       />
-    </template>
-    <TaskForm
-      v-if="modal === 'form'"
-      :task="selectedTask"
-      :projects="store.projects"
-      :project-id="effectiveProject"
-      :initial-status="initialStatus"
-      @close="close"
-      @saved="saved"
-    />
-    <TaskDetails
-      v-if="modal === 'details' && selectedTask"
-      :task="selectedTask"
-      :project="selectedProject"
-      @close="close"
-      @edit="edit"
-      @deleted="deleted"
-    />
+    </div>
   </section>
 </template>

@@ -1,54 +1,35 @@
-# Tela de tarefas — Momentum
+# Página de tarefas e roadmap — FEAT-9
 
-- `/tasks`: todas as tarefas dos projetos acessíveis ao usuário, com filtro por projeto.
-- `/projects/:projectId/tasks`: tarefas de um projeto específico.
-- Acesso pelo item **Tarefas** no menu lateral, protegido pelo guard existente.
+A implementação atual mantém a interface de **criar/editar** em
+`src/components/tasks/TaskForm.vue` como modal nativo. A regra de
+prioridade automática em `src/utils/taskPresentation.js` foi preservada.
 
-## Arquivos
+## Organização do frontend
 
-- `src/views/TasksView.vue`: filtros, progresso e controle dos modais.
-- `src/components/tasks/TaskBoard.vue`: três colunas e movimentação por arraste.
-- `src/components/tasks/TaskCard.vue`: resumo e seletor de situação, também utilizável no celular/teclado.
-- `src/components/tasks/TaskForm.vue`: criação e edição.
-- `src/components/tasks/TaskDetails.vue`: detalhes, exclusão confirmada, checklist e links.
-- `src/stores/taskStore.js`: estado, carregamento, erros e operações de tarefas, checklist e materiais.
-- `src/api/taskApi.js`: contrato HTTP e funções auxiliares.
-- `src/assets/css/tasks.css`: estilos compartilhados e responsividade.
+- `src/views/TasksView.vue`: página principal, lista pesquisável e filtros por projeto, atraso, pendências e concluídas. Mantém seleção da tarefa em `?task=ID`, com layout mobile first.
+- `src/components/tasks/TaskWorkspace.vue`: painel detalhado da tarefa selecionada. Mostra descrição, responsável principal e adicionais, status, prioridade, prazos, data de criação, conclusão (se disponível), criador, dependências, planejamento climático e materiais de apoio. Oferece editar e exclusão com confirmação.
+- `src/components/tasks/TaskRoadmap.vue`: roadmap vertical das microtarefas, barra de progresso e inclusão/conclusão sequencial.
+- `src/utils/taskRoadmap.js`: ordenação, progresso e regras de habilitação das etapas. O backend continua sendo a fonte de verdade e valida os pré-requisitos.
+- `src/stores/taskStore.js` e `src/api/taskApi.js`: chamadas à API continuam fora de views e componentes de apresentação.
+- `src/assets/css/tasks.css`: estilos da tela e dos modais.
 
-## API e comportamento
+## Sobre os dados
 
-Utiliza a instância Axios existente e `VITE_URL_BACKEND`. Todas as operações são persistidas pelo backend; não há dados fictícios nem gravação de tarefas no localStorage.
-
-A listagem usa `tarefas/kanban/`, que já retorna todos os projetos autorizados. Projetos são carregados com a paginação `page`/`total_pages` do backend. Os filtros são aplicados sobre todas as tarefas retornadas. O progresso considera o projeto selecionado (ou todos os projetos), sem ser alterado por busca, prioridade ou responsável.
-
-Criação/edição usam os campos reais `projeto`, `titulo`, `descricao`, `prioridade`, `status`, `responsavel`, `data_limite`. As prioridades são muito baixa, baixa, neutra, alta e muito alta; `planejado` é apresentado como “A fazer”. A edição preserva os campos avançados não expostos no formulário através de PATCH.
-
-Microtarefas seguem a ordem e as dependências validadas pelo servidor. Depois de alterá-las, o frontend relê a tarefa, pois o servidor pode recalcular sua situação. Links são carregados e criados em `tarefas/:id/recursos/` exclusivamente por ações da store; nenhum componente ou view faz requisições HTTP. URLs exibidas são limitadas a HTTP/HTTPS.
-
-## Pendências do backend
-
-Na revisão `f2c32006c49f3713a5414903b9754708fe9b8e2b`, não há endpoint de comentários nem campo de data de conclusão. Esses recursos não foram simulados. A integração deles depende de ampliar o backend. A autenticação e as permissões são as existentes no projeto.
+- Os passos do roadmap usam os campos `microtarefas` e `ordem` fornecidos pela API. Não são apenas um desenho: adicionar e marcar etapa altera o servidor pela store.
+- A API aceita somente um `responsavel` por tarefa. Fotos dos participantes são obtidas do projeto. Seleções adicionais salvas no navegador são exibidas na página, identificadas como locais, sem sincronização com o resto da equipe.
+- A prioridade visual segue o prazo e não altera o campo manual legado.
+- A data de conclusão não é inferida. Se a API não fornece `data_conclusao`, a interface mostra **Data não registrada**.
+- Links de apoio são listados e adicionados pelos endpoints já existentes. Apenas links HTTP ou HTTPS podem ser abertos.
+- Nenhuma alteração é necessária ou realizada no repositório do backend.
 
 ## Validação
 
-```bash
-npm ci
-node --test tests/tasks.test.mjs
-npm run build
-```
+Executar `node --test tests/task-roadmap.test.mjs tests/task-presentation.test.mjs tests/tasks.test.mjs`
+e `npm run build` no repositório local.
 
-Os testes usam respostas HTTP simuladas para verificar paginação, CRUD, erros de validação, recálculo após checklist, carregamento e criação de materiais pela store, prazos e links seguros. Não substituem testes com backend autenticado.
+## Rotas após a integração da DEV
 
-Roteiro manual: entrar em `/tasks`, criar tarefa em um projeto, abrir detalhes, editar, movimentar com seletor ou arraste, concluir etapas em ordem, adicionar link e excluir com confirmação. Conferir filtros combinados e layout no celular. O build apresenta avisos existentes sobre Tailwind e `:deep` no CSS global/home; esses estilos não foram alterados nesta funcionalidade.
-
-
-## Integração com projetos (FEAT-8 + DEV)
-
-- `/projects` mostra os projetos reais, com busca, filtros, cadastro e navegação aos detalhes.
-- `/projects/:id` mostra membros, progresso, edição, exclusão e link para o Kanban.
-- `/projects/:projectId/tasks` conserva o Kanban da FEAT-9, filtrado pelo projeto.
-- A store `project.js` é responsável pelas ações de projetos; as views usam a store em vez de chamadas HTTP.
-- O cliente HTTP usa o servidor configurado na DEV como padrão, aceita `VITE_URL_BACKEND` como substituição e renova o JWT após HTTP 401.
-- `tasks.css` foi adaptado à identidade visual da FEAT-8 (fundo branco, bordas pretas e botões arredondados).
-
-Verificação manual sugerida: autenticar; abrir Projetos; criar, editar e excluir um projeto de teste; abrir um projeto; entrar no Kanban pelo botão; criar, mover, editar e excluir tarefas; renovar sessão com token expirado. Os fluxos com backend real exigem sessão e acesso ao servidor.
+- `/tasks/:id` (rota `task-view`, usada pelos cards dentro dos projetos) renderiza **a mesma** `TasksView.vue` que contém o painel com roadmap. O parâmetro `id` seleciona a tarefa correta, e a troca de seleção atualiza o endereço sem perder o link direto.
+- `/tasks` e `/projects/:projectId/tasks` continuam disponíveis, mas o item `Tarefas` foi removido da sidebar. O acesso permanece pelos projetos e seus cards.
+- A antiga `src/views/TaskView.vue` foi removida. O módulo `src/api/tasksApi.js` foi mantido porque a página de projetos ainda o utiliza.
+- Nada foi alterado no backend, e a DEV não é modificada por esta mudança.

@@ -2,12 +2,13 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import projectApi from '@/api/projectApi'
 
-// Seus componentes usam status em inglês.
-// O backend recebe e retorna status em português.
 const statusParaBackend = {
   planned: 'planejado',
   in_progress: 'em_andamento',
   completed: 'concluido',
+  planejado: 'planejado',
+  em_andamento: 'em_andamento',
+  concluido: 'concluido',
 }
 
 const statusParaFrontend = {
@@ -16,7 +17,6 @@ const statusParaFrontend = {
   concluido: 'completed',
 }
 
-// Converte a resposta da API para o formato das telas.
 function adaptarProjeto(dados) {
   const participantes = Array.isArray(dados.participantes)
     ? dados.participantes
@@ -34,6 +34,9 @@ function adaptarProjeto(dados) {
     description: dados.descricao || '',
     status: statusParaFrontend[dados.status] || dados.status,
     created_at: dados.data_criacao,
+    icone: dados.icone ?? '',
+    cor: dados.cor ?? '',
+    data_limite: dados.data_limite ?? null,
 
     members: participantes.map((membro) => {
       const usuario = membro.usuario_detalhes || {}
@@ -47,7 +50,6 @@ function adaptarProjeto(dados) {
   }
 }
 
-// Converte os campos do formulário para os nomes do backend.
 function prepararDados(dados) {
   const nome = String(dados.name ?? '').trim()
   const status = statusParaBackend[dados.status || 'planned']
@@ -64,14 +66,27 @@ function prepararDados(dados) {
     throw new Error('Selecione um status válido.')
   }
 
-  return {
+  const payload = {
     nome,
     descricao: String(dados.description ?? '').trim(),
     status,
   }
+
+  if (dados.icone !== undefined) {
+    payload.icone = dados.icone
+  }
+
+  if (dados.cor !== undefined) {
+    payload.cor = dados.cor
+  }
+
+  if (dados.data_limite !== undefined) {
+    payload.data_limite = dados.data_limite || null
+  }
+
+  return payload
 }
 
-// Obtém a mensagem enviada pelo backend.
 function obterMensagemErro(erro) {
   const dados = erro.response?.data
 
@@ -84,20 +99,19 @@ function obterMensagemErro(erro) {
       nome: 'Nome',
       descricao: 'Descrição',
       status: 'Status',
+      icone: 'Ícone',
+      cor: 'Cor',
+      data_limite: 'Data de prazo',
       non_field_errors: 'Erro',
     }
 
-    const mensagens = Object.entries(dados).flatMap(
-      ([campo, valor]) => {
-        const lista = Array.isArray(valor) ? valor : [valor]
+    const mensagens = Object.entries(dados).flatMap(([campo, valor]) => {
+      const lista = Array.isArray(valor) ? valor : [valor]
 
-        return lista
-          .filter((mensagem) => typeof mensagem === 'string')
-          .map((mensagem) => {
-            return `${campos[campo] || campo}: ${mensagem}`
-          })
-      },
-    )
+      return lista
+        .filter((mensagem) => typeof mensagem === 'string')
+        .map((mensagem) => `${campos[campo] || campo}: ${mensagem}`)
+    })
 
     if (mensagens.length) {
       return mensagens.join(' ')
@@ -117,7 +131,6 @@ export const useProjectStore = defineStore('projects', () => {
   const loading = ref(false)
   const errorMessage = ref('')
 
-  // Centraliza o tratamento dos erros.
   async function executar(operacao) {
     errorMessage.value = ''
 
@@ -126,33 +139,67 @@ export const useProjectStore = defineStore('projects', () => {
     } catch (erro) {
       errorMessage.value = obterMensagemErro(erro)
 
-      // As views recebem o erro e mantêm o modal aberto.
-      throw new Error(errorMessage.value)
+      throw new Error(errorMessage.value, {
+        cause: erro,
+      })
     }
   }
 
-  // Lista os projetos do usuário autenticado.
   async function fetchProjects() {
     loading.value = true
-    projects.value = []
 
     try {
       return await executar(async () => {
         const encontrados = []
+        const idsEncontrados = new Set()
         let pagina = 1
 
-        // O backend pode responder com array simples ou lista paginada.
         while (true) {
-          const { data } = await projectApi.listar({ page: pagina })
+          const { data } = await projectApi.listar({
+            page: pagina,
+          })
+
+          const lista = Array.isArray(data)
+            ? data
+            : data?.results
+
+          if (!Array.isArray(lista)) {
+            throw new Error(
+              'O servidor retornou uma lista de projetos inválida.',
+            )
+          }
+
+          let novosProjetos = 0
+
+          for (const projeto of lista) {
+            const id = String(projeto.id)
+
+            if (!idsEncontrados.has(id)) {
+              idsEncontrados.add(id)
+              encontrados.push(projeto)
+              novosProjetos += 1
+            }
+          }
 
           if (Array.isArray(data)) {
-            encontrados.push(...data)
             break
           }
 
-          encontrados.push(...(Array.isArray(data?.results) ? data.results : []))
+          const temProximaPagina =
+            data.total_pages != null
+              ? pagina < Number(data.total_pages)
+              : Boolean(data.next)
 
-          if (data?.total_pages != null ? pagina >= data.total_pages : !data?.next) break
+          if (!temProximaPagina) {
+            break
+          }
+
+          if (novosProjetos === 0) {
+            throw new Error(
+              'Não foi possível avançar na paginação dos projetos. Confira se projectApi.listar envia o parâmetro page.',
+            )
+          }
+
           pagina += 1
         }
 
@@ -165,7 +212,6 @@ export const useProjectStore = defineStore('projects', () => {
     }
   }
 
-  // Carrega os detalhes de um projeto.
   async function fetchProject(id) {
     loading.value = true
     currentProject.value = null
@@ -193,28 +239,25 @@ export const useProjectStore = defineStore('projects', () => {
     }
   }
 
-  // Cria o projeto no backend.
   async function createProject(dados) {
     return executar(async () => {
       const payload = prepararDados(dados)
-
       const { data } = await projectApi.criar(payload)
-
       const projetoCriado = adaptarProjeto(data)
 
-      projects.value = [projetoCriado, ...projects.value]
+      projects.value = [
+        projetoCriado,
+        ...projects.value,
+      ]
 
       return projetoCriado
     })
   }
 
-  // Atualiza o projeto no backend.
   async function updateProject(id, dados) {
     return executar(async () => {
       const payload = prepararDados(dados)
-
       const { data } = await projectApi.atualizar(id, payload)
-
       const projetoAtualizado = adaptarProjeto(data)
 
       projects.value = projects.value.map((projeto) => {
@@ -234,7 +277,6 @@ export const useProjectStore = defineStore('projects', () => {
     })
   }
 
-  // Exclui no backend e depois atualiza a lista.
   async function deleteProject(id) {
     return executar(async () => {
       await projectApi.excluir(id)

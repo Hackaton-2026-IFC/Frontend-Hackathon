@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import NotificationBell from '@/components/layout/NotificationBell.vue'
 
 const route = useRoute()
 
@@ -9,7 +10,8 @@ const pageTitle = computed(() => {
     '/': 'Início',
     '/home': 'Início',
     '/projects': 'Projetos',
-    '/tasks': 'Todas as tarefas',
+    '/tasks': 'Tarefas',
+    '/notes': 'Notas',
     '/profile': 'Perfil',
     '/settings': 'Configurações',
   }
@@ -22,6 +24,10 @@ const pageTitle = computed(() => {
 
   if (route.name === 'project-tasks') {
     return 'Tarefas do projeto'
+  }
+
+  if (route.name === 'task-view') {
+    return 'Detalhes da tarefa'
   }
 
   if (path.startsWith('/projects/')) {
@@ -62,6 +68,8 @@ const pageTitle = computed(() => {
           {{ pageTitle }}
         </span>
       </div>
+
+      <NotificationBell />
     </div>
   </header>
 </template>
@@ -85,6 +93,8 @@ const pageTitle = computed(() => {
 .header-content {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 18px;
 
   width: 100%;
   height: 100%;
@@ -141,7 +151,8 @@ const pageTitle = computed(() => {
     align-items: center;
     gap: 7px;
 
-    width: 100%;
+    flex: 1;
+    width: auto;
     min-width: 0;
 
     overflow: hidden;
