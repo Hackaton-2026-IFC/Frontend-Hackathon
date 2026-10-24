@@ -31,6 +31,7 @@ const id = computed(() => route.params.id)
 
 const project = ref(null)
 const board = ref(null)
+const filtersOpen = ref(false)
 
 const error = ref('')
 const editError = ref('')
@@ -776,8 +777,23 @@ onMounted(load)
           </button>
         </div>
 
-        <!-- Filtros -->
+        <!-- Filtros recolhíveis -->
+        <div class="project-tasks__filter-toolbar">
+          <button
+            type="button"
+            class="project-tasks__filter-toggle"
+            :aria-expanded="filtersOpen"
+            aria-controls="project-task-filters"
+            @click="filtersOpen = !filtersOpen"
+          >
+            <span class="mdi mdi-filter-variant" aria-hidden="true"></span>
+            {{ filtersOpen ? 'Ocultar filtros' : 'Filtrar' }}
+            <span v-if="activeFiltersCount" class="project-tasks__filter-badge">{{ activeFiltersCount }}</span>
+            <span class="mdi" :class="filtersOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" aria-hidden="true"></span>
+          </button>
+        </div>
 
+        <div v-show="filtersOpen" id="project-task-filters" class="project-tasks__filter-panel">
         <div class="project-tasks__filters">
           <label class="project-tasks__search">
             Pesquisar por nome
@@ -928,6 +944,8 @@ onMounted(load)
           </button>
         </div>
 
+        </div>
+
         <!-- Contador -->
 
         <p
@@ -968,6 +986,46 @@ onMounted(load)
   </main>
 </template>
 <style scoped>
+.project-tasks__filter-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin: 14px 0;
+}
+.project-tasks__filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 9px 14px;
+  border: 1px solid #dedede;
+  border-radius: 10px;
+  background: #fff;
+  color: #171717;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.project-tasks__filter-toggle:hover { background: #f7f7f7; }
+.project-tasks__filter-toggle:focus-visible { outline: 3px solid #737373; outline-offset: 2px; }
+.project-tasks__filter-toggle .mdi { font-size: 19px; }
+.project-tasks__filter-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 6px;
+  background: #171717;
+  color: #fff;
+  font-size: 11px;
+}
+.project-tasks__filter-panel {
+  padding: 16px 0;
+  border-top: 1px solid #ededed;
+}
+
 .momentum-mural-link{display:flex;align-items:center;gap:15px;margin:18px 0 22px;padding:17px 20px;border:1px solid #dedede;border-radius:16px;background:#fff;color:#111;text-decoration:none;transition:border-color .2s,background .2s}
 .momentum-mural-link:hover{background:#fafafa;border-color:#999}
 .momentum-mural-link>.mdi{font-size:26px}
