@@ -13,6 +13,12 @@ export const useTaskStore = defineStore('tasks', () => {
   const resourcesByTask = ref({})
   const resourcesLoading = ref({})
   const resourceErrors = ref({})
+  const commentsByTask = ref({})
+  const commentsLoading = ref({})
+  const commentsErrors = ref({})
+  const commentsBusy = ref(false)
+  const commentsCountByTask = ref({})
+  const commentsNextPageByTask = ref({})
 
   // The backend supports only one official assignee per task. Extra selections
   // are local to this browser and scoped by authenticated user ID.
@@ -78,6 +84,11 @@ export const useTaskStore = defineStore('tasks', () => {
     resourcesByTask.value = {}
     resourcesLoading.value = {}
     resourceErrors.value = {}
+    commentsByTask.value = {}
+    commentsLoading.value = {}
+    commentsErrors.value = {}
+    commentsCountByTask.value = {}
+    commentsNextPageByTask.value = {}
     try {
       const [allTasks, allProjects] = await Promise.all([taskApi.list(), taskApi.projects()])
       tasks.value = allTasks
@@ -112,6 +123,11 @@ export const useTaskStore = defineStore('tasks', () => {
       delete resourcesByTask.value[id]
       delete resourcesLoading.value[id]
       delete resourceErrors.value[id]
+      delete commentsByTask.value[id]
+      delete commentsLoading.value[id]
+      delete commentsErrors.value[id]
+      delete commentsCountByTask.value[id]
+      delete commentsNextPageByTask.value[id]
       if (additionalAssigneesByTask.value[String(id)]) {
         const next = { ...additionalAssigneesByTask.value }
         delete next[String(id)]
@@ -161,6 +177,81 @@ export const useTaskStore = defineStore('tasks', () => {
       }
     })
 
+  async function loadComments(taskId, { more = false } = {}) {
+    const key = String(taskId)
+    if (commentsLoading.value[key]) return
+    const page = more ? commentsNextPageByTask.value[key] : 1
+    if (more && !page) return
+
+    commentsLoading.value[key] = true
+    commentsErrors.value[key] = ''
+    try {
+      const data = await taskApi.comments(taskId, page)
+      const incoming = Array.isArray(data) ? data : (data.results || [])
+      const previous = more ? (commentsByTask.value[key] || []) : []
+      const existingIds = new Set(previous.map((comment) => String(comment.id)))
+      commentsByTask.value[key] = [
+        ...previous,
+        ...incoming.filter((comment) => !existingIds.has(String(comment.id))),
+      ]
+      commentsCountByTask.value[key] = Array.isArray(data) ? incoming.length : (data.count ?? incoming.length)
+      commentsNextPageByTask.value[key] = !Array.isArray(data) && data.next ? page + 1 : null
+      return commentsByTask.value[key]
+    } catch (err) {
+      commentsErrors.value[key] = taskError(err)
+      throw err
+    } finally {
+      commentsLoading.value[key] = false
+    }
+  }
+
+  async function withCommentMutation(taskId, operation) {
+    if (commentsBusy.value) throw new Error('Aguarde a operação anterior terminar.')
+    commentsBusy.value = true
+    commentsErrors.value[String(taskId)] = ''
+    try {
+      return await operation()
+    } catch (err) {
+      commentsErrors.value[String(taskId)] = taskError(err)
+      throw err
+    } finally {
+      commentsBusy.value = false
+    }
+  }
+
+  const addComment = (taskId, content) =>
+    withCommentMutation(taskId, async () => {
+      const key = String(taskId)
+      const comment = await taskApi.addComment(taskId, content)
+      const previous = commentsByTask.value[key] || []
+      if (!previous.some((item) => String(item.id) === String(comment.id))) {
+        commentsByTask.value[key] = [...previous, comment]
+        commentsCountByTask.value[key] = (commentsCountByTask.value[key] ?? previous.length) + 1
+      }
+      return comment
+    })
+
+  const updateComment = (taskId, commentId, content) =>
+    withCommentMutation(taskId, async () => {
+      const comment = await taskApi.updateComment(taskId, commentId, content)
+      const key = String(taskId)
+      commentsByTask.value[key] = (commentsByTask.value[key] || []).map(
+        (item) => String(item.id) === String(commentId) ? comment : item,
+      )
+      return comment
+    })
+
+  const removeComment = (taskId, commentId) =>
+    withCommentMutation(taskId, async () => {
+      await taskApi.removeComment(taskId, commentId)
+      const key = String(taskId)
+      const previous = commentsByTask.value[key] || []
+      commentsByTask.value[key] = previous.filter((item) => String(item.id) !== String(commentId))
+      if (previous.length !== commentsByTask.value[key].length) {
+        commentsCountByTask.value[key] = Math.max(0, (commentsCountByTask.value[key] ?? previous.length) - 1)
+      }
+    })
+
   return {
     tasks,
     projects,
@@ -170,6 +261,16 @@ export const useTaskStore = defineStore('tasks', () => {
     resourcesByTask,
     resourcesLoading,
     resourceErrors,
+    commentsByTask,
+    commentsLoading,
+    commentsErrors,
+    commentsBusy,
+    commentsCountByTask,
+    commentsNextPageByTask,
+    loadComments,
+    addComment,
+    updateComment,
+    removeComment,
     additionalAssigneesByTask,
     setAdditionalAssignees,
     load,

@@ -49,6 +49,7 @@ try {
     for (const modulePath of [
       '/src/components/tasks/TaskRoadmap.vue',
       '/src/components/tasks/TaskWorkspace.vue',
+      '/src/components/tasks/TaskCommentsModal.vue',
       '/src/views/TasksView.vue',
     ]) {
       const module = await server.ssrLoadModule(modulePath)

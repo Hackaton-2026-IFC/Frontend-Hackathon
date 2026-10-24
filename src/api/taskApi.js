@@ -83,6 +83,18 @@ export default {
   async updateChecklist(id, payload) {
     return (await api.patch(`microtarefas/${id}/`, payload)).data
   },
+  async comments(id, page = 1) {
+    return (await api.get(`tarefas/${id}/comentarios/`, { params: { page } })).data
+  },
+  async addComment(id, content) {
+    return (await api.post(`tarefas/${id}/comentarios/`, { conteudo: content })).data
+  },
+  async updateComment(id, commentId, content) {
+    return (await api.patch(`tarefas/${id}/comentarios/${commentId}/`, { conteudo: content })).data
+  },
+  async removeComment(id, commentId) {
+    await api.delete(`tarefas/${id}/comentarios/${commentId}/`)
+  },
   async resources(id) {
     return (await api.get(`tarefas/${id}/recursos/`)).data
   },

@@ -12,6 +12,7 @@ import {
 } from '@/utils/taskPresentation'
 import TaskAssigneeAvatar from '@/components/tasks/TaskAssigneeAvatar.vue'
 import TaskRoadmap from '@/components/tasks/TaskRoadmap.vue'
+import TaskCommentsModal from '@/components/tasks/TaskCommentsModal.vue'
 
 const props = defineProps({
   task: { type: Object, required: true },
@@ -23,6 +24,7 @@ const props = defineProps({
 const emit = defineEmits(['edit', 'removed'])
 const store = useTaskStore()
 const confirmDialog = ref(null)
+const commentsOpen = ref(false)
 const deletingError = ref('')
 const linkError = ref('')
 const showLinkForm = ref(false)
@@ -79,6 +81,7 @@ watch(
     linkTitle.value = ''
     linkUrl.value = ''
     deletingError.value = ''
+    commentsOpen.value = false
     loadLinks(id)
   },
   { immediate: true },
@@ -146,6 +149,15 @@ async function deleteTask() {
       <div class="task-workspace__actions">
         <button type="button" class="task-button task-primary" :disabled="store.busy" @click="emit('edit', task.id)">
           Editar tarefa
+        </button>
+        <button
+          type="button"
+          class="task-button task-comments-open"
+          :disabled="store.busy"
+          @click="commentsOpen = true"
+        >
+          <span class="mdi mdi-comment-text-outline" aria-hidden="true"></span>
+          Comentários
         </button>
         <button type="button" class="task-button task-button--danger" :disabled="store.busy" @click="openDelete">
           Excluir
@@ -269,6 +281,8 @@ async function deleteTask() {
         </section>
       </aside>
     </div>
+
+    <TaskCommentsModal v-if="commentsOpen" :task="task" @close="commentsOpen = false" />
 
     <dialog ref="confirmDialog" class="task-confirm-dialog" @cancel="deletingError = ''">
       <h3>Excluir tarefa?</h3>

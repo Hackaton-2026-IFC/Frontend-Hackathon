@@ -1204,3 +1204,191 @@
   }
   .task-workspace__actions .task-button { padding-inline: 18px; }
 }
+
+
+/* FEAT-17: desktop apresenta os painéis Tarefas e Tarefa empilhados.
+   O fluxo mobile (lista ou detalhe) continua igual. */
+@media (min-width: 980px) {
+  .task-dashboard {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .task-browser {
+    position: static;
+    top: auto;
+  }
+  .task-browser__list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    width: 100%;
+    max-height: none;
+    min-height: 0;
+    padding: 18px;
+    overflow: visible;
+  }
+  .task-browser__item { height: 100%; min-height: 108px; }
+  .task-workspace { width: 100%; }
+}
+@media (min-width: 1350px) {
+  .task-browser__list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Comentários: modal nativo, acima do header/sidebar; mobile first. */
+.task-comments-open { gap: 7px; }
+.task-comments-open .mdi { font-size: 17px; }
+.task-comments-dialog {
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  width: min(640px, calc(100% - 24px));
+  max-width: none;
+  max-height: calc(100dvh - 24px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid #242424;
+  border-radius: 18px;
+  background: #fff;
+  color: #111;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-shadow: 0 20px 70px rgb(0 0 0 / 22%);
+}
+.task-comments-dialog::backdrop { background: rgb(0 0 0 / 60%); }
+.task-comments-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 18px;
+  border-bottom: 1px solid #e7e7e7;
+}
+.task-comments-header > div { min-width: 0; }
+.task-comments-header h2 {
+  margin: 0 0 8px;
+  font-size: 21px;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+.task-comments-header h2 span { color: #666; font-size: 16px; font-weight: 500; }
+.task-comments-subtitle {
+  margin: 0;
+  color: #666;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.task-comments-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #dedede;
+  border-radius: 50%;
+  background: #fff;
+  color: #111;
+  font: inherit;
+  font-size: 23px;
+  cursor: pointer;
+}
+.task-comments-close:disabled { opacity: .5; cursor: not-allowed; }
+.task-comments-body { padding: 18px; }
+.task-comments-list { display: grid; gap: 14px; padding: 0; margin: 0; list-style: none; }
+.task-comment {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #e6e6e6;
+  border-radius: 12px;
+  background: #fafafa;
+}
+.task-comment-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.task-comment-author { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.task-comment-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #e5e5e5;
+  color: #111;
+  font-size: 13px;
+  font-weight: 700;
+}
+.task-comment-author > div { display: grid; gap: 3px; min-width: 0; }
+.task-comment-author strong { font-size: 12px; overflow-wrap: anywhere; }
+.task-comment-author time { color: #737373; font-size: 11px; }
+.task-comment-actions { display: flex; gap: 12px; align-items: center; }
+.task-comment-actions button {
+  min-height: 36px;
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  color: #404040;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.task-comment-actions button:hover { text-decoration: underline; }
+.task-comment-actions button:disabled { opacity: .5; }
+.task-comment-text {
+  margin: 14px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.task-comments-empty { margin: 10px 0 20px; color: #777; font-size: 13px; }
+.task-comments-more { display: flex; margin: 18px auto 0; }
+.task-comments-compose {
+  display: grid;
+  gap: 10px;
+  padding: 20px 18px;
+  border-top: 1px solid #e7e7e7;
+}
+.task-comments-compose label,
+.task-comment-edit label { font-size: 12px; font-weight: 650; }
+.task-comments-compose textarea,
+.task-comment-edit textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 90px;
+  padding: 12px;
+  border: 1px solid #bbb;
+  border-radius: 10px;
+  background: #fff;
+  color: #111;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.55;
+  resize: vertical;
+}
+.task-comments-compose-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.task-comments-compose-actions span { color: #777; font-size: 11px; }
+.task-comment-edit { display: grid; gap: 10px; margin-top: 14px; }
+.task-comment-edit > div { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.task-comment-delete { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.task-comment-delete p { width: 100%; margin: 0; font-size: 12px; font-weight: 700; }
+.task-comments-dialog .task-error { margin: 0 0 16px; }
+.task-comments-dialog .task-error .task-button { display: block; }
+.task-comments-dialog :focus-visible { outline: 2px solid #111; outline-offset: 3px; }
+@media (min-width: 640px) {
+  .task-comments-header { padding: 24px; }
+  .task-comments-body { padding: 24px; }
+  .task-comments-compose { padding: 24px; }
+}

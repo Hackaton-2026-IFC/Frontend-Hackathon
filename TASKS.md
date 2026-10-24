@@ -43,3 +43,13 @@ e `npm run build` no repositório local.
 - Em telas maiores, lista e detalhes aparecem lado a lado, mantendo a experiência anterior.
 - Os filtros, cards e formulários são responsivos desde telas pequenas; o conteúdo reserva espaço para a navegação inferior do app no celular.
 - Modal de criar/editar, prioridade dinâmica, checklist sequencial e fotos de responsáveis permanecem iguais. O backend não é alterado.
+
+
+## FEAT-17 — lista e detalhes empilhados no desktop + comentários
+
+- No desktop (a partir de 980px), **Tarefas** fica no painel superior, com os cards organizados em duas colunas (três nas telas maiores), e o painel completo da tarefa selecionada fica abaixo. A lista não tem rolagem interna.
+- No celular, continua o fluxo lista → detalhes, para não sobrepor painéis.
+- A área de ações da tarefa inclui **Comentários**, que abre `TaskCommentsModal.vue`.
+- O modal carrega comentários pela API existente, permite publicar, editar e excluir os próprios comentários, pagina os resultados e mostra erros sem perder o texto digitado.
+- As requisições ficam em `src/api/taskApi.js`, coordenadas pela `src/stores/taskStore.js`. Os endpoints existentes são `GET/POST /api/tarefas/:id/comentarios/` e `PATCH/DELETE /api/tarefas/:id/comentarios/:comentarioId/`.
+- Nenhum arquivo do backend foi alterado.
