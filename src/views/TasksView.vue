@@ -36,11 +36,6 @@ const availableTasks = computed(() =>
   ),
 )
 
-const overdueCount = computed(() => availableTasks.value.filter(taskIsOverdue).length)
-const completedCount = computed(() =>
-  availableTasks.value.filter((task) => task.status === 'concluido').length,
-)
-
 const filteredTasks = computed(() => {
   const query = searchText.value.trim().toLocaleLowerCase('pt-BR')
   return availableTasks.value
@@ -197,12 +192,6 @@ function removedTask() {
         </div>
 
         <template v-else>
-          <div class="task-summary" :class="{ 'task-summary--mobile-hidden': mobileDetailActive }" aria-label="Resumo das tarefas">
-            <div><strong>{{ availableTasks.length }}</strong><span>Total de tarefas</span></div>
-            <div><strong>{{ overdueCount }}</strong><span>Em atraso</span></div>
-            <div><strong>{{ completedCount }}</strong><span>Concluídas</span></div>
-          </div>
-
           <div v-if="mobileDetailActive" class="task-mobile-back">
             <button type="button" class="task-mobile-back__button" @click="backToTaskList">
               ← Voltar às tarefas
@@ -210,7 +199,7 @@ function removedTask() {
           </div>
 
           <div class="task-dashboard" :class="{ 'task-dashboard--mobile-detail': mobileDetailActive }">
-            <aside class="task-browser" aria-label="Lista de tarefas">
+            <aside v-if="!mobileDetailActive" class="task-browser" aria-label="Lista de tarefas">
               <div class="task-browser__heading">
                 <h2>Tarefas</h2>
                 <span>{{ filteredTasks.length }}</span>
@@ -282,7 +271,7 @@ function removedTask() {
             </aside>
 
             <TaskWorkspace
-              v-if="selectedTask"
+              v-if="mobileDetailActive && selectedTask"
               :key="selectedTask.id"
               :task="selectedTask"
               :tasks="store.tasks"
@@ -291,7 +280,7 @@ function removedTask() {
               @edit="editTask"
               @removed="removedTask"
             />
-            <div v-else class="task-dashboard__empty">
+            <div v-else-if="mobileDetailActive" class="task-dashboard__empty">
               <h2>{{ requestedTaskId ? 'Tarefa não encontrada' : 'Nenhuma tarefa selecionada' }}</h2>
               <p>{{ requestedTaskId
                 ? 'Esta tarefa não está disponível ou não corresponde aos filtros.'

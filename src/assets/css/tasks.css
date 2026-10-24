@@ -842,7 +842,6 @@
   overflow-wrap: anywhere;
 }
 .workspace-assignees small { color: #666; font-size: 10px; line-height: 1.5; }
-.workspace-local-hint { margin: 14px 0 0; color: #888; font-size: 10px; line-height: 1.6; }
 .workspace-facts { display: grid; gap: 12px; margin: 18px 0 0; }
 .workspace-facts div { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .workspace-facts dt { min-width: 0; color: #656565; font-size: 11px; }
@@ -1235,8 +1234,6 @@
 }
 
 /* Comentários: modal nativo, acima do header/sidebar; mobile first. */
-.task-comments-open { gap: 7px; }
-.task-comments-open .mdi { font-size: 17px; }
 .task-comments-dialog {
   position: fixed;
   inset: 0;
@@ -1399,4 +1396,62 @@
   .task-comments-header { padding: 24px; }
   .task-comments-body { padding: 24px; }
   .task-comments-compose { padding: 24px; }
+}
+
+
+/* Ao abrir uma tarefa, os detalhes ocupam a página inteira.
+   A lista continua disponível na tela anterior em qualquer resolução. */
+.task-dashboard { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 980px) {
+  .task-dashboard { grid-template-columns: minmax(0, 1fr); }
+  .task-mobile-back { display: block; }
+}
+
+/* Botão flutuante de comentários: acompanha a rolagem, sem ocupar
+   espaço no cabeçalho da tarefa nem cobrir a navegação inferior mobile. */
+.task-comments-floating {
+  position: fixed;
+  right: clamp(16px, 3vw, 40px);
+  bottom: 24px;
+  z-index: 1050;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 12px 20px;
+  border: 1px solid #171717;
+  border-radius: 999px;
+  background: #171717;
+  box-shadow: 0 8px 26px rgb(0 0 0 / 22%);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.task-comments-floating .mdi { font-size: 20px; line-height: 1; }
+.task-comments-floating:hover:not(:disabled) {
+  background: #343434;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 28%);
+  transform: translateY(-2px);
+}
+.task-comments-floating:focus-visible {
+  outline: 3px solid #555;
+  outline-offset: 3px;
+}
+.task-comments-floating:disabled { opacity: .55; cursor: not-allowed; }
+@media (max-width: 700px) {
+  .task-comments-floating {
+    right: 16px;
+    bottom: calc(82px + env(safe-area-inset-bottom));
+    min-height: 46px;
+    padding: 11px 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .task-comments-floating { transition: none; }
+  .task-comments-floating:hover:not(:disabled) { transform: none; }
 }

@@ -150,15 +150,6 @@ async function deleteTask() {
         <button type="button" class="task-button task-primary" :disabled="store.busy" @click="emit('edit', task.id)">
           Editar tarefa
         </button>
-        <button
-          type="button"
-          class="task-button task-comments-open"
-          :disabled="store.busy"
-          @click="commentsOpen = true"
-        >
-          <span class="mdi mdi-comment-text-outline" aria-hidden="true"></span>
-          Comentários
-        </button>
         <button type="button" class="task-button task-button--danger" :disabled="store.busy" @click="openDelete">
           Excluir
         </button>
@@ -243,7 +234,7 @@ async function deleteTask() {
             </li>
           </ul>
           <p v-else class="workspace-muted">Nenhum responsável atribuído.</p>
-          <p class="workspace-local-hint">O backend registra apenas o principal. Responsáveis adicionais são locais a este navegador.</p>
+          
         </section>
 
         <section class="workspace-aside-section">
@@ -281,6 +272,17 @@ async function deleteTask() {
         </section>
       </aside>
     </div>
+
+    <button
+      type="button"
+      class="task-comments-floating"
+      :disabled="store.busy"
+      aria-label="Abrir comentários desta tarefa"
+      @click="commentsOpen = true"
+    >
+      <span class="mdi mdi-comment-text-outline" aria-hidden="true"></span>
+      <span>Comentários</span>
+    </button>
 
     <TaskCommentsModal
       v-if="commentsOpen"
