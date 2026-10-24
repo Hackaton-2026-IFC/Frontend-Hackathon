@@ -1,22 +1,26 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import notificationsApi from '@/api/notificationsApi'
+import { useAuthStore } from '@/stores/authStore'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const open = ref(false)
 const loading = ref(false)
 const error = ref('')
 const items = ref([])
 const unread = ref(0)
 let timer = null
+let inFlight = false
 
 function message(err) {
   return err?.response?.data?.detail || err?.message || 'Não foi possível carregar as notificações.'
 }
 
 async function refresh({ silent = false } = {}) {
-  if (loading.value && !silent) return
+  if (!authStore.isAuthenticated || !authStore.accessToken || inFlight) return
+  inFlight = true
   if (!silent) loading.value = true
   error.value = ''
 
@@ -32,6 +36,7 @@ async function refresh({ silent = false } = {}) {
   } catch (err) {
     if (!silent) error.value = message(err)
   } finally {
+    inFlight = false
     if (!silent) loading.value = false
   }
 }
@@ -83,14 +88,24 @@ function dateLabel(value) {
   }).format(date)
 }
 
-onMounted(() => {
+function stopPolling() {
+  if (timer) window.clearInterval(timer)
+  timer = null
+}
+
+watch(() => authStore.isAuthenticated, (authenticated) => {
+  stopPolling()
+  if (!authenticated) {
+    open.value = false
+    items.value = []
+    unread.value = 0
+    return
+  }
   refresh({ silent: true })
   timer = window.setInterval(() => refresh({ silent: true }), 30000)
-})
+}, { immediate: true })
 
-onBeforeUnmount(() => {
-  if (timer) window.clearInterval(timer)
-})
+onBeforeUnmount(stopPolling)
 </script>
 
 <template>
