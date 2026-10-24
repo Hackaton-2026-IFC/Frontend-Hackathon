@@ -1,6 +1,5 @@
 <script setup>
 import { computed } from 'vue'
-import { RouterLink } from 'vue-router'
 import { getProjectIcon } from '@/utils/projectIcons'
 
 const props = defineProps({
@@ -10,7 +9,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['edit', 'delete'])
+const emit = defineEmits(['edit', 'delete', 'open-agent'])
 
 const statuses = {
   planned: 'Planejado',
@@ -109,15 +108,14 @@ const projectDeadline = computed(() => {
     </div>
 
     <div class="momentum-project-header__actions">
-      <RouterLink
+      <button
+        type="button"
         class="momentum-project-header__button board-link"
-        :to="{
-          name: 'project-tasks',
-          params: { projectId: project.id },
-        }"
+        @click="emit('open-agent')"
       >
-        Criar ou editar tarefas ↗
-      </RouterLink>
+        <span class="mdi mdi-auto-fix" aria-hidden="true"></span>
+        Agente de IA
+      </button>
 
       <button
         type="button"
