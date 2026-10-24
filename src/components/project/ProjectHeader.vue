@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { getProjectIcon } from '@/utils/projectIcons'
 import { DEFAULT_PROJECT_COLOR, projectIconTextColor } from '@/utils/projectColors'
 
@@ -11,6 +11,12 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['edit', 'delete', 'open-agent'])
+const mobileMenuOpen = ref(false)
+
+function selectAction(action) {
+  mobileMenuOpen.value = false
+  emit(action)
+}
 
 const statuses = {
   planned: 'Planejado',
@@ -108,11 +114,27 @@ const projectDeadline = computed(() => {
       </div>
     </div>
 
-    <div class="momentum-project-header__actions">
+    <div class="momentum-project-header__action-area">
+      <button
+        type="button"
+        class="momentum-project-header__menu-toggle"
+        :aria-expanded="mobileMenuOpen"
+        aria-controls="project-mobile-actions"
+        aria-label="Abrir ações do projeto"
+        @click="mobileMenuOpen = !mobileMenuOpen"
+      >
+        <span class="mdi" :class="mobileMenuOpen ? 'mdi-close' : 'mdi-menu'" aria-hidden="true"></span>
+        <span class="momentum-project-header__menu-label">Ações</span>
+      </button>
+      <div
+        id="project-mobile-actions"
+        class="momentum-project-header__actions"
+        :class="{ 'momentum-project-header__actions--open': mobileMenuOpen }"
+      >
       <button
         type="button"
         class="momentum-project-header__button board-link"
-        @click="emit('open-agent')"
+        @click="selectAction('open-agent')"
       >
         <span class="mdi mdi-auto-fix" aria-hidden="true"></span>
         Agente de IA
@@ -121,7 +143,7 @@ const projectDeadline = computed(() => {
       <button
         type="button"
         class="momentum-project-header__button momentum-project-header__button--edit"
-        @click="emit('edit')"
+        @click="selectAction('edit')"
       >
         Editar projeto
       </button>
@@ -129,15 +151,72 @@ const projectDeadline = computed(() => {
       <button
         type="button"
         class="momentum-project-header__button momentum-project-header__button--delete"
-        @click="emit('delete')"
+        @click="selectAction('delete')"
       >
         Excluir projeto
       </button>
+      </div>
     </div>
   </header>
 </template>
 
 <style scoped>
+.momentum-project-header__action-area {
+  position: relative;
+  flex: 0 1 auto;
+}
+.momentum-project-header__menu-toggle {
+  display: none;
+}
+@media (max-width: 600px) {
+  .momentum-project-header__action-area {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+  }
+  .momentum-project-header__menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid #dedede;
+    border-radius: 10px;
+    background: #fff;
+    color: #171717;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 650;
+    cursor: pointer;
+  }
+  .momentum-project-header__menu-toggle .mdi { font-size: 22px; }
+  .momentum-project-header__menu-toggle:focus-visible {
+    outline: 3px solid #666;
+    outline-offset: 2px;
+  }
+  .momentum-project-header__actions {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 20;
+    width: min(240px, calc(100vw - 64px));
+    padding: 10px;
+    border: 1px solid #dedede;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgb(0 0 0 / 12%);
+  }
+  .momentum-project-header__actions--open {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .momentum-project-header__actions .board-link { grid-column: auto; }
+}
+
 .momentum-project-header {
   display: flex;
   align-items: center;
