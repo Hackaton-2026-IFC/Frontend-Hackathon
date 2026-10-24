@@ -1,6 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 
+// ==========================================
+// IMPORTAÇÃO DOS COMPONENTES
+// ==========================================
+
 import AuthLayout from '@/components/layout/AuthLayout.vue'
 
 import LoginView from '@/views/LoginView.vue'
