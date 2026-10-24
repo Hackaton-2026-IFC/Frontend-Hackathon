@@ -782,11 +782,6 @@ onMounted(load)
         :planned="plannedTasks"
       />
 
-      <ProjectMembers
-        :project="project"
-        @invite-sent="onInviteSent"
-      />
-
       <section class="panel tasks-section project-tasks">
         <div class="section-heading">
           <div>
@@ -1024,6 +1019,12 @@ onMounted(load)
         :success-count="resourceSuccessCount"
         @add-resource="addResource"
       />
+
+      <ProjectMembers
+        :project="project"
+        @invite-sent="onInviteSent"
+      />
+
     </template>
   </main>
 </template>
