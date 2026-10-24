@@ -154,15 +154,15 @@ function removedTask() {
 </script>
 
 <template>
-  <section class="tasks-page">
+  <section class="tasks-page" :class="{ 'tasks-page--detail': mobileDetailActive }">
     <div class="tasks-container">
       <RouterLink
-        v-if="backProjectId"
+        v-if="backProjectId && !mobileDetailActive"
         class="task-back-link"
         :to="{ name: 'project-details', params: { id: backProjectId } }"
       >← Voltar ao projeto</RouterLink>
 
-      <header class="tasks-page-heading">
+      <header v-if="!mobileDetailActive" class="tasks-page-heading">
         <div>
           <p class="task-eyebrow">MOMENTUM / ORGANIZAÇÃO</p>
           <h1>{{ routeProject ? 'Tarefas do projeto' : 'Painel de tarefas' }}</h1>
