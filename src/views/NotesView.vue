@@ -26,6 +26,9 @@ const error = ref('')
 const search = ref('')
 const filterProject = ref('')
 const editingId = ref(null)
+const openNoteMenuId = ref(null)
+function toggleNoteMenu(id) { openNoteMenuId.value = openNoteMenuId.value === id ? null : id }
+function closeNoteMenu() { openNoteMenuId.value = null }
 const orderSaving = ref(false)
 const draggingId = ref(null)
 const dropTargetId = ref(null)
@@ -424,6 +427,7 @@ async function save() {
 }
 
 function edit(note) {
+  closeNoteMenu()
   if (!isAuthor(note)) return
   editingId.value = note.id
   form.titulo = note.titulo || ''
@@ -451,6 +455,7 @@ async function togglePin(note) {
 }
 
 async function archive(note) {
+  closeNoteMenu()
   if (!isAuthor(note)) return
   try {
     await notesApi.update(note.id, { arquivada: true })
@@ -462,6 +467,7 @@ async function archive(note) {
 }
 
 async function remove(note) {
+  closeNoteMenu()
   if (!isAuthor(note)) return
   if (!window.confirm('Excluir esta nota definitivamente?')) return
   try {
@@ -498,10 +504,10 @@ onBeforeUnmount(() => {
   <main class="notes-page">
     <section class="notes-hero">
       <div>
-        <span class="eyebrow">{{ isProjectMural ? 'PROJETOS / MURAL COMPARTILHADO' : 'IDEIAS / NOTAS' }}</span>
-        <h1>{{ isProjectMural ? (projectInfo?.nome ? 'Mural — ' + projectInfo.nome : 'Mural do projeto') : 'Seu mural.' }}</h1>
-        <p>{{ isProjectMural ? 'Compartilhe ideias, fotos e links. Suas fixações e posições dos cards são só suas.' : 'Suas notas pessoais e ideias publicadas por você em projetos.' }}</p>
-        <RouterLink v-if="isProjectMural" :to="{ name: 'project-details', params: { id: projectId } }" class="back-to-project">← Voltar ao projeto</RouterLink>
+        <span class="eyebrow">{{ isProjectMural ? 'MOMENTUM / IDEIAS DO PROJETO' : 'MOMENTUM / SUAS IDEIAS' }}</span>
+        <h1>{{ isProjectMural ? ((projectInfo?.nome || projectInfo?.name) ? 'Mural de ' + (projectInfo.nome || projectInfo.name) : 'Mural do projeto') : 'Seu mural.' }}</h1>
+        <p>{{ isProjectMural ? 'Um espaço para reunir referências, inspirações e ideias da equipe.' : 'Suas notas pessoais e ideias publicadas por você em projetos.' }}</p>
+        <RouterLink v-if="isProjectMural" :to="{ name: 'project-details', params: { id: projectId } }" class="back-to-project"><span class="mdi mdi-arrow-left" aria-hidden="true"></span> Voltar ao projeto</RouterLink>
       </div>
     </section>
 
@@ -544,14 +550,14 @@ onBeforeUnmount(() => {
           <div class="composer-dialog-body">
 
       <div class="composer-top">
-        <input ref="titleField" v-model="form.titulo" maxlength="200" placeholder="Título" aria-label="Título da nota" />
+        <label class="composer-title-field"><span>Título da ideia</span><input ref="titleField" v-model="form.titulo" maxlength="200" placeholder="Dê um nome para sua ideia" aria-label="Título da nota" /></label>
         <label class="pin-check">
           <input v-model="form.fixada" type="checkbox" />
           Fixar
         </label>
       </div>
 
-      <textarea v-model="form.conteudo" rows="4" placeholder="Escreva sua ideia..." aria-label="Conteúdo da nota"></textarea>
+      <label class="composer-content-field"><span>Descrição</span><textarea v-model="form.conteudo" rows="4" placeholder="Escreva sua ideia..." aria-label="Conteúdo da nota"></textarea></label>
 
       <label class="idea-link">
         Link de referência (opcional)
@@ -665,7 +671,7 @@ onBeforeUnmount(() => {
           >
             <span class="mdi mdi-drag-vertical" aria-hidden="true"></span>
           </button>
-          <span v-if="note.projeto" class="project-chip">{{ projectName(note.projeto) || 'Projeto' }}</span>
+          <span v-if="!isProjectMural && note.projeto" class="project-chip">{{ projectName(note.projeto) || 'Projeto' }}</span>
           <button type="button" class="icon-button pin-button" :aria-pressed="Boolean(note.fixada)" :title="note.fixada ? 'Desafixar só para mim' : 'Fixar só para mim'" :aria-label="note.fixada ? 'Desafixar só para mim' : 'Fixar só para mim'" @click="togglePin(note)">
             <span :class="note.fixada ? 'mdi mdi-pin' : 'mdi mdi-pin-outline'" aria-hidden="true"></span>
           </button>
@@ -687,10 +693,15 @@ onBeforeUnmount(() => {
           <span v-for="tag in note.etiquetas" :key="tag">#{{ tag }}</span>
         </div>
 
-        <div v-if="isAuthor(note)" class="note-actions">
-          <button type="button" @click="edit(note)">Editar</button>
-          <button type="button" @click="archive(note)">Arquivar</button>
-          <button type="button" @click="remove(note)">Excluir</button>
+        <div v-if="isAuthor(note)" class="note-actions note-more-actions">
+          <button type="button" class="note-more-trigger" :aria-expanded="openNoteMenuId === note.id" aria-haspopup="true" :aria-label="'Opções da ideia ' + (note.titulo || 'sem título')" @click="toggleNoteMenu(note.id)">
+            <span class="mdi mdi-dots-horizontal" aria-hidden="true"></span>
+          </button>
+          <div v-if="openNoteMenuId === note.id" class="note-more-popover" role="group" aria-label="Ações da ideia">
+            <button type="button" @click="edit(note)"><span class="mdi mdi-pencil-outline" aria-hidden="true"></span> Editar</button>
+            <button type="button" @click="archive(note)"><span class="mdi mdi-archive-arrow-down-outline" aria-hidden="true"></span> Arquivar</button>
+            <button type="button" class="note-more-danger" @click="remove(note)"><span class="mdi mdi-delete-outline" aria-hidden="true"></span> Excluir</button>
+          </div>
         </div>
       </article>
     </section>
@@ -869,4 +880,83 @@ onBeforeUnmount(() => {
 @media(prefers-reduced-motion:reduce) {
   .note-card { transition: none; }
 }
+</style>
+
+<style>
+/* Ajustes visuais finais: mural alinhado aos painéis do Momentum */
+.notes-page { box-sizing:border-box; width:100%; max-width:1220px; margin:0 auto; padding:32px clamp(20px,4vw,44px) 72px; }
+.notes-page .notes-hero { padding:12px 0 28px; margin-bottom:22px; border-bottom:1px solid #e6e6e6; }
+.notes-page .notes-hero .eyebrow { display:block; color:#858585; font-size:10px; font-weight:750; letter-spacing:1.35px; }
+.notes-page .notes-hero h1 { margin:13px 0 12px; font-size:clamp(28px,3.6vw,42px); font-weight:720; line-height:1.18; letter-spacing:-.055em; overflow-wrap:anywhere; }
+.notes-page .notes-hero p { max-width:610px; color:#777; font-size:13px; line-height:1.7; }
+.notes-page .back-to-project { display:inline-flex; align-items:center; gap:7px; margin-top:19px; color:#171717; font-size:12px; font-weight:700; text-decoration:none; }
+.notes-page .back-to-project:hover { text-decoration:underline; }
+.notes-page .notes-tools { margin:0 0 22px; padding:17px 20px; border:1px solid #e7e7e7; border-radius:14px; background:#fff; }
+.notes-page .notes-tools label { color:#555; font-size:11px; }
+.notes-page .notes-tools input,.notes-page .notes-tools select { min-height:43px; border:1px solid #e5e5e5; border-radius:9px; background:#fafafa; font-size:13px; }
+.notes-page .notes-tools input:focus { outline:2px solid #aaa; outline-offset:1px; }
+.notes-page .drag-hint { margin:12px 0 15px; color:#999; font-size:11px; }
+.notes-page .notes-grid { column-gap:16px; }
+.notes-page .note-card { margin-bottom:16px; padding:17px; border:1px solid rgba(0,0,0,.09); border-radius:14px; box-shadow:0 3px 14px rgba(0,0,0,.035); }
+.notes-page .note-card h2 { font-size:17px; line-height:1.35; letter-spacing:-.025em; }
+.notes-page .note-actions { gap:13px; }
+.notes-page .note-actions button { font-size:11px; font-weight:700; }
+.notes-page .mural-fab { box-shadow:0 10px 25px rgba(0,0,0,.14); }
+@media(max-width:700px){ .notes-page { padding:22px 16px 100px; } .notes-page .notes-hero { padding-top:8px; } .notes-page .notes-tools { padding:14px; } .notes-page .notes-hero h1 { font-size:30px; } }
+</style>
+
+<style>
+.notes-page .note-more-actions{position:relative;display:flex;justify-content:flex-end;margin-top:12px;padding-top:10px;border-top:1px solid rgba(0,0,0,.12);overflow:visible}
+.notes-page .note-more-trigger{display:inline-flex;align-items:center;justify-content:center;width:34px;height:30px;padding:0;border:1px solid rgba(0,0,0,.13);border-radius:9px;background:rgba(255,255,255,.48);color:#222;cursor:pointer;text-decoration:none}
+.notes-page .note-more-trigger .mdi{font-size:20px}
+.notes-page .note-more-popover{position:absolute;right:0;bottom:calc(100% + 4px);z-index:20;min-width:142px;padding:5px;border:1px solid #e8e8e8;border-radius:11px;background:#fff;box-shadow:0 12px 28px rgba(0,0,0,.13)}
+.notes-page .note-more-popover button{display:flex;align-items:center;gap:9px;width:100%;padding:10px 11px;border:0;border-radius:7px;background:transparent;color:#222;font:inherit;font-size:12px;font-weight:600;text-align:left;cursor:pointer;text-decoration:none}
+.notes-page .note-more-popover button:hover{background:#f3f3f3}
+.notes-page .note-more-popover .note-more-danger{color:#bb2525}
+.notes-page .note-more-popover .mdi{font-size:16px}
+</style>
+
+<style>
+/* Formulário de ideias: hierarquia e espaçamento consistentes com o Momentum */
+.composer-modal{width:min(620px,100%);max-height:min(90dvh,840px);border-radius:18px;background:#fff;border:1px solid #e8e8e8;box-shadow:0 22px 65px rgba(0,0,0,.18)}
+.composer-dialog-header{padding:24px 26px 20px;border-color:#ededed;background:#fff}
+.composer-dialog-eyebrow{color:#929292;font-size:10px;letter-spacing:1.2px}
+.composer-dialog-header h2{margin:8px 0 5px;font-size:25px;font-weight:750;letter-spacing:-.04em}
+.composer-dialog-header p{color:#888;font-size:12px}
+.composer-close{width:34px;height:34px;background:#f4f4f4;border-radius:9px}
+.composer-dialog-body{display:flex;flex-direction:column;gap:18px;padding:23px 26px;background:#fff}
+.composer-dialog-body .composer-top{display:flex;align-items:flex-end;gap:16px}
+.composer-dialog-body .composer-title-field{display:flex;flex:1;min-width:0;flex-direction:column;gap:8px}
+.composer-dialog-body .composer-title-field>span,.composer-dialog-body .composer-content-field>span{font-size:12px;font-weight:700;color:#292929}
+.composer-dialog-body .composer-title-field>input{box-sizing:border-box;width:100%;height:44px;padding:0 13px;border:1px solid #dedede;border-radius:9px;background:#fff;font-size:14px;font-weight:500;outline:none}
+.composer-dialog-body .composer-title-field>input:focus{border-color:#444;box-shadow:0 0 0 3px rgba(0,0,0,.06)}
+.composer-dialog-body .pin-check{display:flex;align-items:center;gap:7px;min-height:44px;white-space:nowrap;font-size:12px;color:#555}
+.composer-dialog-body .composer-content-field{display:flex;flex-direction:column;gap:8px}
+.composer-dialog-body .composer-content-field textarea{box-sizing:border-box;width:100%;min-height:104px;padding:12px 13px;border:1px solid #dedede;border-radius:9px;background:#fff;font-size:13px;resize:vertical}
+.composer-dialog-body .idea-link,.composer-dialog-body .photo-picker{display:flex;flex-direction:column;gap:8px;font-size:12px;font-weight:700;color:#333}
+.composer-dialog-body .idea-link input,.composer-dialog-body .photo-picker input{box-sizing:border-box;width:100%;min-height:42px;padding:10px 12px;border:1px solid #dedede;border-radius:9px;background:#fff;font-size:12px;font-weight:400}
+.composer-dialog-body .photo-editor{display:flex;flex-direction:column;gap:12px}
+.composer-dialog-body .photo-preview{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.composer-dialog-body .photo-preview img{width:110px;max-height:125px;object-fit:cover;border-radius:10px;border:1px solid #eee}
+.composer-dialog-body .photo-preview .button{font-size:12px}
+.composer-dialog-body .composer-grid{margin:0}
+.composer-dialog-body .palette{margin:0}
+.composer-dialog-footer{padding:16px 26px;border-color:#ededed;background:#fff}
+.composer-dialog-footer .composer-actions{display:flex;justify-content:flex-end;gap:10px}
+.composer-dialog-footer .button{border-radius:9px;min-height:40px;padding:0 16px;font-size:12px;font-weight:700}
+@media(max-width:700px){.composer-backdrop{padding:10px}.composer-modal{max-height:calc(100dvh - 20px);border-radius:15px}.composer-dialog-header{padding:19px 18px 16px}.composer-dialog-body{padding:18px;gap:15px}.composer-dialog-footer{padding:14px 18px calc(14px + env(safe-area-inset-bottom))}.composer-dialog-body .composer-top{align-items:stretch;flex-direction:column;gap:8px}.composer-dialog-body .pin-check{min-height:26px}}
+</style>
+
+<style>
+/* Cards mais leves e sem a etiqueta redundante no mural do projeto */
+.notes-page .note-card{padding:16px;border:1px solid rgba(0,0,0,.075);border-radius:13px;box-shadow:0 3px 12px rgba(0,0,0,.025)}
+.notes-page .note-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.notes-page .note-card-top .pin-button{margin-left:auto;width:31px;height:31px;border-radius:9px;background:rgba(255,255,255,.5)}
+.notes-page .note-card-top .drag-handle{width:30px;height:31px;flex-basis:30px;border-radius:9px;background:rgba(255,255,255,.38)}
+.notes-page .note-card h2{margin:0 0 10px;font-size:16px;font-weight:750;letter-spacing:-.025em}
+.notes-page .note-author-row{margin-bottom:12px}
+.notes-page .note-more-actions{margin-top:13px;padding-top:9px;border-color:rgba(0,0,0,.09)}
+.notes-page .note-more-trigger{border-color:transparent;background:transparent}
+.notes-page .note-more-trigger:hover{background:rgba(255,255,255,.55)}
+@media(max-width:700px){.notes-page .note-card{padding:14px}}
 </style>
