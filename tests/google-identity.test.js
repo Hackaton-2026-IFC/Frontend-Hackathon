@@ -42,22 +42,12 @@ test('renderiza Google Identity e encaminha ID token somente ao callback ativo',
   handleResponse({ credential: 'token-after-unmount' })
   assert.deepEqual(received, ['valid-google-id-token'])
   assert.equal(host.rendered, false)
+
+  const secondReceived = []
+  const disposeAgain = await mountGoogleButton(host, (token) => secondReceived.push(token))
+  handleResponse({ credential: 'token-second-mount' })
+  assert.deepEqual(secondReceived, ['token-second-mount'])
+  assert.deepEqual(received, ['valid-google-id-token'])
+  disposeAgain()
 })
 
-test('não envia credenciais para callback desmontado quando nova instância está ativa', async () => {
-  let handleResponse
-  globalThis.window = { google: { accounts: { id: {
-    initialize({ callback }) { handleResponse = callback },
-    renderButton() {},
-  } } } }
-  const first = []
-  const second = []
-  const host = { clientWidth: 320, replaceChildren() {} }
-  const disposeFirst = await mountGoogleButton(host, (token) => first.push(token))
-  const disposeSecond = await mountGoogleButton(host, (token) => second.push(token))
-  disposeFirst()
-  handleResponse({ credential: 'token' })
-  assert.deepEqual(first, [])
-  assert.deepEqual(second, ['token'])
-  disposeSecond()
-})
