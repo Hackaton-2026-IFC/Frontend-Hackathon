@@ -33,5 +33,8 @@ jobs:
       - name: Validar build de produção
         run: npm run build
 
+      - name: Testar servidor de produção Dokku
+        run: npm run test:server
+
       - name: Validar fotos de perfil e contraste dos ícones
         run: node --test tests/profile-photo-colors.test.mjs
