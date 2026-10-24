@@ -3,6 +3,7 @@ import ToastNotice from '@/components/ui/ToastNotice.vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import ProjectIconModal from '@/components/project/ProjectIconModal.vue'
 import { getProjectIcon } from '@/utils/projectIcons'
+import { DEFAULT_PROJECT_COLOR, projectIconTextColor } from '@/utils/projectColors'
 
 const props = defineProps({
   project: {
@@ -48,8 +49,8 @@ const form = reactive({
     statusParaFrontend[props.project.status] ??
     props.project.status ??
     'planned',
-  icone: props.project.icone ?? '',
-  cor: props.project.cor || '#111111',
+  icone: props.mode === 'create' ? (props.project.icone || 'folder') : (props.project.icone ?? ''),
+  cor: props.mode === 'create' ? DEFAULT_PROJECT_COLOR : (props.project.cor || DEFAULT_PROJECT_COLOR),
   data_limite: props.project.data_limite
     ? String(props.project.data_limite).slice(0, 10)
     : '',
@@ -58,7 +59,7 @@ const form = reactive({
 const previewColor = computed(() => {
   return /^#[0-9a-fA-F]{6}$/.test(form.cor)
     ? form.cor
-    : '#111111'
+    : DEFAULT_PROJECT_COLOR
 })
 
 onMounted(() => {
@@ -154,7 +155,7 @@ function salvar() {
         <div class="identity-preview">
           <div
             class="preview-icon"
-            :style="{ backgroundColor: previewColor }"
+            :style="{ backgroundColor: previewColor, color: projectIconTextColor(previewColor) }"
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path

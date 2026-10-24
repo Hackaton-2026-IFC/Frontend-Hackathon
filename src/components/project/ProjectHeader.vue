@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { getProjectIcon } from '@/utils/projectIcons'
+import { DEFAULT_PROJECT_COLOR, projectIconTextColor } from '@/utils/projectColors'
 
 const props = defineProps({
   project: {
@@ -45,7 +46,7 @@ const projectColor = computed(() => {
 
   return /^#[0-9a-fA-F]{6}$/.test(color || '')
     ? color
-    : '#111111'
+    : DEFAULT_PROJECT_COLOR
 })
 
 const projectIcon = computed(() => {
@@ -73,7 +74,7 @@ const projectDeadline = computed(() => {
     <div class="momentum-project-header__main">
       <div
         class="momentum-project-header__icon"
-        :style="{ backgroundColor: projectColor }"
+        :style="{ backgroundColor: projectColor, color: projectIconTextColor(projectColor) }"
         aria-hidden="true"
       >
         <svg viewBox="0 0 24 24">

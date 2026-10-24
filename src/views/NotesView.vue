@@ -5,6 +5,7 @@ import projectsApi from '@/api/projectsApi'
 import { useAuthStore } from '@/stores/authStore'
 import { RouterLink } from 'vue-router'
 import { useProjectStore } from '@/stores/project'
+import UserAvatar from '@/components/ui/UserAvatar.vue'
 
 const projectStore = useProjectStore()
 const authStore = useAuthStore()
@@ -12,6 +13,7 @@ const props = defineProps({ id: { type: [String, Number], default: null } })
 const projectId = computed(() => props.id ? String(props.id) : '')
 const isProjectMural = computed(() => Boolean(projectId.value))
 const projectInfo = ref(null)
+const authorMember = (note) => projectInfo.value?.participantes?.find(membro => String(membro.usuario) === String(note.usuario))?.usuario_detalhes || (isAuthor(note) ? authStore.user : null)
 function isAuthor(note) {
   const userId = authStore.user?.id ?? authStore.user?.user_id
   return !!userId && Number(note.usuario) === Number(userId)
@@ -670,7 +672,10 @@ onBeforeUnmount(() => {
         </div>
 
         <h2 v-if="note.titulo">{{ note.titulo }}</h2>
-        <small v-if="isProjectMural" class="note-author">Publicado por {{ note.usuario_nome || 'Participante' }}</small>
+        <div v-if="isProjectMural" class="note-author-row">
+          <UserAvatar :user="authorMember(note)" :name="note.usuario_nome || 'Participante'" :size="26" />
+          <small class="note-author">Publicado por {{ note.usuario_nome || 'Participante' }}</small>
+        </div>
         <img v-if="note.imagem_url" :src="note.imagem_url" :alt="note.titulo ? 'Imagem: ' + note.titulo : 'Imagem da ideia'" class="note-image" loading="lazy" />
         <p v-if="note.conteudo" class="note-content">{{ note.conteudo }}</p>
         <a v-if="safeLink(note.link)" class="note-link" :href="safeLink(note.link)" target="_blank" rel="noopener noreferrer">
@@ -723,7 +728,7 @@ onBeforeUnmount(() => {
 .note-link:hover{text-decoration:none}
 .back-to-project{display:inline-flex;margin-top:18px;color:#171716;font-size:13px;font-weight:700;text-decoration:underline}
 .back-to-project:hover{opacity:.7}
-.note-author{display:block;margin:8px 0 12px;font-size:11px;font-weight:650;color:#52524e}
+.note-author-row{display:flex;align-items:center;gap:8px;margin:8px 0 12px}.note-author{display:block;font-size:11px;font-weight:650;color:#52524e}
 .composer-grid.project-only-grid,.notes-tools.project-only-grid{grid-template-columns:1fr}
 
 /* FEAT-64: botão de criação e formulário em modal */

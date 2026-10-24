@@ -7,7 +7,7 @@ const props = defineProps({
   compact: { type: Boolean, default: false },
 })
 
-const imageFailed = ref(false)
+const failedUrl = ref('')
 const name = computed(() => assigneeDisplayName(props.member))
 const photo = computed(() => assigneePhotoUrl(props.member))
 const initial = computed(() => name.value.charAt(0).toLocaleUpperCase('pt-BR') || '?')
@@ -21,7 +21,7 @@ const initial = computed(() => name.value.charAt(0).toLocaleUpperCase('pt-BR') |
     :aria-label="name"
     :title="name"
   >
-    <img v-if="photo && !imageFailed" :src="photo" alt="" loading="lazy" @error="imageFailed = true" />
+    <img v-if="photo && failedUrl !== photo" :src="photo" alt="" loading="lazy" @error="failedUrl = photo" />
     <span v-else aria-hidden="true">{{ initial }}</span>
   </span>
 </template>

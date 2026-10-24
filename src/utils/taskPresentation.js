@@ -1,4 +1,5 @@
 import { formatDeadline, isOverdue } from '@/api/taskApi'
+import { profilePhotoUrl } from '@/utils/profilePhoto'
 
 /**
  * Automatic deadline-based priority, matching the backend urgency thresholds.
@@ -66,8 +67,7 @@ export function assigneeDisplayName(member) {
 }
 
 export function assigneePhotoUrl(member) {
-  const url = member?.usuario_detalhes?.profile_image?.url
-  return typeof url === 'string' && /^https?:\/\//i.test(url) ? url : null
+  return profilePhotoUrl(member?.usuario_detalhes || member?.user_details || member)
 }
 
 export function assigneeMembers(task, projects, additionalAssigneesByTask = {}) {

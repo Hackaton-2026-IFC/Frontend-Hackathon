@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useTaskStore } from '@/stores/taskStore'
 import { taskError } from '@/api/taskApi'
 import { assigneePhotoUrl } from '@/utils/taskPresentation'
+import { profilePhotoUrl } from '@/utils/profilePhoto'
 
 const props = defineProps({
   task: { type: Object, required: true },
@@ -43,8 +44,8 @@ function authorPhoto(comment) {
   // Prioriza a foto atual do próprio usuário, que pode ter sido alterada
   // depois de carregar os participantes do projeto.
   if (me.value != null && String(comment.autor) === String(me.value)) {
-    const ownPhoto = auth.user?.profile_image?.url
-    if (typeof ownPhoto === 'string' && /^https?:\/\//i.test(ownPhoto)) return ownPhoto
+    const ownPhoto = profilePhotoUrl(auth.user)
+    if (ownPhoto) return ownPhoto
   }
 
   return assigneePhotoUrl(membersById.value[String(comment.autor)])
