@@ -1,3 +1,4 @@
+import { projectToast } from '@/utils/projectToast'
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import ProjectIconModal from '@/components/project/ProjectIconModal.vue'
@@ -114,6 +115,7 @@ function salvar() {
   // A criação utiliza a store, com nomes em inglês.
   emit('save', dados)
 }
+watch(erroLocal, (value, previous) => { if (value && value !== previous) projectToast(value, 'error') })
 </script>
 
 <template>
@@ -243,13 +245,7 @@ function salvar() {
         </div>
       </fieldset>
 
-      <p
-        v-if="erroLocal || error"
-        class="error-message"
-        role="alert"
-      >
-        {{ erroLocal || error }}
-      </p>
+      
 
       <footer class="modal-actions">
         <button
