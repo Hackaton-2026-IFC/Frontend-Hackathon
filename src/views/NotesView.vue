@@ -27,6 +27,8 @@ const editingId = ref(null)
 const orderSaving = ref(false)
 const draggingId = ref(null)
 const dropTargetId = ref(null)
+const previewOrder = ref(null)
+const dragOriginalOrder = ref(null)
 const dragXY = ref({ x: 0, y: 0 })
 let pointerId = null
 let dragHandle = null
@@ -255,39 +257,87 @@ async function moveCard(fromId, toId) {
   }
 }
 
+function detachPointerListeners() {
+  window.removeEventListener('pointermove', moveDrag)
+  window.removeEventListener('pointerup', endDrag)
+  window.removeEventListener('pointercancel', cancelDrag)
+}
+
+// O preview é local: só persiste a ordem no servidor após soltar.
 function startDrag(note, event) {
   if (!dragAllowed.value || (event.pointerType === 'mouse' && event.button !== 0)) return
+  event.preventDefault()
   pointerId = event.pointerId
   dragHandle = event.currentTarget
-  dragHandle.setPointerCapture(pointerId)
   draggingId.value = note.id
-  dropTargetId.value = note.id
+  dropTargetId.value = null
   dragXY.value = { x: event.clientX, y: event.clientY }
+  dragOriginalOrder.value = sortNotes(notes.value).map(item => item.id)
+  previewOrder.value = [...dragOriginalOrder.value]
   error.value = ''
+  window.addEventListener('pointermove', moveDrag)
+  window.addEventListener('pointerup', endDrag)
+  window.addEventListener('pointercancel', cancelDrag)
 }
 
 function moveDrag(event) {
   if (pointerId !== event.pointerId || draggingId.value === null) return
   dragXY.value = { x: event.clientX, y: event.clientY }
-  const element = document.elementFromPoint(event.clientX, event.clientY)
-  const card = element?.closest?.('[data-note-id]')
-  const target = Number(card?.dataset.noteId)
-  dropTargetId.value = card && notes.value.some((note) => note.id === target) ? target : null
+  const card = document.elementFromPoint(event.clientX, event.clientY)?.closest?.('[data-note-id]')
+  const targetId = card ? Number(card.dataset.noteId) : null
+  const draggedId = draggingId.value
+  if (targetId === null || targetId === draggedId || !previewOrder.value) return
+  const dragged = notes.value.find(item => item.id === draggedId)
+  const target = notes.value.find(item => item.id === targetId)
+  if (!dragged || !target || Boolean(dragged.fixada) !== Boolean(target.fixada)) return
+  // Mover o card no array a cada novo alvo faz os demais abrirem espaço imediatamente.
+  const next = [...previewOrder.value]
+  const fromIndex = next.indexOf(draggedId)
+  const targetIndex = next.indexOf(targetId)
+  if (fromIndex < 0 || targetIndex < 0) return
+  next.splice(fromIndex, 1)
+  next.splice(targetIndex, 0, draggedId)
+  previewOrder.value = next
+  dropTargetId.value = targetId
 }
 
 function resetDrag() {
+  detachPointerListeners()
   pointerId = null
   dragHandle = null
   draggingId.value = null
   dropTargetId.value = null
+  previewOrder.value = null
+  dragOriginalOrder.value = null
 }
 
-function endDrag(event) {
-  if (pointerId !== event.pointerId) return
-  const from = draggingId.value
-  const to = dropTargetId.value
+function cancelDrag(event) {
+  if (event && pointerId !== event.pointerId) return
   resetDrag()
-  if (from !== null && to !== null) void moveCard(from, to)
+}
+
+async function endDrag(event) {
+  if (pointerId !== event.pointerId) return
+  const before = dragOriginalOrder.value
+  const after = previewOrder.value
+  resetDrag()
+  if (!before || !after || before.every((id, index) => id === after[index])) return
+  // A ordem otimista já refletida visualmente passa a valer no estado local.
+  const previous = notes.value
+  const ranks = new Map(after.map((id, index) => [id, index]))
+  const next = [...notes.value].sort((a, b) => (ranks.get(a.id) ?? Infinity) - (ranks.get(b.id) ?? Infinity))
+    .map((note, index) => ({ ...note, ordem: index }))
+  notes.value = next
+  orderSaving.value = true
+  error.value = ''
+  try {
+    await notesApi.saveOrder(projectId.value, after)
+  } catch (err) {
+    notes.value = previous
+    error.value = apiError(err, 'Não foi possível salvar a ordem dos cards.')
+  } finally {
+    orderSaving.value = false
+  }
 }
 
 function moveWithKeyboard(note, direction) {
@@ -300,7 +350,11 @@ function moveWithKeyboard(note, direction) {
 
 const visibleNotes = computed(() => {
   const query = search.value.trim().toLowerCase()
-  return sortNotes(notes.value).filter((note) => {
+  const sorted = sortNotes(notes.value)
+  const ranked = previewOrder.value
+    ? [...sorted].sort((a, b) => previewOrder.value.indexOf(a.id) - previewOrder.value.indexOf(b.id))
+    : sorted
+  return ranked.filter((note) => {
     const matchesText =
       !query ||
       note.titulo?.toLowerCase().includes(query) ||
@@ -591,7 +645,7 @@ onBeforeUnmount(() => {
         v-for="note in visibleNotes"
         :key="note.id"
         class="note-card"
-        :class="{ 'note-card-dragging': draggingId === note.id, 'note-card-drop': dropTargetId === note.id && draggingId !== note.id, 'note-card-pinned': note.fixada }"
+        :class="{ 'note-card-dragging': draggingId === note.id, 'note-card-pinned': note.fixada }"
         :data-note-id="note.id"
         :style="{ backgroundColor: note.cor || '#FFF475' }"
       >
@@ -604,10 +658,6 @@ onBeforeUnmount(() => {
             :aria-label="'Mover ideia: ' + (note.titulo || 'Sem título')"
             title="Segure e arraste; use setas ↑↓ pelo teclado"
             @pointerdown="startDrag(note, $event)"
-            @pointermove="moveDrag"
-            @pointerup="endDrag"
-            @pointercancel="resetDrag"
-            @lostpointercapture="resetDrag"
             @keydown.up.prevent="moveWithKeyboard(note, -1)"
             @keydown.down.prevent="moveWithKeyboard(note, 1)"
           >
@@ -785,4 +835,33 @@ onBeforeUnmount(() => {
 .pin-button[aria-pressed="false"] { background: rgb(255 255 255 / 70%); }
 .drag-floating-preview { position: fixed; z-index: 9999; pointer-events: none; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-radius: 12px; background: #171716; box-shadow: 0 12px 30px rgb(0 0 0 / 23%); color: white; transform: translate(-50%, -50%); font-size: 13px; font-weight: 700; }
 @media(max-width:700px){ .notes-grid { grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); gap: 14px; } .drag-handle{width: 38px; height: 38px; flex-basis: 38px;} }
+
+/* FEAT-81 — masonry: cards usam a própria altura, sem reservar a altura da linha. */
+.notes-grid {
+  display: block;
+  columns: 3 280px;
+  column-gap: 18px;
+}
+.note-card {
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+  vertical-align: top;
+  break-inside: avoid;
+  margin: 0 0 18px;
+  transition: opacity .14s ease, box-shadow .14s ease;
+}
+.note-card-dragging {
+  opacity: .28;
+  outline: 2px dashed #171716;
+  outline-offset: -5px;
+}
+.drag-handle { touch-action: none; }
+@media(max-width:700px) {
+  .notes-grid { columns: 1; }
+  .note-card { margin-bottom: 14px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .note-card { transition: none; }
+}
 </style>
