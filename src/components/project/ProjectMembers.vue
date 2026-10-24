@@ -1,5 +1,5 @@
-import { projectToast } from '@/utils/projectToast'
 <script setup>
+import { projectToast } from '@/utils/projectToast'
 import { computed, ref, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 
