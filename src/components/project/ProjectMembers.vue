@@ -1,17 +1,14 @@
+
 <script setup>
 import { computed, ref, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { useAuthStore } from '@/stores/authStore'
+import { useToastStore } from '@/stores/toastStore'
 import projectsApi from '@/api/projectsApi'
 import usersApi from '@/api/usersApi'
 import invitesApi from '@/api/invitesApi'
-import { useToastStore } from '@/stores/toastStore'
 import api from '@/api/config'
-
-// ==========================================
-// CONFIGURAÇÕES
-// ==========================================
 
 const props = defineProps({
   project: {
@@ -21,7 +18,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['invite-sent'])
-
 const router = useRouter()
 const authStore = useAuthStore()
 const toast = useToastStore()
@@ -30,13 +26,9 @@ const toast = useToastStore()
 // USUÁRIO LOGADO
 // ==========================================
 
-const currentUserId = computed(() => {
-  return (
-    authStore.user?.id ??
-    authStore.user?.user_id ??
-    null
-  )
-})
+const currentUserId = computed(
+  () => authStore.user?.id ?? authStore.user?.user_id ?? null,
+)
 
 // ==========================================
 // MEMBROS
@@ -44,29 +36,46 @@ const currentUserId = computed(() => {
 
 const members = ref([])
 const loadingMembers = ref(false)
-const membersError = ref('')
-
-const roleError = ref('')
 const savingRoleId = ref(null)
-
 const removingMemberId = ref(null)
-const removeError = ref('')
 
 const roleOptions = [
   { value: 'member', label: 'Membro' },
   { value: 'admin', label: 'Administrador' },
 ]
 
-// ==========================================
-// NORMALIZAR RESPOSTA DA API
-// ==========================================
+function getErrorMessage(error, fallback) {
+  const data = error?.response?.data
+
+  if (typeof data?.detail === 'string') {
+    return data.detail
+  }
+
+  if (typeof data === 'string' && data.trim()) {
+    return data
+  }
+
+  if (data && typeof data === 'object') {
+    const messages = Object.values(data)
+      .flat(Infinity)
+      .filter((item) => item !== null && item !== undefined)
+      .map((item) =>
+        typeof item === 'string' ? item : JSON.stringify(item),
+      )
+
+    if (messages.length) {
+      return messages.join(' ')
+    }
+  }
+
+  return fallback
+}
 
 function listFrom(data) {
   if (Array.isArray(data)) return data
   if (Array.isArray(data?.results)) return data.results
   if (Array.isArray(data?.membros)) return data.membros
   if (Array.isArray(data?.participantes)) return data.participantes
-
   return []
 }
 
@@ -79,23 +88,22 @@ function normalizeMember(item) {
     {}
 
   const user =
-    typeof raw === 'object' && raw !== null
-      ? raw
-      : {}
+    typeof raw === 'object' && raw !== null ? raw : {}
 
   const userId =
     user.id ??
+    (typeof item.usuario === 'number' ||
+    typeof item.usuario === 'string'
+      ? item.usuario
+      : item.usuario?.id) ??
     item.usuario_id ??
     item.user_id ??
     (typeof raw !== 'object' ? raw : null)
 
   return {
     ...item,
-
     userId,
-
     membershipId: item.id,
-
     name:
       user.name ||
       user.nome ||
@@ -104,22 +112,10 @@ function normalizeMember(item) {
       item.nome ||
       item.username ||
       `Usuário #${userId ?? item.id}`,
-
-    username:
-      user.username ||
-      item.username ||
-      '',
-
-    role:
-      item.cargo ||
-      item.role ||
-      'member',
+    username: user.username || item.username || '',
+    role: item.cargo || item.role || 'member',
   }
 }
-
-// ==========================================
-// CARREGAR MEMBROS
-// ==========================================
 
 async function loadMembers() {
   const projectId = props.project?.id
@@ -130,7 +126,6 @@ async function loadMembers() {
   }
 
   loadingMembers.value = true
-  membersError.value = ''
 
   try {
     const response = await projectsApi.members(projectId)
@@ -143,9 +138,9 @@ async function loadMembers() {
   } catch (error) {
     console.error('Erro ao carregar membros:', error)
 
-    membersError.value =
-      error.response?.data?.detail ||
-      'Não foi possível carregar os membros.'
+    toast.error(
+      getErrorMessage(error, 'Não foi possível carregar os membros.'),
+    )
   } finally {
     if (String(props.project?.id) === String(projectId)) {
       loadingMembers.value = false
@@ -160,67 +155,58 @@ watch(
 )
 
 // ==========================================
-// PERMISSÕES DO USUÁRIO LOGADO
+// PERMISSÕES
 // ==========================================
 
 const currentMember = computed(() => {
-  if (currentUserId.value == null) {
-    return null
-  }
+  if (currentUserId.value == null) return null
 
-  return members.value.find(
-    member =>
-      String(member.userId) === String(currentUserId.value),
-  ) || null
-})
-
-const currentRole = computed(() => {
-  return currentMember.value?.role || null
-})
-
-const isOwner = computed(() => {
-  return currentRole.value === 'owner'
-})
-
-const isAdmin = computed(() => {
-  return currentRole.value === 'admin'
-})
-
-const canLeaveProject = computed(() => {
   return (
-    currentMember.value !== null &&
-    currentRole.value !== 'owner'
+    members.value.find(
+      (member) =>
+        String(member.userId) === String(currentUserId.value),
+    ) || null
   )
 })
 
-// ==========================================
-// NOMES DOS CARGOS
-// ==========================================
+const currentRole = computed(
+  () => currentMember.value?.role || null,
+)
+
+const isOwner = computed(() => currentRole.value === 'owner')
+const isAdmin = computed(() => currentRole.value === 'admin')
+
+const canLeaveProject = computed(
+  () =>
+    currentMember.value !== null &&
+    currentRole.value !== 'owner',
+)
 
 function getRoleLabel(role) {
-  const labels = {
-    owner: 'Proprietário',
-    admin: 'Administrador',
-    member: 'Membro',
-  }
-
-  return labels[role] || role
+  return (
+    {
+      owner: 'Proprietário',
+      admin: 'Administrador',
+      member: 'Membro',
+    }[role] || role
+  )
 }
 
-// ==========================================
-// VERIFICAR SE PODE ALTERAR CARGO
-// ==========================================
-
 function canChangeRole(member) {
-  if (!isOwner.value) {
+  return isOwner.value && member.role !== 'owner'
+}
+
+function canRemoveMember(member) {
+  if (!currentMember.value) return false
+  if (member.role === 'owner') return false
+
+  if (String(member.userId) === String(currentUserId.value)) {
     return false
   }
 
-  if (member.role === 'owner') {
-    return false
-  }
+  if (isOwner.value) return true
 
-  return true
+  return isAdmin.value && member.role === 'member'
 }
 
 // ==========================================
@@ -231,24 +217,16 @@ async function changeRole(member, event) {
   const newRole = event.target.value
   const oldRole = member.role
 
-  if (newRole === oldRole) {
-    return
-  }
-
-  roleError.value = ''
+  if (newRole === oldRole) return
 
   if (!canChangeRole(member)) {
-    roleError.value =
-      'Você não tem permissão para alterar este cargo.'
-
+    toast.error('Você não tem permissão para alterar este cargo.')
     event.target.value = oldRole
     return
   }
 
   if (member.userId == null) {
-    roleError.value =
-      'Não foi possível identificar o usuário.'
-
+    toast.error('Não foi possível identificar o usuário.')
     event.target.value = oldRole
     return
   }
@@ -258,22 +236,22 @@ async function changeRole(member, event) {
   try {
     await api.patch(
       `projetos/${props.project.id}/membros/${member.userId}/cargo/`,
-      {
-        cargo: newRole,
-      },
+      { cargo: newRole },
     )
 
     member.role = newRole
 
-    toast.success(`Cargo de ${member.name} alterado para ${getRoleLabel(newRole)}.`)
+    toast.success(
+      `Cargo de ${member.name} alterado para ${getRoleLabel(newRole)}.`,
+    )
 
     await loadMembers()
   } catch (error) {
     console.error('Erro ao alterar cargo:', error)
 
-    roleError.value =
-      error.response?.data?.detail ||
-      'Não foi possível alterar o cargo.'
+    toast.error(
+      getErrorMessage(error, 'Não foi possível alterar o cargo.'),
+    )
 
     member.role = oldRole
     event.target.value = oldRole
@@ -283,53 +261,19 @@ async function changeRole(member, event) {
 }
 
 // ==========================================
-// VERIFICAR SE PODE REMOVER MEMBRO
-// ==========================================
-
-function canRemoveMember(member) {
-  // Precisa estar autenticado no projeto.
-  if (!currentMember.value) {
-    return false
-  }
-
-  // Não pode remover o proprietário.
-  if (member.role === 'owner') {
-    return false
-  }
-
-  // O botão de remover outros não deve
-  // aparecer para o próprio usuário.
-  if (
-    String(member.userId) === String(currentUserId.value)
-  ) {
-    return false
-  }
-
-  // Proprietário remove membros e administradores.
-  if (isOwner.value) {
-    return true
-  }
-
-  // Administrador remove apenas membros comuns.
-  if (
-    isAdmin.value &&
-    member.role === 'member'
-  ) {
-    return true
-  }
-
-  return false
-}
-
-// ==========================================
 // REMOVER MEMBRO
 // ==========================================
 
 async function removeMember(member) {
   if (!canRemoveMember(member)) {
-    removeError.value =
-      'Você não tem permissão para remover este participante.'
+    toast.error(
+      'Você não tem permissão para remover este participante.',
+    )
+    return
+  }
 
+  if (member.userId == null) {
+    toast.error('Não foi possível identificar o usuário.')
     return
   }
 
@@ -337,12 +281,9 @@ async function removeMember(member) {
     `Tem certeza que deseja remover ${member.name} do projeto?`,
   )
 
-  if (!confirmed) {
-    return
-  }
+  if (!confirmed) return
 
   removingMemberId.value = member.userId
-  removeError.value = ''
 
   try {
     await api.delete(
@@ -355,9 +296,9 @@ async function removeMember(member) {
   } catch (error) {
     console.error('Erro ao remover membro:', error)
 
-    removeError.value =
-      error.response?.data?.detail ||
-      'Não foi possível remover o membro.'
+    toast.error(
+      getErrorMessage(error, 'Não foi possível remover o membro.'),
+    )
   } finally {
     removingMemberId.value = null
   }
@@ -369,9 +310,9 @@ async function removeMember(member) {
 
 async function leaveProject() {
   if (!canLeaveProject.value) {
-    removeError.value =
-      'O proprietário precisa transferir a propriedade antes de sair.'
-
+    toast.error(
+      'O proprietário precisa transferir a propriedade antes de sair.',
+    )
     return
   }
 
@@ -379,25 +320,24 @@ async function leaveProject() {
     'Tem certeza que deseja sair deste projeto? Você perderá o acesso às atividades dele.',
   )
 
-  if (!confirmed) {
-    return
-  }
+  if (!confirmed) return
 
   removingMemberId.value = currentUserId.value
-  removeError.value = ''
 
   try {
     await api.delete(
       `projetos/${props.project.id}/membros/${currentUserId.value}/`,
     )
 
+    toast.success('Você saiu do projeto com sucesso.')
+
     await router.push('/projects')
   } catch (error) {
     console.error('Erro ao sair do projeto:', error)
 
-    removeError.value =
-      error.response?.data?.detail ||
-      'Não foi possível sair do projeto.'
+    toast.error(
+      getErrorMessage(error, 'Não foi possível sair do projeto.'),
+    )
   } finally {
     removingMemberId.value = null
   }
@@ -411,27 +351,18 @@ const showModal = ref(false)
 const search = ref('')
 const users = ref([])
 const selectedUser = ref(null)
-
 const searching = ref(false)
 const sending = ref(false)
-
-const error = ref('')
 
 let searchTimer = null
 let searchRequest = 0
 
-// ==========================================
-// PESQUISAR USUÁRIOS
-// ==========================================
-
 watch(search, (value) => {
   clearTimeout(searchTimer)
-
   searchRequest++
 
   users.value = []
   selectedUser.value = null
-  error.value = ''
 
   const term = value.trim()
 
@@ -441,34 +372,34 @@ watch(search, (value) => {
   }
 
   searching.value = true
-
   const requestId = searchRequest
 
   searchTimer = setTimeout(async () => {
     try {
       const response = await usersApi.search(term)
 
-      if (requestId !== searchRequest) {
-        return
-      }
+      if (requestId !== searchRequest) return
 
       const results = listFrom(response.data)
 
       users.value = results.filter(
-        user =>
+        (user) =>
           !members.value.some(
-            member =>
+            (member) =>
               String(member.userId) === String(user.id),
           ),
       )
-    } catch (err) {
-      if (requestId !== searchRequest) {
-        return
-      }
+    } catch (error) {
+      if (requestId !== searchRequest) return
 
-      error.value =
-        err.response?.data?.detail ||
-        'Não foi possível pesquisar os usuários.'
+      console.error('Erro ao pesquisar usuários:', error)
+
+      toast.error(
+        getErrorMessage(
+          error,
+          'Não foi possível pesquisar os usuários.',
+        ),
+      )
     } finally {
       if (requestId === searchRequest) {
         searching.value = false
@@ -477,23 +408,15 @@ watch(search, (value) => {
   }, 350)
 })
 
-// ==========================================
-// MODAL
-// ==========================================
-
 function openModal() {
   search.value = ''
   users.value = []
   selectedUser.value = null
-
-  error.value = ''
-
   showModal.value = true
 }
 
 function resetModal() {
   clearTimeout(searchTimer)
-
   searchRequest++
 
   showModal.value = false
@@ -503,16 +426,12 @@ function resetModal() {
 }
 
 function closeModal() {
-  if (sending.value) {
-    return
-  }
-
+  if (sending.value) return
   resetModal()
 }
 
 function selectUser(user) {
   selectedUser.value = user
-  error.value = ''
 }
 
 // ==========================================
@@ -520,45 +439,53 @@ function selectUser(user) {
 // ==========================================
 
 async function sendInvite() {
-  if (!selectedUser.value || sending.value) {
+  if (!selectedUser.value || sending.value) return
+
+  const projectId = props.project?.id
+  const invitedUser = selectedUser.value
+
+  if (!projectId || invitedUser.id == null) {
+    toast.error('Não foi possível identificar o projeto ou usuário.')
     return
   }
 
   sending.value = true
-  error.value = ''
 
   try {
     await invitesApi.create(
-      props.project.id,
-      selectedUser.value.id,
+      projectId,
+      invitedUser.id,
       'member',
     )
 
-    const invitedUser = selectedUser.value
-
     resetModal()
 
-    toast.success(`Convite enviado para ${
-        invitedUser.name || invitedUser.username
-      }!`)
+    toast.success(
+      `Convite enviado para ${
+        invitedUser.name ||
+        invitedUser.username ||
+        'o usuário'
+      }!`,
+    )
 
     emit('invite-sent')
-
     await loadMembers()
-  } catch (err) {
-    console.error('Erro ao enviar convite:', err)
+  } catch (error) {
+    const data = error.response?.data
 
-    const data = err.response?.data
+    console.error('Erro ao enviar convite:', {
+      status: error.response?.status,
+      respostaBackend: data,
+      url: error.config?.url,
+      payload: error.config?.data,
+    })
 
-    if (typeof data?.detail === 'string') {
-      error.value = data.detail
-    } else if (data && typeof data === 'object') {
-      error.value = Object.values(data)
-        .flat()
-        .join(' ')
-    } else {
-      error.value = 'Não foi possível enviar o convite.'
-    }
+    const message = getErrorMessage(
+      error,
+      'Não foi possível enviar o convite.',
+    )
+
+    toast.error(message)
   } finally {
     sending.value = false
   }
@@ -579,10 +506,6 @@ onUnmounted(() => {
     class="members"
     aria-labelledby="project-members-title"
   >
-    <!-- ==================================
-         CABEÇALHO
-    ================================== -->
-
     <header class="members-header">
       <div class="members-title">
         <h2 id="project-members-title">
@@ -605,60 +528,20 @@ onUnmounted(() => {
       </button>
     </header>
 
-    <!-- ==================================
-         MENSAGENS
-    ================================== -->
+    <!-- CARREGAMENTO -->
 
-    <p
-      v-if="membersError"
-      class="error-message"
-      role="alert"
-    >
-      {{ membersError }}
-    </p>
-
-    <p
-      v-if="roleError"
-      class="error-message"
-      role="alert"
-    >
-      {{ roleError }}
-    </p>
-
-    <p
-      v-if="removeError"
-      class="error-message"
-      role="alert"
-    >
-      {{ removeError }}
-    </p>
-
-    <!-- ==================================
-         CARREGAMENTO
-    ================================== -->
-
-    <p
-      v-if="loadingMembers"
-      class="empty"
-    >
+    <p v-if="loadingMembers" class="empty">
       Carregando membros...
     </p>
 
-    <!-- ==================================
-         LISTA DE MEMBROS
-    ================================== -->
+    <!-- LISTA DE MEMBROS -->
 
-    <ul
-      v-if="members.length"
-      class="members-list"
-    >
+    <ul v-if="members.length" class="members-list">
       <li
         v-for="member in members"
         :key="member.membershipId ?? member.userId"
         class="member-item"
       >
-        <!-- AVATAR -->
-
         <span class="avatar">
           {{
             String(member.name || 'M')
@@ -667,25 +550,15 @@ onUnmounted(() => {
           }}
         </span>
 
-        <!-- INFORMAÇÕES -->
-
         <div class="member-info">
-          <strong>
-            {{ member.name }}
-          </strong>
+          <strong>{{ member.name }}</strong>
 
-          <p>
-            {{ getRoleLabel(member.role) }}
-          </p>
+          <p>{{ getRoleLabel(member.role) }}</p>
 
           <small v-if="member.username">
             @{{ member.username }}
           </small>
         </div>
-
-        <!-- ==================================
-             AÇÕES
-        ================================== -->
 
         <div class="member-actions">
           <!-- ALTERAR CARGO -->
@@ -744,24 +617,17 @@ onUnmounted(() => {
     </ul>
 
     <p
-      v-else-if="!loadingMembers && !membersError"
+      v-else-if="!loadingMembers"
       class="empty"
     >
       Nenhum membro encontrado.
     </p>
 
-    <!-- ==================================
-         SAIR DO PROJETO
-    ================================== -->
+    <!-- SAIR DO PROJETO -->
 
-    <div
-      v-if="canLeaveProject"
-      class="leave-section"
-    >
+    <div v-if="canLeaveProject" class="leave-section">
       <div class="leave-info">
-        <strong>
-          Sair do projeto
-        </strong>
+        <strong>Sair do projeto</strong>
 
         <p>
           Você deixará de participar deste projeto
@@ -783,14 +649,9 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <!-- ==================================
-         AVISO AO PROPRIETÁRIO
-    ================================== -->
+    <!-- AVISO AO PROPRIETÁRIO -->
 
-    <div
-      v-if="isOwner"
-      class="owner-notice"
-    >
+    <div v-if="isOwner" class="owner-notice">
       <strong>
         Você é o proprietário deste projeto.
       </strong>
@@ -801,9 +662,7 @@ onUnmounted(() => {
       </p>
     </div>
 
-    <!-- ==================================
-         MODAL DE CONVITE
-    ================================== -->
+    <!-- MODAL DE CONVITE -->
 
     <Teleport to="body">
       <div
@@ -817,8 +676,6 @@ onUnmounted(() => {
           aria-modal="true"
           aria-labelledby="invite-title"
         >
-          <!-- CABEÇALHO -->
-
           <div class="invite-modal-header">
             <div>
               <h2 id="invite-title">
@@ -826,8 +683,7 @@ onUnmounted(() => {
               </h2>
 
               <p>
-                Pesquise pelo nome ou username
-                do perfil.
+                Pesquise pelo nome ou username do perfil.
               </p>
             </div>
 
@@ -872,12 +728,11 @@ onUnmounted(() => {
               v-else-if="search.trim().length < 2"
               class="search-feedback"
             >
-              Digite pelo menos 2 caracteres
-              para pesquisar.
+              Digite pelo menos 2 caracteres para pesquisar.
             </p>
 
             <p
-              v-else-if="!users.length && !error"
+              v-else-if="!users.length"
               class="search-feedback"
             >
               Nenhum usuário encontrado.
@@ -906,7 +761,7 @@ onUnmounted(() => {
                   {{ user.name || user.username }}
                 </strong>
 
-                <small>
+                <small v-if="user.username">
                   @{{ user.username }}
                 </small>
               </span>
@@ -919,16 +774,6 @@ onUnmounted(() => {
               </span>
             </button>
           </div>
-
-          <!-- ERRO -->
-
-          <p
-            v-if="error"
-            class="error-message"
-            role="alert"
-          >
-            {{ error }}
-          </p>
 
           <!-- AÇÕES -->
 
@@ -962,10 +807,6 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* ==========================================
-   CONTAINER
-========================================== */
-
 .members {
   padding: 24px;
   border: 1px solid #e6e4e4;
@@ -973,10 +814,6 @@ onUnmounted(() => {
   background: #fff;
   color: #111;
 }
-
-/* ==========================================
-   CABEÇALHO
-========================================== */
 
 .members-header {
   display: flex;
@@ -1024,10 +861,6 @@ onUnmounted(() => {
 .invite-button:hover {
   background: #333;
 }
-
-/* ==========================================
-   MEMBROS
-========================================== */
 
 .members-list {
   display: grid;
@@ -1083,10 +916,6 @@ onUnmounted(() => {
   font-size: 11px;
 }
 
-/* ==========================================
-   AÇÕES DOS MEMBROS
-========================================== */
-
 .member-actions {
   display: flex;
   align-items: center;
@@ -1132,10 +961,6 @@ onUnmounted(() => {
   opacity: 0.5;
   cursor: not-allowed;
 }
-
-/* ==========================================
-   SAIR DO PROJETO
-========================================== */
 
 .leave-section {
   display: flex;
@@ -1188,10 +1013,6 @@ onUnmounted(() => {
   cursor: not-allowed;
 }
 
-/* ==========================================
-   AVISO DO PROPRIETÁRIO
-========================================== */
-
 .owner-notice {
   margin-top: 25px;
   padding: 16px;
@@ -1210,37 +1031,11 @@ onUnmounted(() => {
   font-size: 12px;
 }
 
-/* ==========================================
-   MENSAGENS
-========================================== */
-
 .empty {
   margin-top: 20px;
   color: #777;
   font-size: 13px;
 }
-
-.success-message {
-  padding: 12px;
-  margin-top: 18px;
-  border-radius: 8px;
-  background: #eaf8ef;
-  color: #16803c;
-  font-size: 13px;
-}
-
-.error-message {
-  margin: 15px 0 0;
-  padding: 12px;
-  border-radius: 8px;
-  background: #fff1f1;
-  color: #b42318;
-  font-size: 13px;
-}
-
-/* ==========================================
-   MODAL
-========================================== */
 
 .invite-overlay {
   position: fixed;
@@ -1297,10 +1092,6 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
-/* ==========================================
-   PESQUISA
-========================================== */
-
 .search-field {
   display: flex;
   flex-direction: column;
@@ -1328,10 +1119,6 @@ onUnmounted(() => {
 .search-field input:focus {
   border-color: #000;
 }
-
-/* ==========================================
-   RESULTADOS
-========================================== */
 
 .search-results {
   display: flex;
@@ -1411,10 +1198,6 @@ onUnmounted(() => {
   font-weight: 700;
 }
 
-/* ==========================================
-   BOTÕES DO MODAL
-========================================== */
-
 .invite-actions {
   display: flex;
   justify-content: flex-end;
@@ -1449,10 +1232,6 @@ onUnmounted(() => {
   cursor: not-allowed;
 }
 
-/* ==========================================
-   ACESSIBILIDADE
-========================================== */
-
 .sr-only {
   position: absolute;
   width: 1px;
@@ -1464,10 +1243,6 @@ onUnmounted(() => {
   white-space: nowrap;
   border: 0;
 }
-
-/* ==========================================
-   RESPONSIVIDADE
-========================================== */
 
 @media (max-width: 600px) {
   .members {
