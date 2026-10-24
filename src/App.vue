@@ -56,6 +56,7 @@ const toastStore = useToastStore()
 
 <style>
 @import url('/src/assets/css/global.css');
+@import url('/src/assets/css/internal-pages.css');
 </style>
 
 <style scoped>
