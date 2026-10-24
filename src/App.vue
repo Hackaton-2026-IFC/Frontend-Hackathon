@@ -42,6 +42,11 @@ const toastStore = useToastStore()
       type="error"
     />
 
+    <nav v-if="!route.meta.legalPublic" class="momentum-legal-links" aria-label="Documentos legais">
+      <RouterLink to="/privacidade">Privacidade</RouterLink>
+      <RouterLink to="/termos">Termos de Uso</RouterLink>
+    </nav>
+
     <div
       v-if="templateStore.isLoading"
       class="loading-overlay"
@@ -56,6 +61,8 @@ const toastStore = useToastStore()
 
 <style>
 @import url('/src/assets/css/global.css');
+.momentum-legal-links{position:fixed;left:10px;bottom:8px;z-index:1000;display:flex;gap:10px;background:#ffffffeb;padding:5px 9px;border:1px solid #eee;border-radius:9px;box-shadow:0 3px 12px #0000000c}.momentum-legal-links a{font-size:10px;color:#555;text-decoration:underline;font-weight:600}
+@media(max-width:700px){.momentum-legal-links{bottom:79px;left:6px}}
 </style>
 
 <style scoped>

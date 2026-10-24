@@ -27,6 +27,9 @@ jobs:
       - name: Testar Google Agenda
         run: npm run test:calendar
 
+      - name: Testar aceite e privacidade
+        run: npm run test:legal
+
       - name: Validar build de produção
         run: npm run build
 
