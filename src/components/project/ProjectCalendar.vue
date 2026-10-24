@@ -116,7 +116,15 @@ async function exportEvent(event) {
     // Consentimento OAuth durante o clique; não guardar access token em storage.
     const token = await authorizeCalendar()
     const { data } = await projectCalendarApi.exportGoogle(props.projectId, event.id, token)
-    if (data.htmlLink?.startsWith('https://calendar.google.com/')) googleLinks.value[event.id] = data.htmlLink
+    if (typeof data.htmlLink === 'string') {
+      try {
+        const link = new URL(data.htmlLink)
+        if (link.protocol === 'https:' && (
+          link.hostname === 'calendar.google.com' ||
+          (link.hostname === 'www.google.com' && link.pathname.startsWith('/calendar/'))
+        )) googleLinks.value[event.id] = link.href
+      } catch { /* Resposta sem link válido: exportação segue concluída. */ }
+    }
     notice.value = 'Evento exportado para seu Google Agenda!'
   } catch (err) { error.value = message(err) }
   finally { exporting.value = null }
