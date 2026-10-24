@@ -15,32 +15,13 @@ import NotFoundView from '@/views/NotFoundView.vue'
 import ProjectsView from '@/views/ProjectsView.vue'
 import ProjectView from '@/views/ProjectView.vue'
 import TaskView from '@/views/TaskView.vue'
-import NotesView from '@/views/NotesView.vue'
 import NotificationView from '@/views/NotificationView.vue'
 
+// ==========================================
+// DEFINIÇÃO DAS ROTAS
+// ==========================================
+
 const routes = [
-  // ==========================================
-  // TAREFAS
-  // ==========================================
-
-  {
-    path: '/tasks',
-    name: 'tasks',
-    component: () => import('@/views/TasksView.vue'),
-    meta: {
-      requiresAuth: true,
-    },
-  },
-
-  {
-    path: '/projects/:projectId/tasks',
-    name: 'project-tasks',
-    component: () => import('@/views/TasksView.vue'),
-    meta: {
-      requiresAuth: true,
-    },
-  },
-
   // ==========================================
   // AUTENTICAÇÃO
   // ==========================================
@@ -94,6 +75,25 @@ const routes = [
     },
   },
 
+  // ==========================================
+  // TAREFAS DO PROJETO
+  // ==========================================
+
+  {
+    path: '/projects/:projectId/tasks',
+    name: 'project-tasks',
+    redirect: (to) => ({
+      name: 'project-details',
+      params: {
+        id: to.params.projectId,
+      },
+    }),
+  },
+
+  // ==========================================
+  // DETALHES DO PROJETO
+  // ==========================================
+
   {
     path: '/projects/:id',
     name: 'project-details',
@@ -126,19 +126,6 @@ const routes = [
     path: '/notifications',
     name: 'notifications',
     component: NotificationView,
-    meta: {
-      requiresAuth: true,
-    },
-  },
-
-  // ==========================================
-  // ANOTAÇÕES
-  // ==========================================
-
-  {
-    path: '/notes',
-    name: 'notes',
-    component: NotesView,
     meta: {
       requiresAuth: true,
     },
@@ -186,7 +173,7 @@ const routes = [
 ]
 
 // ==========================================
-// CRIAR ROUTER
+// CONFIGURAÇÃO DO ROUTER
 // ==========================================
 
 const router = createRouter({
