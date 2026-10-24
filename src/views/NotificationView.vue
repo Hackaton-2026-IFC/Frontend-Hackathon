@@ -2,11 +2,13 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import invitesApi from '@/api/invitesApi'
+import { useToastStore } from '@/stores/toastStore'
+
+const toast = useToastStore()
 
 const invites = ref([])
 const loading = ref(true)
 const error = ref('')
-const success = ref('')
 const processingId = ref(null)
 
 const pendingInvites = computed(() =>
@@ -91,15 +93,14 @@ async function respond(invite, action) {
 
   processingId.value = invite.id
   error.value = ''
-  success.value = ''
 
   try {
     if (action === 'accept') {
       await invitesApi.accept(invite.id)
-      success.value = 'Convite aceito! Você agora faz parte do projeto.'
+      toast.success('Convite aceito! Você agora faz parte do projeto.')
     } else {
       await invitesApi.reject(invite.id)
-      success.value = 'Convite recusado.'
+      toast.info('Convite recusado.')
     }
 
     // Remove o convite respondido da lista imediatamente.
@@ -112,6 +113,7 @@ async function respond(invite, action) {
   } catch (err) {
     console.error('Erro ao responder convite:', err)
     error.value = getErrorMessage(err)
+    toast.error(error.value)
   } finally {
     processingId.value = null
   }
@@ -159,13 +161,6 @@ onMounted(loadInvites)
         {{ error }}
       </div>
 
-      <div
-        v-if="success"
-        class="feedback feedback-success"
-        role="status"
-      >
-        {{ success }}
-      </div>
 
       <!-- CONVITES -->
 

@@ -7,14 +7,18 @@ import appSidebarComponent from '@/components/layout/appSidebarComponent.vue'
 
 import { useAuthStore } from '@/stores/authStore'
 import { useTemplateStore } from '@/stores/templateStore'
+import { useToastStore } from '@/stores/toastStore'
+import AppToast from '@/components/ui/AppToast.vue'
 
 const route = useRoute()
 const authStore = useAuthStore()
 const templateStore = useTemplateStore()
+const toastStore = useToastStore()
 </script>
 
 <template>
   <div class="app-shell">
+    <AppToast :message="toastStore.message" :type="toastStore.type" :duration="toastStore.duration" :toast-id="toastStore.toastId" @close="toastStore.close()" />
     <RouterView v-if="route.meta.hideHeader" />
 
     <template v-else>
