@@ -1,3 +1,4 @@
+import { projectToast } from '@/utils/projectToast'
 <script setup>
 import { computed, ref, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -578,6 +579,12 @@ onUnmounted(() => {
   clearTimeout(searchTimer)
   searchRequest++
 })
+watch(membersError, (value, previous) => { if (value && value !== previous) projectToast(value, 'error') })
+watch(roleError, (value, previous) => { if (value && value !== previous) projectToast(value, 'error') })
+watch(removeError, (value, previous) => { if (value && value !== previous) projectToast(value, 'error') })
+watch(error, (value, previous) => { if (value && value !== previous) projectToast(value, 'error') })
+watch(roleSuccess, (value, previous) => { if (value && value !== previous) projectToast(value, 'success') })
+watch(success, (value, previous) => { if (value && value !== previous) projectToast(value, 'success') })
 </script>
 
 <template>
@@ -615,45 +622,15 @@ onUnmounted(() => {
          MENSAGENS
     ================================== -->
 
-    <p
-      v-if="success"
-      class="success-message"
-      role="status"
-    >
-      {{ success }}
-    </p>
+    
 
-    <p
-      v-if="roleSuccess"
-      class="success-message"
-      role="status"
-    >
-      {{ roleSuccess }}
-    </p>
+    
 
-    <p
-      v-if="membersError"
-      class="error-message"
-      role="alert"
-    >
-      {{ membersError }}
-    </p>
+    
 
-    <p
-      v-if="roleError"
-      class="error-message"
-      role="alert"
-    >
-      {{ roleError }}
-    </p>
+    
 
-    <p
-      v-if="removeError"
-      class="error-message"
-      role="alert"
-    >
-      {{ removeError }}
-    </p>
+    
 
     <!-- ==================================
          CARREGAMENTO
@@ -944,13 +921,7 @@ onUnmounted(() => {
 
           <!-- ERRO -->
 
-          <p
-            v-if="error"
-            class="error-message"
-            role="alert"
-          >
-            {{ error }}
-          </p>
+          
 
           <!-- AÇÕES -->
 
