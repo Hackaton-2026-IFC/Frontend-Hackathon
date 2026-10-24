@@ -94,6 +94,28 @@ try {
     assert.equal(response.data.usuario_nome, 'Colega')
   })
 
+  await test('fixação de ideia usa preferência pessoal, sem alterar a nota compartilhada', async () => {
+    handler = (config) => {
+      assert.equal(config.method, 'patch')
+      assert.equal(config.url, 'notas/24/preferencia/')
+      assert.deepEqual(JSON.parse(config.data), { fixada: true })
+      return { id: 24, titulo: 'Ideia de outro colega', fixada: true, ordem: 2 }
+    }
+    const { data } = await notesApi.pinForMe(24, true)
+    assert.equal(data.fixada, true)
+  })
+
+  await test('ordem arrastada é enviada com todos IDs e ID do projeto', async () => {
+    handler = (config) => {
+      assert.equal(config.method, 'post')
+      assert.equal(config.url, 'notas/ordenar/')
+      assert.deepEqual(JSON.parse(config.data), { projeto: 42, ids: [9, 1, 5] })
+      return { projeto: 42, ids: [9, 1, 5] }
+    }
+    const { data } = await notesApi.saveOrder('42', [9, 1, 5])
+    assert.deepEqual(data.ids, [9, 1, 5])
+  })
+
 } finally {
   await server.close()
 }

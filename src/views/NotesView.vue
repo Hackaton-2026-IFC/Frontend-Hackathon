@@ -24,6 +24,12 @@ const error = ref('')
 const search = ref('')
 const filterProject = ref('')
 const editingId = ref(null)
+const orderSaving = ref(false)
+const draggingId = ref(null)
+const dropTargetId = ref(null)
+const dragXY = ref({ x: 0, y: 0 })
+let pointerId = null
+let dragHandle = null
 const composerOpen = ref(false)
 const titleField = ref(null)
 const modalDialog = ref(null)
@@ -185,7 +191,7 @@ async function load() {
     if (isProjectMural.value) {
       const { data: project } = await projectsApi.get(projectId.value)
       projectInfo.value = project
-      notes.value = await notesApi.listAll({ projeto: projectId.value, arquivada: false })
+      notes.value = sortNotes(await notesApi.listAll({ projeto: projectId.value, arquivada: false }))
     } else {
       projectInfo.value = null
       const [loadedNotes] = await Promise.all([
@@ -203,9 +209,98 @@ async function load() {
   }
 }
 
+
+function sortNotes(items) {
+  return [...items].sort((a, b) => {
+    if (Boolean(a.fixada) !== Boolean(b.fixada)) return a.fixada ? -1 : 1
+    const left = Number.isInteger(a.ordem) ? a.ordem : Number.MAX_SAFE_INTEGER
+    const right = Number.isInteger(b.ordem) ? b.ordem : Number.MAX_SAFE_INTEGER
+    if (left !== right) return left - right
+    const ad = Date.parse(a.atualizada_em || a.criada_em || '') || 0
+    const bd = Date.parse(b.atualizada_em || b.criada_em || '') || 0
+    return bd - ad || Number(b.id) - Number(a.id)
+  })
+}
+
+const dragAllowed = computed(() =>
+  isProjectMural.value && !!projectInfo.value && !search.value.trim()
+  && !filterProject.value && !loading.value && !orderSaving.value,
+)
+const draggingNote = computed(() => notes.value.find((item) => item.id === draggingId.value) || null)
+
+async function moveCard(fromId, toId) {
+  if (!dragAllowed.value || fromId === toId) return
+  const current = sortNotes(notes.value)
+  const fromIndex = current.findIndex((item) => item.id === fromId)
+  const targetIndex = current.findIndex((item) => item.id === toId)
+  if (fromIndex < 0 || targetIndex < 0) return
+  if (Boolean(current[fromIndex].fixada) !== Boolean(current[targetIndex].fixada)) {
+    error.value = 'Os cards fixados ficam no topo. Arraste entre cards da mesma seção.'
+    return
+  }
+  const next = [...current]
+  const [moved] = next.splice(fromIndex, 1)
+  next.splice(targetIndex, 0, moved)
+  const previous = notes.value
+  notes.value = next.map((note, index) => ({ ...note, ordem: index }))
+  orderSaving.value = true
+  error.value = ''
+  try {
+    await notesApi.saveOrder(projectId.value, next.map((note) => note.id))
+  } catch (err) {
+    notes.value = previous
+    error.value = apiError(err, 'Não foi possível salvar a ordem dos cards.')
+  } finally {
+    orderSaving.value = false
+  }
+}
+
+function startDrag(note, event) {
+  if (!dragAllowed.value || (event.pointerType === 'mouse' && event.button !== 0)) return
+  pointerId = event.pointerId
+  dragHandle = event.currentTarget
+  dragHandle.setPointerCapture(pointerId)
+  draggingId.value = note.id
+  dropTargetId.value = note.id
+  dragXY.value = { x: event.clientX, y: event.clientY }
+  error.value = ''
+}
+
+function moveDrag(event) {
+  if (pointerId !== event.pointerId || draggingId.value === null) return
+  dragXY.value = { x: event.clientX, y: event.clientY }
+  const element = document.elementFromPoint(event.clientX, event.clientY)
+  const card = element?.closest?.('[data-note-id]')
+  const target = Number(card?.dataset.noteId)
+  dropTargetId.value = card && notes.value.some((note) => note.id === target) ? target : null
+}
+
+function resetDrag() {
+  pointerId = null
+  dragHandle = null
+  draggingId.value = null
+  dropTargetId.value = null
+}
+
+function endDrag(event) {
+  if (pointerId !== event.pointerId) return
+  const from = draggingId.value
+  const to = dropTargetId.value
+  resetDrag()
+  if (from !== null && to !== null) void moveCard(from, to)
+}
+
+function moveWithKeyboard(note, direction) {
+  if (!dragAllowed.value) return
+  const section = sortNotes(notes.value).filter((item) => Boolean(item.fixada) === Boolean(note.fixada))
+  const index = section.findIndex((item) => item.id === note.id)
+  const target = section[index + direction]
+  if (target) void moveCard(note.id, target.id)
+}
+
 const visibleNotes = computed(() => {
   const query = search.value.trim().toLowerCase()
-  return notes.value.filter((note) => {
+  return sortNotes(notes.value).filter((note) => {
     const matchesText =
       !query ||
       note.titulo?.toLowerCase().includes(query) ||
@@ -263,7 +358,7 @@ async function save() {
     const index = notes.value.findIndex((item) => item.id === saved.id)
     if (index >= 0) notes.value[index] = saved
     else notes.value.unshift(saved)
-    notes.value = [...notes.value].sort((a, b) => Number(b.fixada) - Number(a.fixada))
+    notes.value = sortNotes(notes.value)
     closeComposer(true)
   } catch (err) {
     error.value = apiError(err, 'Não foi possível salvar a nota.')
@@ -289,11 +384,11 @@ function edit(note) {
 }
 
 async function togglePin(note) {
-  if (!isAuthor(note)) return
+  if (orderSaving.value) return
   try {
-    const { data } = await notesApi.update(note.id, { fixada: !note.fixada })
+    const { data } = await notesApi.pinForMe(note.id, !note.fixada)
     notes.value = notes.value.map((item) => item.id === data.id ? data : item)
-    notes.value = [...notes.value].sort((a, b) => Number(b.fixada) - Number(a.fixada))
+    notes.value = sortNotes(notes.value)
   } catch (err) {
     error.value = apiError(err, 'Não foi possível fixar a nota.')
   }
@@ -328,6 +423,7 @@ function projectName(id) {
 
 onMounted(load)
 watch(projectId, () => {
+  resetDrag()
   if (composerOpen.value) closeComposer(true)
   resetForm()
   filterProject.value = ''
@@ -336,6 +432,7 @@ watch(projectId, () => {
   load()
 })
 onBeforeUnmount(() => {
+  resetDrag()
   clearTemporaryPhoto()
   if (composerOpen.value) document.body.style.overflow = previousBodyOverflow
 })
@@ -347,7 +444,7 @@ onBeforeUnmount(() => {
       <div>
         <span class="eyebrow">{{ isProjectMural ? 'PROJETOS / MURAL COMPARTILHADO' : 'IDEIAS / NOTAS' }}</span>
         <h1>{{ isProjectMural ? (projectInfo?.nome ? 'Mural — ' + projectInfo.nome : 'Mural do projeto') : 'Seu mural.' }}</h1>
-        <p>{{ isProjectMural ? 'Compartilhe ideias, fotos e links com todos os participantes deste projeto.' : 'Suas notas pessoais e ideias publicadas por você em projetos.' }}</p>
+        <p>{{ isProjectMural ? 'Compartilhe ideias, fotos e links. Suas fixações e posições dos cards são só suas.' : 'Suas notas pessoais e ideias publicadas por você em projetos.' }}</p>
         <RouterLink v-if="isProjectMural" :to="{ name: 'project-details', params: { id: projectId } }" class="back-to-project">← Voltar ao projeto</RouterLink>
       </div>
     </section>
@@ -480,6 +577,13 @@ onBeforeUnmount(() => {
       </label>
     </section>
 
+    <p v-if="isProjectMural && search.trim()" class="drag-hint">Limpe a busca para reorganizar o mural.</p>
+    <p v-else-if="isProjectMural && visibleNotes.length" class="drag-hint">
+      <span class="mdi mdi-drag-vertical" aria-hidden="true"></span>
+      Segure a alça e arraste para organizar os cards. Só você vê essa ordem.
+      <span v-if="orderSaving" aria-live="polite">Salvando ordem…</span>
+    </p>
+
     <div v-if="loading" class="state" role="status">Carregando notas...</div>
 
     <section v-else-if="visibleNotes.length" class="notes-grid" aria-label="Suas notas">
@@ -487,11 +591,30 @@ onBeforeUnmount(() => {
         v-for="note in visibleNotes"
         :key="note.id"
         class="note-card"
+        :class="{ 'note-card-dragging': draggingId === note.id, 'note-card-drop': dropTargetId === note.id && draggingId !== note.id, 'note-card-pinned': note.fixada }"
+        :data-note-id="note.id"
         :style="{ backgroundColor: note.cor || '#FFF475' }"
       >
         <div class="note-card-top">
+          <button
+            v-if="isProjectMural"
+            type="button"
+            class="drag-handle"
+            :disabled="!dragAllowed"
+            :aria-label="'Mover ideia: ' + (note.titulo || 'Sem título')"
+            title="Segure e arraste; use setas ↑↓ pelo teclado"
+            @pointerdown="startDrag(note, $event)"
+            @pointermove="moveDrag"
+            @pointerup="endDrag"
+            @pointercancel="resetDrag"
+            @lostpointercapture="resetDrag"
+            @keydown.up.prevent="moveWithKeyboard(note, -1)"
+            @keydown.down.prevent="moveWithKeyboard(note, 1)"
+          >
+            <span class="mdi mdi-drag-vertical" aria-hidden="true"></span>
+          </button>
           <span v-if="note.projeto" class="project-chip">{{ projectName(note.projeto) || 'Projeto' }}</span>
-          <button v-if="isAuthor(note)" type="button" class="icon-button" :title="note.fixada ? 'Desafixar' : 'Fixar'" @click="togglePin(note)">
+          <button type="button" class="icon-button pin-button" :aria-pressed="Boolean(note.fixada)" :title="note.fixada ? 'Desafixar só para mim' : 'Fixar só para mim'" :aria-label="note.fixada ? 'Desafixar só para mim' : 'Fixar só para mim'" @click="togglePin(note)">
             <span :class="note.fixada ? 'mdi mdi-pin' : 'mdi mdi-pin-outline'" aria-hidden="true"></span>
           </button>
         </div>
@@ -521,6 +644,18 @@ onBeforeUnmount(() => {
       <strong>Nenhuma nota por aqui.</strong>
       <span>Capture a próxima ideia antes que ela fuja.</span>
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="draggingNote"
+        class="drag-floating-preview"
+        :style="{ left: dragXY.x + 'px', top: dragXY.y + 'px' }"
+        aria-hidden="true"
+      >
+        <span class="mdi mdi-drag-vertical"></span>
+        {{ draggingNote.titulo || 'Ideia sem título' }}
+      </div>
+    </Teleport>
   </main>
 </template>
 
@@ -630,4 +765,24 @@ onBeforeUnmount(() => {
 @media(prefers-reduced-motion:reduce) {
   .mural-fab { transition: none; }
 }
+
+/* FEAT-65: organização pessoal */
+.notes-grid { columns: unset; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr)); gap: 18px; align-items: start; }
+.note-card { margin: 0; min-width: 0; transition: box-shadow .12s ease, opacity .12s ease, outline-color .12s ease; }
+.note-card-pinned { box-shadow: 0 4px 0 rgb(20 20 20 / 18%), 0 9px 22px rgb(0 0 0 / 7%); }
+.note-card-dragging { opacity: .44; }
+.note-card-drop { outline: 3px dashed #171716; outline-offset: 3px; }
+.drag-hint { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin: 14px 0 0; color: #62625d; font-size: 12px; }
+.drag-hint .mdi { font-size: 19px; }
+.note-card-top { gap: 8px; }
+.note-card-top .project-chip { flex: 1; margin-right: auto; }
+.drag-handle { display: grid; place-items: center; flex: 0 0 32px; width: 32px; height: 34px; padding: 0; border: none; border-radius: 8px; background: rgb(255 255 255 / 50%); color: #393933; cursor: grab; touch-action: none; user-select: none; }
+.drag-handle:active { cursor: grabbing; }
+.drag-handle:disabled { cursor: not-allowed; opacity: .4; }
+.drag-handle:focus-visible, .pin-button:focus-visible { outline: 3px solid #171716; outline-offset: 2px; }
+.drag-handle .mdi { font-size: 20px; pointer-events: none; }
+.pin-button[aria-pressed="true"] { background: #171716; color: #fff; }
+.pin-button[aria-pressed="false"] { background: rgb(255 255 255 / 70%); }
+.drag-floating-preview { position: fixed; z-index: 9999; pointer-events: none; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-radius: 12px; background: #171716; box-shadow: 0 12px 30px rgb(0 0 0 / 23%); color: white; transform: translate(-50%, -50%); font-size: 13px; font-weight: 700; }
+@media(max-width:700px){ .notes-grid { grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); gap: 14px; } .drag-handle{width: 38px; height: 38px; flex-basis: 38px;} }
 </style>
