@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/authStore'
 import projectsApi from '@/api/projectsApi'
 import usersApi from '@/api/usersApi'
 import invitesApi from '@/api/invitesApi'
+import { useToastStore } from '@/stores/toastStore'
 import api from '@/api/config'
 
 // ==========================================
@@ -23,6 +24,7 @@ const emit = defineEmits(['invite-sent'])
 
 const router = useRouter()
 const authStore = useAuthStore()
+const toast = useToastStore()
 
 // ==========================================
 // USUÁRIO LOGADO
@@ -45,7 +47,6 @@ const loadingMembers = ref(false)
 const membersError = ref('')
 
 const roleError = ref('')
-const roleSuccess = ref('')
 const savingRoleId = ref(null)
 
 const removingMemberId = ref(null)
@@ -235,7 +236,6 @@ async function changeRole(member, event) {
   }
 
   roleError.value = ''
-  roleSuccess.value = ''
 
   if (!canChangeRole(member)) {
     roleError.value =
@@ -265,8 +265,7 @@ async function changeRole(member, event) {
 
     member.role = newRole
 
-    roleSuccess.value =
-      `Cargo de ${member.name} alterado para ${getRoleLabel(newRole)}.`
+    toast.success(`Cargo de ${member.name} alterado para ${getRoleLabel(newRole)}.`)
 
     await loadMembers()
   } catch (error) {
@@ -344,15 +343,13 @@ async function removeMember(member) {
 
   removingMemberId.value = member.userId
   removeError.value = ''
-  roleSuccess.value = ''
 
   try {
     await api.delete(
       `projetos/${props.project.id}/membros/${member.userId}/`,
     )
 
-    roleSuccess.value =
-      `${member.name} foi removido do projeto.`
+    toast.success(`${member.name} foi removido do projeto.`)
 
     await loadMembers()
   } catch (error) {
@@ -419,7 +416,6 @@ const searching = ref(false)
 const sending = ref(false)
 
 const error = ref('')
-const success = ref('')
 
 let searchTimer = null
 let searchRequest = 0
@@ -491,7 +487,6 @@ function openModal() {
   selectedUser.value = null
 
   error.value = ''
-  success.value = ''
 
   showModal.value = true
 }
@@ -543,10 +538,9 @@ async function sendInvite() {
 
     resetModal()
 
-    success.value =
-      `Convite enviado para ${
+    toast.success(`Convite enviado para ${
         invitedUser.name || invitedUser.username
-      }!`
+      }!`)
 
     emit('invite-sent')
 
@@ -614,22 +608,6 @@ onUnmounted(() => {
     <!-- ==================================
          MENSAGENS
     ================================== -->
-
-    <p
-      v-if="success"
-      class="success-message"
-      role="status"
-    >
-      {{ success }}
-    </p>
-
-    <p
-      v-if="roleSuccess"
-      class="success-message"
-      role="status"
-    >
-      {{ roleSuccess }}
-    </p>
 
     <p
       v-if="membersError"
