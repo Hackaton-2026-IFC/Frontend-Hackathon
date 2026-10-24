@@ -38,8 +38,10 @@ export default defineConfig({
           },
         ],
       },
+      // Evita que o SW de desenvolvimento intercepte páginas e force atualizações
+      // enquanto o Vite usa HMR. O PWA continua ativo no build de produção.
       devOptions: {
-        enabled: true,
+        enabled: false,
       },
     }),
   ],
