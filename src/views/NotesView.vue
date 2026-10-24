@@ -1,9 +1,21 @@
 <script setup>
-import { computed, onMounted, onBeforeUnmount, reactive, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import notesApi from '@/api/notesApi'
+import projectsApi from '@/api/projectsApi'
+import { useAuthStore } from '@/stores/authStore'
+import { RouterLink } from 'vue-router'
 import { useProjectStore } from '@/stores/project'
 
 const projectStore = useProjectStore()
+const authStore = useAuthStore()
+const props = defineProps({ id: { type: [String, Number], default: null } })
+const projectId = computed(() => props.id ? String(props.id) : '')
+const isProjectMural = computed(() => Boolean(projectId.value))
+const projectInfo = ref(null)
+function isAuthor(note) {
+  const userId = authStore.user?.id ?? authStore.user?.user_id
+  return !!userId && Number(note.usuario) === Number(userId)
+}
 
 const notes = ref([])
 const loading = ref(false)
@@ -86,7 +98,7 @@ function resetForm() {
   form.conteudo = ''
   form.link = ''
   form.cor = '#FFF475'
-  form.projeto = ''
+  form.projeto = projectId.value
   form.etiquetas = ''
   form.fixada = false
 }
@@ -109,13 +121,22 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    const [loadedNotes] = await Promise.all([
-      notesApi.listAll({ arquivada: false }),
-      projectStore.projects.length ? Promise.resolve(projectStore.projects) : projectStore.fetchProjects(),
-    ])
-    notes.value = loadedNotes
+    if (isProjectMural.value) {
+      const { data: project } = await projectsApi.get(projectId.value)
+      projectInfo.value = project
+      notes.value = await notesApi.listAll({ projeto: projectId.value, arquivada: false })
+    } else {
+      projectInfo.value = null
+      const [loadedNotes] = await Promise.all([
+        notesApi.listAll({ arquivada: false }),
+        projectStore.projects.length ? Promise.resolve(projectStore.projects) : projectStore.fetchProjects(),
+      ])
+      notes.value = loadedNotes
+    }
   } catch (err) {
-    error.value = apiError(err, 'Não foi possível carregar suas notas.')
+    notes.value = []
+    projectInfo.value = null
+    error.value = apiError(err, 'Não foi possível carregar o mural.')
   } finally {
     loading.value = false
   }
@@ -142,7 +163,7 @@ function payload() {
     conteudo: form.conteudo.trim(),
     link: form.link.trim(),
     cor: form.cor,
-    projeto: form.projeto ? Number(form.projeto) : null,
+    projeto: isProjectMural.value ? Number(projectId.value) : (form.projeto ? Number(form.projeto) : null),
     etiquetas: form.etiquetas
       .split(',')
       .map((tag) => tag.trim())
@@ -191,6 +212,7 @@ async function save() {
 }
 
 function edit(note) {
+  if (!isAuthor(note)) return
   editingId.value = note.id
   form.titulo = note.titulo || ''
   form.conteudo = note.conteudo || ''
@@ -206,6 +228,7 @@ function edit(note) {
 }
 
 async function togglePin(note) {
+  if (!isAuthor(note)) return
   try {
     const { data } = await notesApi.update(note.id, { fixada: !note.fixada })
     notes.value = notes.value.map((item) => item.id === data.id ? data : item)
@@ -216,6 +239,7 @@ async function togglePin(note) {
 }
 
 async function archive(note) {
+  if (!isAuthor(note)) return
   try {
     await notesApi.update(note.id, { arquivada: true })
     notes.value = notes.value.filter((item) => item.id !== note.id)
@@ -226,6 +250,7 @@ async function archive(note) {
 }
 
 async function remove(note) {
+  if (!isAuthor(note)) return
   if (!window.confirm('Excluir esta nota definitivamente?')) return
   try {
     await notesApi.remove(note.id)
@@ -237,10 +262,17 @@ async function remove(note) {
 }
 
 function projectName(id) {
-  return projectStore.projects.find((project) => String(project.id) === String(id))?.name || ''
+  return projectStore.projects.find((project) => String(project.id) === String(id))?.nome || projectStore.projects.find((project) => String(project.id) === String(id))?.name || ''
 }
 
 onMounted(load)
+watch(projectId, () => {
+  resetForm()
+  filterProject.value = ''
+  notes.value = []
+  projectInfo.value = null
+  load()
+})
 onBeforeUnmount(clearTemporaryPhoto)
 </script>
 
@@ -248,13 +280,14 @@ onBeforeUnmount(clearTemporaryPhoto)
   <main class="notes-page">
     <section class="notes-hero">
       <div>
-        <span class="eyebrow">IDEIAS / NOTAS</span>
-        <h1>Seu mural.</h1>
-        <p>Capture uma ideia em segundos e conecte-a a um projeto quando fizer sentido.</p>
+        <span class="eyebrow">{{ isProjectMural ? 'PROJETOS / MURAL COMPARTILHADO' : 'IDEIAS / NOTAS' }}</span>
+        <h1>{{ isProjectMural ? (projectInfo?.nome ? 'Mural — ' + projectInfo.nome : 'Mural do projeto') : 'Seu mural.' }}</h1>
+        <p>{{ isProjectMural ? 'Compartilhe ideias, fotos e links com todos os participantes deste projeto.' : 'Suas notas pessoais e ideias publicadas por você em projetos.' }}</p>
+        <RouterLink v-if="isProjectMural" :to="{ name: 'project-details', params: { id: projectId } }" class="back-to-project">← Voltar ao projeto</RouterLink>
       </div>
     </section>
 
-    <section class="composer" aria-label="Criar ou editar nota">
+    <section v-if="!isProjectMural || projectInfo" class="composer" aria-label="Criar ou editar nota">
       <div class="composer-top">
         <input v-model="form.titulo" maxlength="200" placeholder="Título" aria-label="Título da nota" />
         <label class="pin-check">
@@ -282,8 +315,8 @@ onBeforeUnmount(clearTemporaryPhoto)
         <p v-else class="photo-hint">Você pode salvar uma ideia só com foto, link ou texto, ou combinar os três.</p>
       </div>
 
-      <div class="composer-grid">
-        <label>
+      <div class="composer-grid" :class="{ 'project-only-grid': isProjectMural }">
+        <label v-if="!isProjectMural">
           Projeto
           <select v-model="form.projeto">
             <option value="">Nota pessoal</option>
@@ -322,12 +355,12 @@ onBeforeUnmount(clearTemporaryPhoto)
 
     <p v-if="error" class="error" role="alert">{{ error }}</p>
 
-    <section class="notes-tools">
+    <section v-if="!isProjectMural || projectInfo" class="notes-tools" :class="{ 'project-only-grid': isProjectMural }">
       <label>
         <span>Buscar</span>
         <input v-model="search" type="search" placeholder="Título, texto, link ou etiqueta" />
       </label>
-      <label>
+      <label v-if="!isProjectMural">
         <span>Projeto</span>
         <select v-model="filterProject">
           <option value="">Todos</option>
@@ -349,12 +382,13 @@ onBeforeUnmount(clearTemporaryPhoto)
       >
         <div class="note-card-top">
           <span v-if="note.projeto" class="project-chip">{{ projectName(note.projeto) || 'Projeto' }}</span>
-          <button type="button" class="icon-button" :title="note.fixada ? 'Desafixar' : 'Fixar'" @click="togglePin(note)">
+          <button v-if="isAuthor(note)" type="button" class="icon-button" :title="note.fixada ? 'Desafixar' : 'Fixar'" @click="togglePin(note)">
             <span :class="note.fixada ? 'mdi mdi-pin' : 'mdi mdi-pin-outline'" aria-hidden="true"></span>
           </button>
         </div>
 
         <h2 v-if="note.titulo">{{ note.titulo }}</h2>
+        <small v-if="isProjectMural" class="note-author">Publicado por {{ note.usuario_nome || 'Participante' }}</small>
         <img v-if="note.imagem_url" :src="note.imagem_url" :alt="note.titulo ? 'Imagem: ' + note.titulo : 'Imagem da ideia'" class="note-image" loading="lazy" />
         <p v-if="note.conteudo" class="note-content">{{ note.conteudo }}</p>
         <a v-if="safeLink(note.link)" class="note-link" :href="safeLink(note.link)" target="_blank" rel="noopener noreferrer">
@@ -366,7 +400,7 @@ onBeforeUnmount(clearTemporaryPhoto)
           <span v-for="tag in note.etiquetas" :key="tag">#{{ tag }}</span>
         </div>
 
-        <div class="note-actions">
+        <div v-if="isAuthor(note)" class="note-actions">
           <button type="button" @click="edit(note)">Editar</button>
           <button type="button" @click="archive(note)">Arquivar</button>
           <button type="button" @click="remove(note)">Excluir</button>
@@ -393,4 +427,8 @@ onBeforeUnmount(clearTemporaryPhoto)
 .note-image{display:block;width:100%;max-height:320px;object-fit:cover;border-radius:10px;margin-top:12px}
 .note-link{display:flex;align-items:center;gap:6px;max-width:100%;margin-top:12px;color:#244c91;font-size:12px;overflow-wrap:anywhere;word-break:break-all}
 .note-link:hover{text-decoration:none}
+.back-to-project{display:inline-flex;margin-top:18px;color:#171716;font-size:13px;font-weight:700;text-decoration:underline}
+.back-to-project:hover{opacity:.7}
+.note-author{display:block;margin:8px 0 12px;font-size:11px;font-weight:650;color:#52524e}
+.composer-grid.project-only-grid,.notes-tools.project-only-grid{grid-template-columns:1fr}
 </style>
