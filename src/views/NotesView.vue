@@ -444,7 +444,7 @@ onBeforeUnmount(() => {
       <div>
         <span class="eyebrow">{{ isProjectMural ? 'PROJETOS / MURAL COMPARTILHADO' : 'IDEIAS / NOTAS' }}</span>
         <h1>{{ isProjectMural ? (projectInfo?.nome ? 'Mural — ' + projectInfo.nome : 'Mural do projeto') : 'Seu mural.' }}</h1>
-        <p>{{ isProjectMural ? 'Compartilhe ideias, fotos e links com todos os participantes deste projeto.' : 'Suas notas pessoais e ideias publicadas por você em projetos.' }}</p>
+        <p>{{ isProjectMural ? 'Compartilhe ideias, fotos e links. Suas fixações e posições dos cards são só suas.' : 'Suas notas pessoais e ideias publicadas por você em projetos.' }}</p>
         <RouterLink v-if="isProjectMural" :to="{ name: 'project-details', params: { id: projectId } }" class="back-to-project">← Voltar ao projeto</RouterLink>
       </div>
     </section>
@@ -577,6 +577,13 @@ onBeforeUnmount(() => {
       </label>
     </section>
 
+    <p v-if="isProjectMural && search.trim()" class="drag-hint">Limpe a busca para reorganizar o mural.</p>
+    <p v-else-if="isProjectMural && visibleNotes.length" class="drag-hint">
+      <span class="mdi mdi-drag-vertical" aria-hidden="true"></span>
+      Segure a alça e arraste para organizar os cards. Só você vê essa ordem.
+      <span v-if="orderSaving" aria-live="polite">Salvando ordem…</span>
+    </p>
+
     <div v-if="loading" class="state" role="status">Carregando notas...</div>
 
     <section v-else-if="visibleNotes.length" class="notes-grid" aria-label="Suas notas">
@@ -584,11 +591,30 @@ onBeforeUnmount(() => {
         v-for="note in visibleNotes"
         :key="note.id"
         class="note-card"
+        :class="{ 'note-card-dragging': draggingId === note.id, 'note-card-drop': dropTargetId === note.id && draggingId !== note.id, 'note-card-pinned': note.fixada }"
+        :data-note-id="note.id"
         :style="{ backgroundColor: note.cor || '#FFF475' }"
       >
         <div class="note-card-top">
+          <button
+            v-if="isProjectMural"
+            type="button"
+            class="drag-handle"
+            :disabled="!dragAllowed"
+            :aria-label="'Mover ideia: ' + (note.titulo || 'Sem título')"
+            title="Segure e arraste; use setas ↑↓ pelo teclado"
+            @pointerdown="startDrag(note, $event)"
+            @pointermove="moveDrag"
+            @pointerup="endDrag"
+            @pointercancel="resetDrag"
+            @lostpointercapture="resetDrag"
+            @keydown.up.prevent="moveWithKeyboard(note, -1)"
+            @keydown.down.prevent="moveWithKeyboard(note, 1)"
+          >
+            <span class="mdi mdi-drag-vertical" aria-hidden="true"></span>
+          </button>
           <span v-if="note.projeto" class="project-chip">{{ projectName(note.projeto) || 'Projeto' }}</span>
-          <button v-if="isAuthor(note)" type="button" class="icon-button" :title="note.fixada ? 'Desafixar' : 'Fixar'" @click="togglePin(note)">
+          <button type="button" class="icon-button pin-button" :aria-pressed="Boolean(note.fixada)" :title="note.fixada ? 'Desafixar só para mim' : 'Fixar só para mim'" :aria-label="note.fixada ? 'Desafixar só para mim' : 'Fixar só para mim'" @click="togglePin(note)">
             <span :class="note.fixada ? 'mdi mdi-pin' : 'mdi mdi-pin-outline'" aria-hidden="true"></span>
           </button>
         </div>
@@ -618,6 +644,18 @@ onBeforeUnmount(() => {
       <strong>Nenhuma nota por aqui.</strong>
       <span>Capture a próxima ideia antes que ela fuja.</span>
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="draggingNote"
+        class="drag-floating-preview"
+        :style="{ left: dragXY.x + 'px', top: dragXY.y + 'px' }"
+        aria-hidden="true"
+      >
+        <span class="mdi mdi-drag-vertical"></span>
+        {{ draggingNote.titulo || 'Ideia sem título' }}
+      </div>
+    </Teleport>
   </main>
 </template>
 
@@ -727,4 +765,24 @@ onBeforeUnmount(() => {
 @media(prefers-reduced-motion:reduce) {
   .mural-fab { transition: none; }
 }
+
+/* FEAT-65: organização pessoal */
+.notes-grid { columns: unset; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr)); gap: 18px; align-items: start; }
+.note-card { margin: 0; min-width: 0; transition: box-shadow .12s ease, opacity .12s ease, outline-color .12s ease; }
+.note-card-pinned { box-shadow: 0 4px 0 rgb(20 20 20 / 18%), 0 9px 22px rgb(0 0 0 / 7%); }
+.note-card-dragging { opacity: .44; }
+.note-card-drop { outline: 3px dashed #171716; outline-offset: 3px; }
+.drag-hint { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin: 14px 0 0; color: #62625d; font-size: 12px; }
+.drag-hint .mdi { font-size: 19px; }
+.note-card-top { gap: 8px; }
+.note-card-top .project-chip { flex: 1; margin-right: auto; }
+.drag-handle { display: grid; place-items: center; flex: 0 0 32px; width: 32px; height: 34px; padding: 0; border: none; border-radius: 8px; background: rgb(255 255 255 / 50%); color: #393933; cursor: grab; touch-action: none; user-select: none; }
+.drag-handle:active { cursor: grabbing; }
+.drag-handle:disabled { cursor: not-allowed; opacity: .4; }
+.drag-handle:focus-visible, .pin-button:focus-visible { outline: 3px solid #171716; outline-offset: 2px; }
+.drag-handle .mdi { font-size: 20px; pointer-events: none; }
+.pin-button[aria-pressed="true"] { background: #171716; color: #fff; }
+.pin-button[aria-pressed="false"] { background: rgb(255 255 255 / 70%); }
+.drag-floating-preview { position: fixed; z-index: 9999; pointer-events: none; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-radius: 12px; background: #171716; box-shadow: 0 12px 30px rgb(0 0 0 / 23%); color: white; transform: translate(-50%, -50%); font-size: 13px; font-weight: 700; }
+@media(max-width:700px){ .notes-grid { grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); gap: 14px; } .drag-handle{width: 38px; height: 38px; flex-basis: 38px;} }
 </style>
