@@ -449,11 +449,12 @@
   }
 
   .project-tasks .project-tasks__filter-toolbar {
-    justify-content: stretch;
+    justify-content: flex-end;
     margin: 0 0 16px;
   }
 
   .project-tasks .project-tasks__filter-toggle {
-    width: 100%;
+    width: auto;
+    min-width: 44px;
   }
 }
